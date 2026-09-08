@@ -1,0 +1,600 @@
+{
+  "id": "bsai-solh3-fast-v3",
+  "revision": 0,
+  "last_node_id": 10,
+  "last_link_id": 12,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "BSAI_SolH3_Loader",
+      "pos": [
+        50,
+        50
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "steps",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "sol_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "BSAI Sol-H3 Loader (极速版)",
+      "properties": {
+        "Node name for S&R": "BSAI_SolH3_Loader"
+      },
+      "widgets_values": [
+        "minimax_h3_fl2va_int8_convrot.safetensors",
+        "FastH3-4step-LoRA.safetensors",
+        1.0,
+        "4步 FastH3 极速",
+        true,
+        1.3,
+        0.8,
+        12.0
+      ]
+    },
+    {
+      "id": 2,
+      "type": "SolAttnMiniMax",
+      "pos": [
+        480,
+        50
+      ],
+      "size": [
+        340,
+        340
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "Sol-Attn 稀疏注意力",
+      "properties": {
+        "Node name for S&R": "SolAttnMiniMax"
+      },
+      "widgets_values": [
+        1.3,
+        0.2,
+        0.9,
+        12288,
+        "exact_kv_and_rows",
+        false,
+        "2d_frame",
+        true,
+        0,
+        false,
+        false,
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "CLIPLoader",
+      "pos": [
+        50,
+        320
+      ],
+      "size": [
+        400,
+        80
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            3,
+            4
+          ]
+        }
+      ],
+      "title": "CLIP",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [
+        500,
+        320
+      ],
+      "size": [
+        400,
+        100
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "title": "正面提示词",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "A cinematic live-action shot, beautiful natural lighting, shallow depth of field, 4K quality, smooth motion"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [
+        500,
+        450
+      ],
+      "size": [
+        400,
+        80
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "title": "负面提示词",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "blurry, low quality, distorted, extra limbs, bad anatomy, watermark, static, silent"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "EmptyHunyuanLatentVideo",
+      "pos": [
+        500,
+        570
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "title": "空Latent",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "EmptyHunyuanLatentVideo"
+      },
+      "widgets_values": [
+        832,
+        480,
+        97,
+        1
+      ]
+    },
+    {
+      "id": 7,
+      "type": "VAELoader",
+      "pos": [
+        50,
+        430
+      ],
+      "size": [
+        400,
+        60
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            8
+          ]
+        }
+      ],
+      "title": "视频VAE (fp16)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_fp16.safetensors"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "VAELoader",
+      "pos": [
+        50,
+        520
+      ],
+      "size": [
+        400,
+        60
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "title": "音频VAE",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "minimax_h3_audio_vae_fp32.safetensors"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "KSampler",
+      "pos": [
+        900,
+        50
+      ],
+      "size": [
+        300,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 5
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 6
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "title": "KSampler (4步 FastH3)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        4,
+        1.0,
+        "euler",
+        "simple",
+        1.0
+      ]
+    },
+    {
+      "id": 10,
+      "type": "MiniMaxH3AVDecodeT8",
+      "pos": [
+        1250,
+        50
+      ],
+      "size": [
+        280,
+        120
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "av_latent",
+          "type": "LATENT",
+          "link": 10
+        },
+        {
+          "name": "video_vae",
+          "type": "VAE",
+          "link": 8
+        },
+        {
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frames",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "generated_audio",
+          "type": "AUDIO",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "title": "H3 AV 解码 (视频+音频)",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3AVDecodeT8"
+      }
+    },
+    {
+      "id": 11,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        1580,
+        50
+      ],
+      "size": [
+        600,
+        700
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "shape": 7,
+          "link": 12
+        }
+      ],
+      "outputs": [],
+      "title": "视频合成",
+      "properties": {
+        "cnr_id": "comfyui-videohelpersuite",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "BSAI_SolH3",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 18,
+        "save_metadata": true,
+        "trim_to_audio": true,
+        "pingpong": false,
+        "save_output": true
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      2,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "CLIP"
+    ],
+    [
+      4,
+      3,
+      0,
+      5,
+      0,
+      "CLIP"
+    ],
+    [
+      5,
+      4,
+      0,
+      9,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      6,
+      5,
+      0,
+      9,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      7,
+      6,
+      0,
+      9,
+      3,
+      "LATENT"
+    ],
+    [
+      8,
+      7,
+      0,
+      10,
+      1,
+      "VAE"
+    ],
+    [
+      9,
+      8,
+      0,
+      10,
+      2,
+      "VAE"
+    ],
+    [
+      10,
+      9,
+      0,
+      10,
+      0,
+      "LATENT"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      10,
+      1,
+      11,
+      1,
+      "AUDIO"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "BSAI Sol-H3 极速版 (FastH3 4步 + Sol-Attn + 音视频)",
+      "bounding": [
+        30,
+        20,
+        2160,
+        760
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
