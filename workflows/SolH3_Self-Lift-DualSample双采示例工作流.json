@@ -539,7 +539,7 @@
           "link": 5
         },
         {
-          "name": "positive",
+          "name": "conditioning",
           "type": "CONDITIONING",
           "link": 9
         }
