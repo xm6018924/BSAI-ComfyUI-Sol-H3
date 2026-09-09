@@ -57,6 +57,14 @@ try:
     if _os.path.isdir(_up_dir) and _up_dir not in _sys.path:
         _sys.path.insert(0, _up_dir)
     import minimax_h3_latent_upscaler_3d as _UPSCALER_MOD
+    # 把 h3_latent_upscalers 目录也注册为 latent_upscale_models 的搜索路径
+    try:
+        import folder_paths as _fp
+        _extra_dir = _os.path.join(_fp.models_dir, "h3_latent_upscalers")
+        if _os.path.isdir(_extra_dir):
+            _fp.add_model_folder_path("latent_upscale_models", _extra_dir)
+    except Exception:
+        pass
 except Exception:
     _UPSCALER_MOD = None
 

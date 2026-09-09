@@ -29,7 +29,7 @@
 ## v2.5 更新（2026-09-10）— 3D Latent Upscaler 模型支持
 
 - **LatentUpscaleAlign 节点新增 `upscaler_model` 参数**：可选使用专门训练的 3D latent upscaler 模型做神经网络语义放大，比 bilinear 插值保留更多细节和高频信息。选 `(bilinear插值, 无需模型)` 则用插值（默认，向后兼容）。
-- **模型文件**：需要安装 [Comfyui_Minimax_h3_latent_Upscaler](https://github.com/bbaudio-2025/Comfyui-MiniMax-H3-LatentSplit) 插件，并将 `minimax_h3_latent_upscaler_3d_fp16.safetensors` 放入 `models/latent_upscale_models/` 目录。
+- **模型文件**：需要安装 [Comfyui_Minimax_h3_latent_Upscaler](https://github.com/bbaudio-2025/Comfyui-MiniMax-H3-LatentSplit) 插件，并将 `minimax_h3_latent_upscaler_3d_fp16.safetensors` 放入 `models/latent_upscale_models/` 或 `models/h3_latent_upscalers/` 目录（两个目录都会被自动搜索）。
 - **用法**：LatentUpscaleAlign 节点的 `upscaler_model` 下拉选择模型文件名即可。音频锁定逻辑不变（3D 模型只处理视频 latent，音频成员保持不动）。
 
 ## v2.4 更新（2026-09-09）— 双采 Self-Lift 支持
