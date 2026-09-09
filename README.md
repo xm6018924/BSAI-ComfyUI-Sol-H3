@@ -22,8 +22,16 @@
 
 ## 节点
 
-- **BSAI Sol-H3 Loader** — 一键加载模型+应用所有优化（27 参数：模型/精度/Sol-Attn/tau/sink条件/INT8-QK/融合调制/分块FFN/步数/采样器/CFG/Shift/AudioShift）
+- **BSAI Sol-H3 Loader** — 一键加载模型+应用所有优化（29 参数：模型/精度/Sol-Attn/tau/sink条件/INT8-QK/融合调制/分块FFN/步数/采样器/CFG/Shift/AudioShift/双采 LoRA）
+- **BSAI Sol-H3 Latent 放大对齐 (双采)** — 双采 Self-Lift 核心节点：latent 直接放大（不经过 VAE，无画质损失）+ 像素 32 倍数对齐（避免边缘色条）+ 可选 CONST 重加噪（音频默认锁定），输出可直接接 `SamplerCustomAdvanced + DisableNoise` 完成二采精修
 - **BSAI Sol-H3 Info** — 显示优化状态
+
+## v2.4 更新（2026-09-09）— 双采 Self-Lift 支持
+
+- **Loader 双 LoRA 可配**：新增第 27/28 号参数 `lora_name`（默认 `FastH3-4step-LoRA.safetensors`）与 `lora_strength`（默认 1.0）。双采工作流可将一采设为 8 步 LoRA（权重约 0.75），二采用内置 `LoraLoaderModelOnly` 节点叠加 4 步 LoRA（权重约 0.7）。旧工作流不受影响（新参数在末尾自动补默认值）。
+- **新增 `BSAI_SolH3_LatentUpscaleAlign` 节点**（双采 Self-Lift 核心）：latent 直接放大（不经过 VAE 编解码，无画质损失）、按 H3 官方 32px 分辨率步进对齐（官方 latent 放大节点不取整会导致渲染分辨率偏移/边缘色条）、可选 CONST 重加噪（视频重噪到 `sigmas[0]`，音频默认锁定 `audio_denoise<0.5`，二采可重绘音频时设 ≥0.5）。
+- **新增双采示例工作流**：`workflows/SolH3_DualSample.json`——一采 672×384×24（8 步 euler/simple，Loader 出图）→ Latent 放大对齐（2x → 1344×768 + 32px 对齐 + 重噪）→ 二采（4 步 Beta，DisableNoise 延续 sigma 精修，LoraLoaderModelOnly 挂 4 步 LoRA 0.7）→ AVDecode → 24fps 输出。纯内置节点 + 本插件，开箱即用。
+- **双采经验参数**（社区已验证）：一采步数 ≤3 步快速预览更省抽卡成本（>3 易画面异常）；放大倍数 1.3–2（显存峰值=放大后分辨率那次，不能超单采预算）；一采 8 步 LoRA 保底、二采 4 步 LoRA 收敛快边缘清晰；二采 sigma 起点约 0.25–0.45（示例 0.35）。
 
 ## v2.3 更新（2026-09-09）— 音频解码修复
 
@@ -74,8 +82,10 @@
 | 24 | **verbose** | OFF | Sol-Attn 详细日志 |
 | 25 | **dense_blocks** | 空 | 强制全 Dense 的块索引列表，如 `0,1,2` |
 | 26 | **tau_profile** | 空 | 逐块 tau 覆盖，如 `0-4=2.0; 20-24=0.8`（分号/换行分隔） |
+| 27 | **lora_name** | FastH3-4step-LoRA.safetensors | 主 LoRA（双采一采时改 8 步 LoRA 文件名，权重约 0.75） |
+| 28 | **lora_strength** | 1.0 | 主 LoRA 强度（0=禁用 LoRA） |
 
-> 注意：升级后旧工作流若出现参数错位，请在 Loader 面板重新设置一次参数（面板顺序已与 v2.3 对齐）。
+> 注意：升级后旧工作流若出现参数错位，请在 Loader 面板重新设置一次参数（面板顺序已与 v2.4 对齐，新参数在末尾）。
 
 ## 安装
 
@@ -88,12 +98,13 @@ python install.py
 
 ### 其他电脑安装 / 升级排错
 
-1. **必须使用最新版**：若旧电脑曾用旧打包（v2.0 之前），请先删除旧目录再重新 clone，或 `git pull` 到最新（当前 v2.3）。
-2. **删除根目录旧顶层文件**：检查 `ComfyUI/custom_nodes/sol_attn_minimax_v2.py` 是否存在。若存在且不是本插件内置副本（对比文件大小约 36KB），**请删除或覆盖为最新版**——否则旧文件（旧 API `max_blocks`）会在运行时触发：
+1. **必须使用最新版**：若旧电脑曾用旧打包（v2.0 之前），请先删除旧目录再重新 clone，或 `git pull` 到最新（当前 v2.4）。
+2. **双采工作流**：`workflows/SolH3_DualSample.json` 使用内置 `BSAI_SolH3_LatentUpscaleAlign` 节点 + ComfyUI 内置节点（LoraLoaderModelOnly / BasicScheduler / BasicGuider / SamplerCustomAdvanced / DisableNoise / RandomNoise / BasicScheduler），不依赖任何第三方插件，clone 即跑。若一采使用 8 步 LoRA，请把 Loader 的 `lora_name` 指向你本机 `models/loras` 下的 8 步 LoRA 文件。
+3. **删除根目录旧顶层文件**：检查 `ComfyUI/custom_nodes/sol_attn_minimax_v2.py` 是否存在。若存在且不是本插件内置副本（对比文件大小约 36KB），**请删除或覆盖为最新版**——否则旧文件（旧 API `max_blocks`）会在运行时触发：
    `TypeError: sol_attn() got an unexpected keyword argument 'max_blocks'` 并退化为全 Dense 注意力（速度变慢、显存暴涨）。
-3. **依赖项**：`comfy_kitchen`（随 ComfyUI 升级）必须为支持 `sink_blocks/sink_q/tail` 新 API 的版本；若报 `got an unexpected keyword argument 'sink_blocks'`，说明 `comfy_kitchen` 过旧，请升级 ComfyUI/comfy_kitchen。
-4. **音频问题**：v2.3 已内置两项音频修复（audio_shift 独立缩放 + AudioVAE 全量加载补丁）。启动日志应出现 `[BSAI-Sol-H3] 音频解码修复已就绪`，且生成时无 `prepared for dynamic VRAM loading. 576MB Staged` 字样。若音频仍怪异，请检查工作流里 Loader 的 `audio_shift` 参数是否为默认 3.0。
-5. 安装后启动 ComfyUI，日志应出现：`Sol-Attn已安装: ... (新API: sink_blocks/tail)` 且无 `kernel failed`。
+4. **依赖项**：`comfy_kitchen`（随 ComfyUI 升级）必须为支持 `sink_blocks/sink_q/tail` 新 API 的版本；若报 `got an unexpected keyword argument 'sink_blocks'`，说明 `comfy_kitchen` 过旧，请升级 ComfyUI/comfy_kitchen。
+5. **音频问题**：v2.3 起已内置两项音频修复（audio_shift 独立缩放 + AudioVAE 全量加载补丁）。启动日志应出现 `[BSAI-Sol-H3] 音频解码修复已就绪`，且生成时无 `prepared for dynamic VRAM loading. 576MB Staged` 字样。若音频仍怪异，请检查工作流里 Loader 的 `audio_shift` 参数是否为默认 3.0。
+6. 安装后启动 ComfyUI，日志应出现：`Sol-Attn已安装: ... (新API: sink_blocks/tail)` 且无 `kernel failed`。
 
 ## 硬件要求
 
