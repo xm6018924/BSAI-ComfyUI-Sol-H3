@@ -26,6 +26,12 @@
 - **BSAI Sol-H3 Latent 放大对齐 (双采)** — 双采 Self-Lift 核心节点：latent 直接放大（不经过 VAE，无画质损失）+ 像素 32 倍数对齐（避免边缘色条）+ 可选 CONST 重加噪（音频默认锁定），输出可直接接 `SamplerCustomAdvanced + DisableNoise` 完成二采精修
 - **BSAI Sol-H3 Info** — 显示优化状态
 
+## v2.5 更新（2026-09-10）— 3D Latent Upscaler 模型支持
+
+- **LatentUpscaleAlign 节点新增 `upscaler_model` 参数**：可选使用专门训练的 3D latent upscaler 模型做神经网络语义放大，比 bilinear 插值保留更多细节和高频信息。选 `(bilinear插值, 无需模型)` 则用插值（默认，向后兼容）。
+- **模型文件**：需要安装 [Comfyui_Minimax_h3_latent_Upscaler](https://github.com/bbaudio-2025/Comfyui-MiniMax-H3-LatentSplit) 插件，并将 `minimax_h3_latent_upscaler_3d_fp16.safetensors` 放入 `models/latent_upscale_models/` 目录。
+- **用法**：LatentUpscaleAlign 节点的 `upscaler_model` 下拉选择模型文件名即可。音频锁定逻辑不变（3D 模型只处理视频 latent，音频成员保持不动）。
+
 ## v2.4 更新（2026-09-09）— 双采 Self-Lift 支持
 
 - **Loader 双 LoRA 可配**：新增第 27/28 号参数 `lora_name`（默认 `FastH3-4step-LoRA.safetensors`）与 `lora_strength`（默认 1.0）。双采工作流可将一采设为 8 步 LoRA（权重约 0.75），二采用内置 `LoraLoaderModelOnly` 节点叠加 4 步 LoRA（权重约 0.7）。旧工作流不受影响（新参数在末尾自动补默认值）。

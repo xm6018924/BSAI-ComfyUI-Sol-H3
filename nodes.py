@@ -48,6 +48,18 @@ try:
 except Exception:
     folder_paths = None
 
+# 可选: 3D latent upscaler 模型支持(Comfyui_Minimax_h3_latent_Upscaler 插件)
+_UPSCALER_MOD = None
+try:
+    import sys as _sys, os as _os
+    _up_dir = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+                            "Comfyui_Minimax_h3_latent_Upscaler", "nodes")
+    if _os.path.isdir(_up_dir) and _up_dir not in _sys.path:
+        _sys.path.insert(0, _up_dir)
+    import minimax_h3_latent_upscaler_3d as _UPSCALER_MOD
+except Exception:
+    _UPSCALER_MOD = None
+
 
 def _get_diffusion_models():
     try:
@@ -56,6 +68,19 @@ def _get_diffusion_models():
     except Exception:
         pass
     return ["model.safetensors"]
+
+
+def _get_upscaler_models():
+    """获取可用的3D upscaler模型列表; 不可用时返回仅bilinear选项。"""
+    opts = ["(bilinear插值, 无需模型)"]
+    if _UPSCALER_MOD is not None:
+        try:
+            names = _UPSCALER_MOD.scan_models()
+            names = [n for n in names if not n.startswith("(")]
+            opts.extend(sorted(names))
+        except Exception:
+            pass
+    return opts
 
 
 def _get_loras():
@@ -278,12 +303,15 @@ def _wrap_members(members, was_nested):
     return members[0]
 
 
-def _upscale_video_latent(video, scale, align_to_px, method):
+def _upscale_video_latent(video, scale, align_to_px, method, upscaler_model=""):
     """视频 latent [B,C,T,H,W] 空间放大 + 像素32倍数对齐(不经过 VAE, 无编解码损失)。
 
     H3 官方支持的分辨率步进为 32px(1344x768 等), latent 是像素的 1/8。
     放大后先把像素目标取整到 32 的倍数, 再换算回 latent 尺寸, 避免官方 latent
     放大节点不取整导致的渲染分辨率偏移与边缘色条。
+
+    upscaler_model: 如果选了3D upscaler模型文件名, 用神经网络语义放大;
+                    否则用 bilinear 等插值方法。
     """
     import torch
     import comfy.utils
@@ -301,6 +329,34 @@ def _upscale_video_latent(video, scale, align_to_px, method):
         return video
 
     orig_dtype = video.dtype
+
+    # 3D upscaler 模型语义放大(比插值细节更丰富)
+    use_model = (upscaler_model and _UPSCALER_MOD is not None
+                 and not upscaler_model.startswith("("))
+    if use_model:
+        try:
+            dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model_dtype = torch.bfloat16
+            s = video.to(device=dev, dtype=model_dtype, copy=True)
+            if s.ndim == 4:
+                s = s.unsqueeze(2)
+            T = s.shape[2]
+            model = _UPSCALER_MOD.load_model(upscaler_model, dev, "bf16")
+            norm_mean, norm_std = _UPSCALER_MOD._make_norm_tensors(dev, model_dtype)
+            with torch.inference_mode():
+                s.sub_(norm_mean).div_(norm_std)
+                out = model(s, scale=float(scale), target_size=(T, new_h, new_w))
+                del s
+                out.mul_(norm_std).add_(norm_mean)
+            out = out.to(device="cpu", dtype=orig_dtype)
+            if dev.type == "cuda":
+                torch.cuda.empty_cache()
+            print(f"[BSAI-Sol-H3] 3D upscaler: {h_lat}x{w_lat} -> {new_h}x{new_w} "
+                  f"model={upscaler_model}")
+            return out
+        except Exception as e:
+            print(f"[BSAI-Sol-H3] 3D upscaler 失败({e}), fallback bilinear")
+
     # fp16/bf16 插值会量化新网格, 二采出现斑点; 统一 fp32 放大后转回原精度
     samples = video.float() if video.dtype in (torch.float16, torch.bfloat16) else video
     out = comfy.utils.common_upscale(samples, new_w, new_h, method, "disabled")
@@ -327,6 +383,9 @@ class BSAI_SolH3_LatentUpscaleAlign:
                                      "tooltip": "像素分辨率对齐步长(H3 官方为 32px), 避免边缘色条"}),
                 "method": (["nearest-exact", "area", "bilinear", "bicubic", "bislerp"],
                            {"default": "bilinear"}),
+                "upscaler_model": (_get_upscaler_models(),
+                                   {"default": "(bilinear插值, 无需模型)",
+                                    "tooltip": "选择3D upscaler模型做神经网络语义放大(比bilinear插值细节更丰富); 选bilinear则用插值"}),
                 "add_noise": ("BOOLEAN", {"default": True,
                                           "tooltip": "True=CONST 重加噪到 sigmas[0] 供二采; False=仅放大对齐"}),
                 "audio_denoise": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05,
@@ -345,7 +404,8 @@ class BSAI_SolH3_LatentUpscaleAlign:
     CATEGORY = "BSAI/Sol-H3"
     DESCRIPTION = "双采 Self-Lift: latent 放大(不经过VAE) + 像素32倍数对齐 + CONST 重加噪, 输出接 SamplerCustomAdvanced+DisableNoise 二采"
 
-    def upscale_align(self, samples, scale, align_to, method, add_noise, audio_denoise,
+    def upscale_align(self, samples, scale, align_to, method, upscaler_model,
+                      add_noise, audio_denoise,
                       model=None, noise=None, sigmas=None):
         out = dict(samples) if isinstance(samples, dict) else {"samples": samples}
         latent_image = out["samples"]
@@ -357,7 +417,7 @@ class BSAI_SolH3_LatentUpscaleAlign:
         video = members[0]
         if video.ndim not in (4, 5):
             raise ValueError(f"视频latent维度异常: {tuple(video.shape)}")
-        up_video = _upscale_video_latent(video, float(scale), int(align_to), method)
+        up_video = _upscale_video_latent(video, float(scale), int(align_to), method, upscaler_model)
         up_members = [up_video] + list(members[1:])
         out["samples"] = _wrap_members(up_members, was_nested)
 
