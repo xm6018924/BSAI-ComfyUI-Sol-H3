@@ -326,7 +326,7 @@ class BSAI_SolH3_LatentUpscaleAlign:
                 "align_to": ("INT", {"default": 32, "min": 8, "max": 256, "step": 8,
                                      "tooltip": "像素分辨率对齐步长(H3 官方为 32px), 避免边缘色条"}),
                 "method": (["nearest-exact", "area", "bilinear", "bicubic", "bislerp"],
-                           {"default": "nearest-exact"}),
+                           {"default": "bilinear"}),
                 "add_noise": ("BOOLEAN", {"default": True,
                                           "tooltip": "True=CONST 重加噪到 sigmas[0] 供二采; False=仅放大对齐"}),
                 "audio_denoise": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05,

@@ -31,7 +31,7 @@
 - **Loader 双 LoRA 可配**：新增第 27/28 号参数 `lora_name`（默认 `FastH3-4step-LoRA.safetensors`）与 `lora_strength`（默认 1.0）。双采工作流可将一采设为 8 步 LoRA（权重约 0.75），二采用内置 `LoraLoaderModelOnly` 节点叠加 4 步 LoRA（权重约 0.7）。旧工作流不受影响（新参数在末尾自动补默认值）。
 - **新增 `BSAI_SolH3_LatentUpscaleAlign` 节点**（双采 Self-Lift 核心）：latent 直接放大（不经过 VAE 编解码，无画质损失）、按 H3 官方 32px 分辨率步进对齐（官方 latent 放大节点不取整会导致渲染分辨率偏移/边缘色条）、可选 CONST 重加噪（视频重噪到 `sigmas[0]`，音频默认锁定 `audio_denoise<0.5`，二采可重绘音频时设 ≥0.5）。
 - **新增双采示例工作流**：`workflows/SolH3_Self-Lift-DualSample双采示例工作流.json`——一采 672×384×24（8 步 euler/simple，Loader 出图）→ Latent 放大对齐（2x → 1344×768 + 32px 对齐 + 重噪）→ 二采（4 步 Beta，DisableNoise 延续 sigma 精修，LoraLoaderModelOnly 挂 4 步 LoRA 0.7）→ 核心 `VAEDecode` + `VAEDecodeAudio` 解码 → 24fps 输出。**纯 ComfyUI 核心节点 + 本插件，不依赖 comfyui-minimax-h3-audio-T8 等任何第三方插件**，clone 即跑。
-- **双采经验参数**（社区已验证）：一采步数 ≤3 步快速预览更省抽卡成本（>3 易画面异常）；放大倍数 1.3–2（显存峰值=放大后分辨率那次，不能超单采预算）；一采 8 步 LoRA 保底、二采 4 步 LoRA 收敛快边缘清晰；二采 sigma 起点约 0.25–0.45（示例 0.35）。
+- **双采经验参数**（社区已验证 + v2.4.2 实测修正）：一采步数 ≤3 步快速预览更省抽卡成本（>3 易画面异常）；放大倍数 1.3–2（显存峰值=放大后分辨率那次，不能超单采预算）；**放大方法必须用 bilinear（nearest-exact 会导致 latent 块化→二采鬼影/重影）**；一采 8 步 LoRA 保底、二采 4 步 LoRA 收敛快边缘清晰；二采 denoise 约 0.5–0.6（示例 0.55；0.35 太低修不干净块化会留鬼影）。
 
 ## v2.3 更新（2026-09-09）— 音频解码修复
 
