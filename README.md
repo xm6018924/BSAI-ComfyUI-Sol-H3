@@ -30,6 +30,7 @@
 - **修复音频怪异/失真（关键）**：Loader 之前调用 `set_parameters(shift=shift)` 时把采样调度里 H3 官方默认的 `audio_shift=3.0` 覆盖为 `None`，音频流失去独立缩放、被按视频 schedule 采样，导致音频轨迹错位、声音怪异。现在改为 `set_parameters(shift=shift, audio_shift=audio_shift)`，并新增可调 `audio_shift` 参数（默认 3.0）。
 - **修复音频解码慢/异常（关键）**：ComfyUI 核心的 MiniMax H3 音频 VAE（约 577MB）未设 `disable_offload=True`，走了 DynamicVRAM 权重量流路径（日志 `prepared for dynamic VRAM loading. 576MB Staged`），5 秒音频解码耗时约 153 秒且流式数值不稳定。插件现内置内存级补丁（对应官方 PR #15371）：加载时自动检测 H3 AudioVAE 并切换全量加载（解码约 0.45 秒，577MB 常驻显存）。**不改核心文件，装插件即生效，其他电脑开箱即用**。
 - Loader 新增第 14 号参数 `audio_shift`（默认 3.0）：音频流 flow matching 时间偏移（官方默认 3.0）。
+- **示例工作流已更新**：`workflows/SolH3_Fast_4step.json` 重制为 v2.3 结构——27 参数 Loader（含 `audio_shift`）、1344×768×24 帧、移除已并入 Loader 的旧 `SolAttnMiniMax` 独立节点，文生视频+音频一键跑通。
 
 ## v2.2 更新（2026-09-09）
 
