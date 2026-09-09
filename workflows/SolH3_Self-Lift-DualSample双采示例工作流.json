@@ -1,7 +1,7 @@
 {
   "id": "BSAI_SolH3_DualSample",
   "revision": 0,
-  "last_node_id": 18,
+  "last_node_id": 19,
   "last_link_id": 24,
   "nodes": [
     {
@@ -691,7 +691,7 @@
     },
     {
       "id": 17,
-      "type": "MiniMaxH3AVDecodeT8",
+      "type": "VAEDecode",
       "pos": [
         2170,
         150
@@ -705,40 +705,28 @@
       "mode": 0,
       "inputs": [
         {
-          "name": "av_latent",
+          "name": "samples",
           "type": "LATENT",
           "link": 21
         },
         {
-          "name": "video_vae",
+          "name": "vae",
           "type": "VAE",
           "link": 12
-        },
-        {
-          "name": "audio_vae",
-          "type": "VAE",
-          "link": 13
         }
       ],
       "outputs": [
         {
-          "name": "image",
+          "name": "IMAGE",
           "type": "IMAGE",
           "links": [
             23
           ]
-        },
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "links": [
-            24
-          ]
         }
       ],
-      "title": "MiniMaxH3AVDecodeT8",
+      "title": "VAE Decode (视频)",
       "properties": {
-        "Node name for S&R": "MiniMaxH3AVDecodeT8"
+        "Node name for S&R": "VAEDecode"
       },
       "widgets_values": null
     },
@@ -785,6 +773,47 @@
         "pingpong": false,
         "save_output": true
       }
+    },
+    {
+      "id": 19,
+      "type": "VAEDecodeAudio",
+      "title": "VAE Decode Audio (音频)",
+      "pos": [
+        2500,
+        150
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 21
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecodeAudio"
+      },
+      "widgets_values": null
     }
   ],
   "links": [
@@ -888,8 +917,8 @@
       13,
       8,
       0,
-      17,
-      2,
+      19,
+      1,
       "VAE"
     ],
     [
@@ -974,8 +1003,8 @@
     ],
     [
       24,
-      17,
-      1,
+      19,
+      0,
       18,
       1,
       "AUDIO"
