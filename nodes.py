@@ -3,6 +3,22 @@
 BSAI ComfyUI Sol-H3 — 统一高速MiniMax H3推理插件
 内置 FastH3 4步蒸馏参数 + Sol-Attn 稀疏注意力
 
+v2.3 (2026-09-09) 变更:
+- 【音频解码修复】修复 Loader 覆盖模型默认 audio_shift 的 bug:
+  ms.set_parameters(shift=shift) 会把采样调度里 H3 官方默认 audio_shift=3.0 覆盖为 None,
+  导致音频流失去独立缩放、按视频 schedule 采样 -> 音频轨迹错位/声音怪异。
+  现改为 set_parameters(shift=shift, audio_shift=audio_shift), 并新增可调 audio_shift 参数。
+- 【音频解码修复】新增 AudioVAE 全量加载补丁(对应 ComfyUI 官方 PR #15371):
+  ComfyUI 核心 MiniMaxH3AudioVAE 分支未设 disable_offload=True, 577MB 的音频 VAE 走了
+  DynamicVRAM 权重量流路径(日志 "prepared for dynamic VRAM loading. 576MB Staged"),
+  每帧解码反复 offload/reload 权重 -> 5秒音频解码约需153秒, 且流式数值不稳定导致音频怪异。
+  插件在加载时对 comfy.sd.VAE.__init__ 打内存补丁: 检测到 H3 AudioVAE 即置
+  disable_offload=True(全量加载, 0.45s 解码, 577MB 常驻显存)。不改核心文件, 装插件即生效。
+
+v2.2 (2026-09-09) 变更:
+- Loader 模块加载改为「内置副本优先」, 根治其他电脑根目录旧版 sol_attn_minimax_v2.py
+  旧 API (max_blocks) 污染导致的报错。
+
 v2.1 (2026-09-09) 变更:
 - Loader 并入右侧 SolAttnMiniMax 节点的全套精细参数, 删除独立节点后配置能力不丢失:
   sol_tau / start_percent / end_percent / min_tokens / morton / morton_curve /
@@ -70,6 +86,7 @@ class BSAI_SolH3_Loader:
                             {"default": "euler"}),
                 "cfg": ("FLOAT", {"default": 4.0, "min": 1.0, "max": 10.0, "step": 0.5}),
                 "shift": ("FLOAT", {"default": 8.0, "min": 1.0, "max": 20.0, "step": 0.5}),
+                "audio_shift": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 20.0, "step": 0.5}),
                 # ---- 以下为原独立 SolAttnMiniMax 节点的精细参数 ----
                 "min_tokens": ("INT", {"default": 12288, "min": 256, "max": 262144, "step": 256}),
                 "sol_tau": ("FLOAT", {"default": 1.3, "min": 0.1, "max": 4.0, "step": 0.1}),
@@ -95,7 +112,7 @@ class BSAI_SolH3_Loader:
 
     def load(self, model_name, precision, sol_attn, tau_start, tau_end,
              sink_conditioning, int8_qk, fused_modulation, chunk_ff, chunk_size,
-             fast_h3_steps, sampler, cfg, shift,
+             fast_h3_steps, sampler, cfg, shift, audio_shift,
              min_tokens, sol_tau, start_percent, end_percent,
              morton, morton_curve, centroid_tail, routed_cap_percent,
              reuse_qkv_memory, verbose, dense_blocks, tau_profile):
@@ -112,14 +129,16 @@ class BSAI_SolH3_Loader:
         else:
             steps = 50
 
-        # 设置 flow matching shift (视频=shift, 音频=3)
+        # 设置 flow matching shift (视频=shift, 音频=audio_shift, 默认对齐官方 12.0/3.0 的独立时钟)
+        # 注意: set_parameters 必须同时传 audio_shift —— 只传 shift 会把模型配置里官方默认的
+        # audio_shift=3.0 覆盖为 None, 音频流失去独立缩放(按视频 schedule 采样), 导致音频怪异。
         try:
             ms = model.get_model_object("model_sampling")
             if hasattr(ms, 'set_parameters'):
-                ms.set_parameters(shift=shift)
+                ms.set_parameters(shift=shift, audio_shift=audio_shift)
             to = model.model_options.get("transformer_options", {})
             to["minimax_h3_sigma_shift_video"] = shift
-            to["minimax_h3_sigma_shift_audio"] = 3.0
+            to["minimax_h3_sigma_shift_audio"] = audio_shift
             model.model_options["transformer_options"] = to
         except Exception as e:
             print(f"[BSAI-Sol-H3] shift设置跳过: {e}", flush=True)
@@ -171,6 +190,7 @@ class BSAI_SolH3_Loader:
             print(f"[BSAI-Sol-H3] sink_conditioning=off, Sol-Attn跳过", flush=True)
 
         info = (f"Sol-H3: {model_name} | mode={fast_h3_steps} | steps={steps} | cfg={cfg:.1f} | "
+                f"shift={shift:.1f}/audio={audio_shift:.1f} | "
                 f"Sol-Attn={sol_attn_state} | tau={sol_tau:.1f} | min_tokens={min_tokens} | "
                 f"FusedMod={'ON' if fused_modulation else 'OFF'} | ChunkFF={chunk_size}")
         print(f"[BSAI-Sol-H3] {info}", flush=True)
@@ -201,3 +221,46 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BSAI_SolH3_Loader": "BSAI Sol-H3 Loader (极速版)",
     "BSAI_SolH3_Info": "BSAI Sol-H3 Info",
 }
+
+
+def _patch_audio_vae_offload():
+    """内存级补丁: 修复 ComfyUI 核心 H3 AudioVAE 的 DynamicVRAM 权重量流问题。
+
+    官方 PR #15371 语义: MiniMax H3 音频 VAE(约577MB) 在 comfy/sd.py 的
+    MiniMaxH3AudioVAE 分支未设 disable_offload=True, 继承了全局默认 False,
+    导致音频 VAE 走 DynamicVRAM streaming 路径(日志: "prepared for dynamic
+    VRAM loading. 576MB Staged"), 每帧解码反复 offload/reload 权重:
+    - 5 秒音频解码耗时约 153 秒(全量加载仅 0.45 秒)
+    - 流式数值不稳定, 解码状态异常 -> 声音怪异/失真
+    本补丁不改动 ComfyUI 核心文件: 插件加载时包装 VAE.__init__, 检测到
+    MiniMaxH3AudioVAE 即置 disable_offload=True, 全量加载、解码快且稳定。
+    其他电脑安装本插件即自动生效, 开箱即用。
+    """
+    try:
+        import comfy.sd as _sd
+        from comfy.ldm.minimax.audio_vae import MiniMaxH3AudioVAE
+    except Exception:
+        return
+    if getattr(_patch_audio_vae_offload, "_applied", False):
+        return
+    _patch_audio_vae_offload._applied = True
+
+    _orig_init = _sd.VAE.__init__
+
+    def _wrapped_init(self, *args, **kwargs):
+        _orig_init(self, *args, **kwargs)
+        try:
+            if isinstance(getattr(self, "first_stage_model", None), MiniMaxH3AudioVAE) \
+                    and not getattr(self, "disable_offload", False):
+                self.disable_offload = True
+                print("[BSAI-Sol-H3] 音频解码修复: H3 AudioVAE 已切换全量加载"
+                      "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
+        except Exception:
+            pass
+
+    _sd.VAE.__init__ = _wrapped_init
+    print("[BSAI-Sol-H3] 音频解码修复已就绪: H3 AudioVAE 将全量加载(PR #15371 语义), "
+          "不再走 DynamicVRAM 权重量流", flush=True)
+
+
+_patch_audio_vae_offload()

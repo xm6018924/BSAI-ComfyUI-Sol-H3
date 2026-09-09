@@ -22,8 +22,14 @@
 
 ## 节点
 
-- **BSAI Sol-H3 Loader** — 一键加载模型+应用所有优化（14 参数：模型/精度/Sol-Attn/tau/sink条件/INT8-QK/融合调制/分块FFN/步数/采样器/CFG/Shift）
+- **BSAI Sol-H3 Loader** — 一键加载模型+应用所有优化（27 参数：模型/精度/Sol-Attn/tau/sink条件/INT8-QK/融合调制/分块FFN/步数/采样器/CFG/Shift/AudioShift）
 - **BSAI Sol-H3 Info** — 显示优化状态
+
+## v2.3 更新（2026-09-09）— 音频解码修复
+
+- **修复音频怪异/失真（关键）**：Loader 之前调用 `set_parameters(shift=shift)` 时把采样调度里 H3 官方默认的 `audio_shift=3.0` 覆盖为 `None`，音频流失去独立缩放、被按视频 schedule 采样，导致音频轨迹错位、声音怪异。现在改为 `set_parameters(shift=shift, audio_shift=audio_shift)`，并新增可调 `audio_shift` 参数（默认 3.0）。
+- **修复音频解码慢/异常（关键）**：ComfyUI 核心的 MiniMax H3 音频 VAE（约 577MB）未设 `disable_offload=True`，走了 DynamicVRAM 权重量流路径（日志 `prepared for dynamic VRAM loading. 576MB Staged`），5 秒音频解码耗时约 153 秒且流式数值不稳定。插件现内置内存级补丁（对应官方 PR #15371）：加载时自动检测 H3 AudioVAE 并切换全量加载（解码约 0.45 秒，577MB 常驻显存）。**不改核心文件，装插件即生效，其他电脑开箱即用**。
+- Loader 新增第 14 号参数 `audio_shift`（默认 3.0）：音频流 flow matching 时间偏移（官方默认 3.0）。
 
 ## v2.2 更新（2026-09-09）
 
@@ -53,21 +59,22 @@
 | 10 | fast_h3_steps | 4步 | 4步 FastH3 极速 / 8步增强 / 50步原生 |
 | 11 | sampler | euler | 采样器 |
 | 12 | cfg | 4.0 | 提示词引导强度 |
-| 13 | shift | 8.0 | Flow matching 时间偏移（视频时钟；音频固定 3.0） |
-| 14 | **min_tokens** | 12288 | 序列长度阈值：低于此长度的注意力用 Dense（省显存/保质量） |
-| 15 | **sol_tau** | 1.3 | Sol-Attn 稀疏强度（越大越稀疏、越省显存） |
-| 16 | **start_percent** | 0.2 | 稀疏生效起始采样比例（前 20% 步数 Dense 热身） |
-| 17 | **end_percent** | 0.9 | 稀疏生效结束采样比例（最后 10% 步数 Dense 收尾） |
-| 18 | **morton** | OFF | Morton 空间排序（提升稀疏命中率；需 H3） |
-| 19 | **morton_curve** | 2d_frame | 排序曲线：2d_frame / hilbert / z_order |
-| 20 | **centroid_tail** | ON | 质心尾块保留（提升长序列质量） |
-| 21 | **routed_cap_percent** | 0 | 路由容量上限百分比（0=不限制） |
-| 22 | **reuse_qkv_memory** | OFF | 复用 QKV 中间缓冲（仅限已知安全的模型） |
-| 23 | **verbose** | OFF | Sol-Attn 详细日志 |
-| 24 | **dense_blocks** | 空 | 强制全 Dense 的块索引列表，如 `0,1,2` |
-| 25 | **tau_profile** | 空 | 逐块 tau 覆盖，如 `0-4=2.0; 20-24=0.8`（分号/换行分隔） |
+| 13 | shift | 8.0 | Flow matching 时间偏移（视频时钟；官方默认 12.0） |
+| 14 | **audio_shift** | 3.0 | 音频流独立时间偏移（官方默认 3.0；修音频怪异核心参数） |
+| 15 | **min_tokens** | 12288 | 序列长度阈值：低于此长度的注意力用 Dense（省显存/保质量） |
+| 16 | **sol_tau** | 1.3 | Sol-Attn 稀疏强度（越大越稀疏、越省显存） |
+| 17 | **start_percent** | 0.2 | 稀疏生效起始采样比例（前 20% 步数 Dense 热身） |
+| 18 | **end_percent** | 0.9 | 稀疏生效结束采样比例（最后 10% 步数 Dense 收尾） |
+| 19 | **morton** | OFF | Morton 空间排序（提升稀疏命中率；需 H3） |
+| 20 | **morton_curve** | 2d_frame | 排序曲线：2d_frame / hilbert / z_order |
+| 21 | **centroid_tail** | ON | 质心尾块保留（提升长序列质量） |
+| 22 | **routed_cap_percent** | 0 | 路由容量上限百分比（0=不限制） |
+| 23 | **reuse_qkv_memory** | OFF | 复用 QKV 中间缓冲（仅限已知安全的模型） |
+| 24 | **verbose** | OFF | Sol-Attn 详细日志 |
+| 25 | **dense_blocks** | 空 | 强制全 Dense 的块索引列表，如 `0,1,2` |
+| 26 | **tau_profile** | 空 | 逐块 tau 覆盖，如 `0-4=2.0; 20-24=0.8`（分号/换行分隔） |
 
-> 注意：升级后旧工作流若出现参数错位，请在 Loader 面板重新设置一次参数（面板顺序已与 v2.1 对齐）。
+> 注意：升级后旧工作流若出现参数错位，请在 Loader 面板重新设置一次参数（面板顺序已与 v2.3 对齐）。
 
 ## 安装
 
@@ -80,11 +87,12 @@ python install.py
 
 ### 其他电脑安装 / 升级排错
 
-1. **必须使用最新版**：若旧电脑曾用旧打包（v2.0 之前），请先删除旧目录再重新 clone，或 `git pull` 到最新（当前 v2.2）。
+1. **必须使用最新版**：若旧电脑曾用旧打包（v2.0 之前），请先删除旧目录再重新 clone，或 `git pull` 到最新（当前 v2.3）。
 2. **删除根目录旧顶层文件**：检查 `ComfyUI/custom_nodes/sol_attn_minimax_v2.py` 是否存在。若存在且不是本插件内置副本（对比文件大小约 36KB），**请删除或覆盖为最新版**——否则旧文件（旧 API `max_blocks`）会在运行时触发：
    `TypeError: sol_attn() got an unexpected keyword argument 'max_blocks'` 并退化为全 Dense 注意力（速度变慢、显存暴涨）。
 3. **依赖项**：`comfy_kitchen`（随 ComfyUI 升级）必须为支持 `sink_blocks/sink_q/tail` 新 API 的版本；若报 `got an unexpected keyword argument 'sink_blocks'`，说明 `comfy_kitchen` 过旧，请升级 ComfyUI/comfy_kitchen。
-4. 安装后启动 ComfyUI，日志应出现：`Sol-Attn已安装: ... (新API: sink_blocks/tail)` 且无 `kernel failed`。
+4. **音频问题**：v2.3 已内置两项音频修复（audio_shift 独立缩放 + AudioVAE 全量加载补丁）。启动日志应出现 `[BSAI-Sol-H3] 音频解码修复已就绪`，且生成时无 `prepared for dynamic VRAM loading. 576MB Staged` 字样。若音频仍怪异，请检查工作流里 Loader 的 `audio_shift` 参数是否为默认 3.0。
+5. 安装后启动 ComfyUI，日志应出现：`Sol-Attn已安装: ... (新API: sink_blocks/tail)` 且无 `kernel failed`。
 
 ## 硬件要求
 
