@@ -25,13 +25,17 @@
 - **BSAI Sol-H3 Loader** — 一键加载模型+应用所有优化（14 参数：模型/精度/Sol-Attn/tau/sink条件/INT8-QK/融合调制/分块FFN/步数/采样器/CFG/Shift）
 - **BSAI Sol-H3 Info** — 显示优化状态
 
+## v2.2 更新（2026-09-09）
+
+- **Loader 模块加载改为「内置副本优先」**：不再 `import` custom_nodes 根目录的顶层 `sol_attn_minimax_v2.py`，始终加载本插件自带的 `sol_attn_minimax_v2.py`。彻底杜绝「其他电脑从旧打包拷贝后，根目录残留旧版顶层文件（旧 API `max_blocks`）污染新版插件」导致的 `sol_attn() got an unexpected keyword argument 'max_blocks'` 报错。插件现在完全自包含，clone 即用。
+- **升级必读**：如果你或分发对象在 `ComfyUI/custom_nodes/` 根目录仍留有旧版 `sol_attn_minimax_v2.py`（独立 SolAttnMiniMax 节点），请将其**删除**（或替换为本插件内置的同名文件）。v2.1 起该节点已并入 Loader，不再需要顶层文件；保留旧文件只会带来 API 冲突。
+
 ## v2.1 更新（2026-09-09）
 
 - **Loader 并入原独立 SolAttnMiniMax 节点的全套精细参数**：删除右侧独立节点后配置能力不丢失（见下表参数 15-26）。
 - **Sol-Attn 安装改走 `_apply_patch` 完整路径**：自动 clone model、安装 H3 Morton hooks（sink 锚点必需）、block 索引（dense_blocks/tau_profile 用）、采样百分比→sigma 换算。
 - **修复 Sol-Attn 实际未安装问题**：旧版 `sol_attn=True` 仅打印 ON，未真正安装稀疏注意力补丁，导致注意力退化全 Dense、显存 OOM。
 - **适配新版 comfy_kitchen API**：`sink_blocks`/`sink_q`/`tail`（旧名 `max_blocks`/`centroid_tail` 已移除）。
-- 插件内置 `sol_attn_minimax_v2.py`（与顶层节点同源），Loader 优先复用顶层模块、回退使用内置副本。
 
 ### Loader 参数说明
 
@@ -73,6 +77,14 @@ git clone https://github.com/xm6018924/BSAI-ComfyUI-Sol-H3.git
 cd BSAI-ComfyUI-Sol-H3
 python install.py
 ```
+
+### 其他电脑安装 / 升级排错
+
+1. **必须使用最新版**：若旧电脑曾用旧打包（v2.0 之前），请先删除旧目录再重新 clone，或 `git pull` 到最新（当前 v2.2）。
+2. **删除根目录旧顶层文件**：检查 `ComfyUI/custom_nodes/sol_attn_minimax_v2.py` 是否存在。若存在且不是本插件内置副本（对比文件大小约 36KB），**请删除或覆盖为最新版**——否则旧文件（旧 API `max_blocks`）会在运行时触发：
+   `TypeError: sol_attn() got an unexpected keyword argument 'max_blocks'` 并退化为全 Dense 注意力（速度变慢、显存暴涨）。
+3. **依赖项**：`comfy_kitchen`（随 ComfyUI 升级）必须为支持 `sink_blocks/sink_q/tail` 新 API 的版本；若报 `got an unexpected keyword argument 'sink_blocks'`，说明 `comfy_kitchen` 过旧，请升级 ComfyUI/comfy_kitchen。
+4. 安装后启动 ComfyUI，日志应出现：`Sol-Attn已安装: ... (新API: sink_blocks/tail)` 且无 `kernel failed`。
 
 ## 硬件要求
 

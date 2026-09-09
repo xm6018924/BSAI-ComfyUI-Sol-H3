@@ -33,14 +33,10 @@ def _get_diffusion_models():
 
 def _load_sol_attn_module():
     """加载 Sol-Attn 补丁模块:
-    1) 优先使用顶层 custom_nodes 的 sol_attn_minimax_v2(全局唯一注册)
-    2) 回退加载本插件内置副本(BSAI-ComfyUI-Sol-H3/sol_attn_minimax_v2.py)
+    始终使用本插件内置副本(BSAI-ComfyUI-Sol-H3/sol_attn_minimax_v2.py),
+    不依赖 custom_nodes 根目录的顶层 sol_attn_minimax_v2.py —— 避免旧版
+    顶层文件(旧 API max_blocks)污染新插件, 保证其他电脑安装后开箱即用。
     """
-    try:
-        import sol_attn_minimax_v2 as _m
-        return _m
-    except Exception:
-        pass
     import importlib.util
     _f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sol_attn_minimax_v2.py")
     _spec = importlib.util.spec_from_file_location("bsai_solh3_solattn", _f)
