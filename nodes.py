@@ -210,9 +210,84 @@ class BSAI_SolH3_Loader:
                 try:
                     import comfy.utils
                     sd = comfy.utils.load_torch_file(lora_path, safe_load=True)
-                    model.add_patches(sd, strength_patch=lora_strength, strength_model=lora_strength)
+                    
+                    # v2.5.3: 分离标准LoRA格式和delta格式(.diff/.diff_b)
+                    lora_sd = {}  # 标准LoRA (lora_A/lora_B)
+                    delta_sd = {}  # 直接delta权重 (.diff/.diff_b)
+                    
+                    for k, v in sd.items():
+                        if k.endswith('.diff_b') or k.endswith('.diff'):
+                            delta_sd[k] = v
+                        else:
+                            lora_sd[k] = v
+                    
+                    # 加载标准LoRA部分
+                    if lora_sd:
+                        model.add_patches(lora_sd, strength_patch=lora_strength, strength_model=lora_strength)
+                    
+                    # v2.5.4: 智能加载delta格式权重 (.diff/.diff_b)
+                    # 自动匹配模型实际参数key（处理前缀、.weight/.bias后缀）
+                    delta_loaded = 0
+                    if delta_sd:
+                        try:
+                            model_sd = model.model_state_dict()
+                            model_keys = list(model_sd.keys())
+                            
+                            # 建立反向索引：去掉前缀后的key → 实际key
+                            key_map = {}
+                            for mk in model_keys:
+                                # 尝试去掉常见前缀
+                                clean = mk
+                                for prefix in ['diffusion_model.', 'model.']:
+                                    if clean.startswith(prefix):
+                                        clean = clean[len(prefix):]
+                                key_map[mk] = mk
+                                key_map[clean] = mk
+                            
+                            for k, v in delta_sd.items():
+                                target_key = None
+                                
+                                if k.endswith('.diff_b'):
+                                    # diff_b 对应 bias
+                                    base = k[:-len('.diff_b')]
+                                    candidates = [
+                                        f"{base}.bias",
+                                        f"{base}.weight",  # 有些层只有weight没有bias
+                                    ]
+                                else:
+                                    # diff 对应 weight
+                                    base = k[:-len('.diff')]
+                                    candidates = [
+                                        f"{base}.weight",
+                                        base,
+                                    ]
+                                
+                                # 在key_map里找匹配
+                                for cand in candidates:
+                                    # 带前缀找
+                                    for prefix in ['diffusion_model.', 'model.', '']:
+                                        full = prefix + cand
+                                        if full in model_sd:
+                                            target_key = full
+                                            break
+                                    if target_key:
+                                        break
+                                    # 模糊匹配：模型key包含cand
+                                    if cand in key_map:
+                                        target_key = key_map[cand]
+                                        break
+                                
+                                if target_key and target_key in model_sd:
+                                    with torch.no_grad():
+                                        model_sd[target_key].add_(v.to(model_sd[target_key].dtype) * lora_strength)
+                                    delta_loaded += 1
+                            
+                            print(f"[BSAI-Sol-H3] delta权重加载: {delta_loaded}/{len(delta_sd)}个key已应用", flush=True)
+                        except Exception as delta_e:
+                            print(f"[BSAI-Sol-H3] delta权重加载失败(不影响主LoRA): {delta_e}", flush=True)
+                    
                     lora_state = f"{lora_name} x{lora_strength:.2f}"
-                    print(f"[BSAI-Sol-H3] LoRA已加载: {lora_name} strength={lora_strength:.2f}", flush=True)
+                    print(f"[BSAI-Sol-H3] LoRA已加载: {lora_name} strength={lora_strength:.2f} (LoRA:{len(lora_sd)//2}对 + delta:{delta_loaded}个)", flush=True)
                 except Exception as e:
                     print(f"[BSAI-Sol-H3] LoRA加载失败: {e}", flush=True)
             else:
@@ -359,7 +434,7 @@ def _upscale_video_latent(video, scale, align_to_px, method, upscaler_model=""):
             out = out.to(device="cpu", dtype=orig_dtype)
             if dev.type == "cuda":
                 torch.cuda.empty_cache()
-            print(f"[BSAI-Sol-H3] 3D upscaler: {h_lat}x{w_lat} -> {new_h}x{new_w} "
+            print(f"[BSAI-Sol-H3] 3D upscaler: in={tuple(video.shape)} -> out={tuple(out.shape)} "
                   f"model={upscaler_model}")
             return out
         except Exception as e:
@@ -495,6 +570,12 @@ class BSAI_SolH3_LatentUpscaleAlign:
         out["samples"] = _wrap_members(
             [torch.nan_to_num(t, nan=0.0, posinf=0.0, neginf=0.0) for t in m_members],
             was_nested=was_nested)
+        # debug: print final member shapes
+        _final, _ = _extract_members(out["samples"])
+        print(f"[BSAI-Sol-H3] output members: {[tuple(m.shape) for m in _final]}")
+        if "noise_mask" in out:
+            _nm, _ = _extract_members(out["noise_mask"])
+            print(f"[BSAI-Sol-H3] noise_mask members: {[tuple(m.shape) for m in _nm]}")
         return out
 
 
