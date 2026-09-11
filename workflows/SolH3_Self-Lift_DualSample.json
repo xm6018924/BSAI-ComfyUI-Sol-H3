@@ -1,0 +1,1018 @@
+{
+  "id": "BSAI_SolH3_DualSample",
+  "revision": 0,
+  "last_node_id": 19,
+  "last_link_id": 24,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "BSAI_SolH3_Loader",
+      "pos": [
+        50,
+        50
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "steps",
+          "type": "INT"
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT"
+        },
+        {
+          "name": "sol_info",
+          "type": "STRING"
+        }
+      ],
+      "title": "BSAI Sol-H3 Loader (极速版)",
+      "properties": {
+        "Node name for S&R": "BSAI_SolH3_Loader"
+      },
+      "widgets_values": [
+        "minimax_h3_fastvideo_vsa_datafree_1300step_4step_int8_convrot.safetensors",
+        "int8",
+        true,
+        0.5,
+        1.0,
+        "exact_kv",
+        true,
+        true,
+        true,
+        2,
+        "4步 FastH3 极速",
+        "euler",
+        4.0,
+        8.0,
+        3.0,
+        12288,
+        1.3,
+        0.2,
+        0.9,
+        false,
+        "2d_frame",
+        true,
+        0,
+        false,
+        false,
+        "",
+        "",
+        "FastH3-4step-LoRA.safetensors",
+        1.0
+      ]
+    },
+    {
+      "id": 2,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        470,
+        50
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "title": "LoraLoaderModelOnly (二采4步LoRA)",
+      "properties": {
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "FastH3-4step-LoRA.safetensors",
+        0.7
+      ]
+    },
+    {
+      "id": 3,
+      "type": "CLIPLoader",
+      "pos": [
+        50,
+        300
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": [
+            6,
+            7
+          ]
+        }
+      ],
+      "title": "CLIPLoader",
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [
+        50,
+        450
+      ],
+      "size": [
+        380,
+        300
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            8,
+            9
+          ]
+        }
+      ],
+      "title": "CLIPTextEncode (正)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "A cinematic live-action shot, beautiful natural lighting, shallow depth of field, 4K quality, smooth motion. The camera slowly pushes in on a hero standing in a rain-soaked neon alley, wind rustling their coat, with rich ambient audio: rain, distant city hum, footsteps."
+      ]
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [
+        470,
+        450
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "title": "CLIPTextEncode (负)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "blurry, low quality, distorted, extra limbs, bad anatomy, watermark, static, silent, robotic voice"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "EmptyHunyuanLatentVideo",
+      "pos": [
+        890,
+        50
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "title": "EmptyHunyuanLatentVideo (一采低清)",
+      "properties": {
+        "Node name for S&R": "EmptyHunyuanLatentVideo"
+      },
+      "widgets_values": [
+        672,
+        384,
+        24,
+        1
+      ]
+    },
+    {
+      "id": 7,
+      "type": "VAELoader",
+      "pos": [
+        890,
+        200
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "title": "VAELoader (视频VAE)",
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_fp16.safetensors"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "VAELoader",
+      "pos": [
+        890,
+        330
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "title": "VAELoader (音频VAE)",
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "minimax_h3_audio_vae_fp32.safetensors"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "KSampler",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        380,
+        300
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 8
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 10
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "title": "KSampler #1 (一采 8步)",
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        8,
+        1.0,
+        "euler",
+        "simple",
+        1.0
+      ]
+    },
+    {
+      "id": 10,
+      "type": "RandomNoise",
+      "pos": [
+        1310,
+        50
+      ],
+      "size": [
+        200,
+        80
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "title": "RandomNoise (二采噪声)",
+      "properties": {
+        "Node name for S&R": "RandomNoise"
+      },
+      "widgets_values": [
+        43
+      ]
+    },
+    {
+      "id": 11,
+      "type": "BasicScheduler",
+      "pos": [
+        1310,
+        160
+      ],
+      "size": [
+        300,
+        120
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            16,
+            17
+          ]
+        }
+      ],
+      "title": "BasicScheduler (二采 4步 Beta)",
+      "properties": {
+        "Node name for S&R": "BasicScheduler"
+      },
+      "widgets_values": [
+        "beta",
+        4,
+        0.55
+      ]
+    },
+    {
+      "id": 12,
+      "type": "BSAI_SolH3_LatentUpscaleAlign",
+      "pos": [
+        1310,
+        310
+      ],
+      "size": [
+        400,
+        260
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 14
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        },
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 15
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "title": "BSAI Sol-H3 Latent 放大对齐 (双采)",
+      "properties": {
+        "Node name for S&R": "BSAI_SolH3_LatentUpscaleAlign"
+      },
+      "widgets_values": [
+        2.0,
+        32,
+        "bilinear",
+        "minimax_h3_latent_upscaler_3d_fp16.safetensors",
+        true,
+        0.0
+      ]
+    },
+    {
+      "id": 13,
+      "type": "BasicGuider",
+      "pos": [
+        1750,
+        310
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 5
+        },
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "title": "BasicGuider (二采)",
+      "properties": {
+        "Node name for S&R": "BasicGuider"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 14,
+      "type": "KSamplerSelect",
+      "pos": [
+        1750,
+        460
+      ],
+      "size": [
+        200,
+        80
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "title": "KSamplerSelect (二采)",
+      "properties": {
+        "Node name for S&R": "KSamplerSelect"
+      },
+      "widgets_values": [
+        "euler"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1750,
+        150
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 22
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 19
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 20
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 17
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            21
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT"
+        },
+        {
+          "name": "samples",
+          "type": "LATENT"
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS"
+        }
+      ],
+      "title": "SamplerCustomAdvanced #2 (二采 4步)",
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "DisableNoise",
+      "pos": [
+        1750,
+        50
+      ],
+      "size": [
+        200,
+        80
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            22
+          ]
+        }
+      ],
+      "title": "DisableNoise (二采不重加噪)",
+      "properties": {
+        "Node name for S&R": "DisableNoise"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 17,
+      "type": "VAEDecode",
+      "pos": [
+        2170,
+        150
+      ],
+      "size": [
+        300,
+        120
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 21
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            23
+          ]
+        }
+      ],
+      "title": "VAE Decode (视频)",
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": null
+    },
+    {
+      "id": 18,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        2500,
+        150
+      ],
+      "size": [
+        380,
+        260
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 23
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 24
+        }
+      ],
+      "outputs": [],
+      "title": "VHS_VideoCombine (双采输出)",
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "BSAI_SolH3_DualSample",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true
+      }
+    },
+    {
+      "id": 19,
+      "type": "VAEDecodeAudio",
+      "title": "VAE Decode Audio (音频)",
+      "pos": [
+        2500,
+        150
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 21
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecodeAudio"
+      },
+      "widgets_values": null
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      1,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      2,
+      0,
+      11,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      2,
+      0,
+      12,
+      1,
+      "MODEL"
+    ],
+    [
+      5,
+      2,
+      0,
+      13,
+      0,
+      "MODEL"
+    ],
+    [
+      6,
+      3,
+      0,
+      4,
+      0,
+      "CLIP"
+    ],
+    [
+      7,
+      3,
+      0,
+      5,
+      0,
+      "CLIP"
+    ],
+    [
+      8,
+      4,
+      0,
+      9,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      9,
+      4,
+      0,
+      13,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      10,
+      5,
+      0,
+      9,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      11,
+      6,
+      0,
+      9,
+      3,
+      "LATENT"
+    ],
+    [
+      12,
+      7,
+      0,
+      17,
+      1,
+      "VAE"
+    ],
+    [
+      13,
+      8,
+      0,
+      19,
+      1,
+      "VAE"
+    ],
+    [
+      14,
+      9,
+      0,
+      12,
+      0,
+      "LATENT"
+    ],
+    [
+      15,
+      10,
+      0,
+      12,
+      2,
+      "NOISE"
+    ],
+    [
+      16,
+      11,
+      0,
+      12,
+      3,
+      "SIGMAS"
+    ],
+    [
+      17,
+      11,
+      0,
+      15,
+      3,
+      "SIGMAS"
+    ],
+    [
+      18,
+      12,
+      0,
+      15,
+      4,
+      "LATENT"
+    ],
+    [
+      19,
+      13,
+      0,
+      15,
+      1,
+      "GUIDER"
+    ],
+    [
+      20,
+      14,
+      0,
+      15,
+      2,
+      "SAMPLER"
+    ],
+    [
+      21,
+      15,
+      0,
+      17,
+      0,
+      "LATENT"
+    ],
+    [
+      22,
+      16,
+      0,
+      15,
+      0,
+      "NOISE"
+    ],
+    [
+      23,
+      17,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      24,
+      19,
+      0,
+      18,
+      1,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
