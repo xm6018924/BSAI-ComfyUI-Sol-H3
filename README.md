@@ -93,6 +93,18 @@ VAELoader(audio VAE) ──> VAEDecodeAudio
 
 也可将 Loader 输出的 `steps`（INT）接 `EmptyHunyuanLatentVideo` 的帧数无关（帧数由 latent 决定）；`steps`/`cfg` 可直接接入 KSampler 的 `steps`/`cfg` 输入端。
 
+> ⚠️ **重要：勿叠加其他 attention 优化节点 / IMPORTANT: do NOT stack extra attention-optimization nodes**
+>
+> `sol_attn=True` 时 Loader 已内置 Sol-Attn 稀疏注意力补丁。**同一条模型链上不要再挂**：
+> - KJNodes `MiniMaxH3MemoryEfficientSageAttentionPatch`（int8/fp8 Sage，会在 Sol-Attn 内层重复量化，显存翻倍触发 OOM）
+> - 旧版单文件节点 `SolAttnMiniMax`（`custom_nodes/sol_attn_minimax_v2.py` 旧版残留，请删除该文件，插件 v2.2+ 始终使用内置副本）
+> - T8 `MiniMaxLowVRAMAttention`（另一套 attention override）
+>
+> 多套叠加会形成 `Sol-Attn → kitchen → Sage int8/fp8` 链式 patch，每层都分配中间张量，RTX 5090 Laptop 24GB 上主采样即 OOM。
+> When `sol_attn=True`, the Loader already installs the Sol-Attn sparse-attention patch. Do **not** add any of these on the same model path: KJNodes `MiniMaxH3MemoryEfficientSageAttentionPatch` (re-quantizes inside Sol-Attn, doubles VRAM → OOM), the legacy single-file `SolAttnMiniMax` node (delete the stale `custom_nodes/sol_attn_minimax_v2.py`; v2.2+ always loads the built-in copy), or T8 `MiniMaxLowVRAMAttention`. Stacking them chains `Sol-Attn → kitchen → Sage int8/fp8`, each layer allocating intermediate tensors, and OOMs the main pass even on a 24GB RTX 5090 Laptop.
+>
+> 保留 `ModelAttentionBackend`（comfy kitchen attention）**不影响**——它是底层 kernel 后端，Sol-Attn 正常工作依赖它。Keep `ModelAttentionBackend` (comfy kitchen attention) — it is the underlying kernel backend Sol-Attn relies on.
+
 ### Loader 参数说明 / Loader Parameters
 
 | # | 参数 / Parameter | 默认 / Default | 说明 / Description |
