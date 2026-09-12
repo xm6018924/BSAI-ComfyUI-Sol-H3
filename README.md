@@ -231,6 +231,7 @@ VAELoader×2 (video VAE + audio VAE)
 
 ## 版本历史 / Changelog
 
+- **v2.6 (2026-09-12)**: **FastVideo LoRA 真正生效 / FastVideo LoRA fully works** — 内置 FastVideo→ComfyUI 结构转换（`transformer_blocks.attn.to_q/to_k/to_v`→`blocks.attn.qkv_proj` 块对角融合、`ff.net.0.proj/2`→`mlp.fc1/fc2`、`.diff/.diff_b`→量化感知 delta patch），并加形状过滤自动跳过 curve 版模型（adaln 8 维 / 无 time_embedder）不兼容的 patch；同时修复 FastVideo 导出 LoRA 文件 header 数据长度与实际文件不一致导致的 safetensors 0.8.0 严格校验失败（自动回退手动解析）。标准模型（adaln 全宽 2688）上 FastH3-4step-LoRA **258+85 全部生效**；curve 版模型（如 10Eros TURBO-hybrid）主体 208+80 生效、不兼容部分自动跳过。
 - **v2.5.4 (2026-09-11)**: Loader 支持 delta 权重（`.diff`/`.diff_b`）智能加载（自动 key 匹配 + 反量化应用）；示例工作流恢复并更新至 29 参数结构。
 - **v2.5.3 (2026-09-11)**: 分离标准 LoRA 与 delta 格式；shape/cov 调试打印。
 - **v2.5.2**: 示例工作流默认选 3D upscaler 模型（fp16）。

@@ -114,6 +114,147 @@ def _load_sol_attn_module():
     return _mod
 
 
+# ============================================================================
+# FastVideo FastH3 LoRA → ComfyUI MiniMax-H3 key 转换加载
+# ----------------------------------------------------------------------------
+# 背景: 官方 FastH3-4step-LoRA.safetensors 是 FastVideo 训练格式
+#   (transformer_blocks.N.attn.to_q/to_k/to_v + ff.net.0.proj/ff.net.2 +
+#    .diff/.diff_b delta 权重), 而 ComfyUI 0.35 的 MiniMax-H3 模型实现是
+#   融合结构 (blocks.N.attn.qkv_proj + mlp.fc1/fc2), 两者 key 完全不对应,
+#   直接 add_patches 必然 0 匹配 (ComfyUI 官方 lora.py 无 minimax key 转换)。
+# 本转换器把 FastVideo 格式逐类映射到 ComfyUI 结构, 并通过 ComfyUI 官方
+#   量化感知 patch 路径 (cast_bias_weight 内 dequantize → calculate_weight)
+#   在 int8/convrot 量化模型上也能真正生效。
+# ============================================================================
+
+def _load_torch_file_safe(path):
+    """load_torch_file 的兼容封装: 部分 FastVideo 导出的 LoRA 文件 header 声明的
+    数据长度与实际文件大小不一致, 新版 safetensors 严格校验会报
+    'incomplete metadata, file not fully covered', 此时回退手动解析(不校验覆盖)。"""
+    try:
+        import comfy.utils
+        return comfy.utils.load_torch_file(path, safe_load=True)
+    except Exception:
+        pass
+    import struct, json
+    import torch
+    with open(path, 'rb') as f:
+        n = struct.unpack('<Q', f.read(8))[0]
+        hdr = json.loads(f.read(n))
+        sd = {}
+        _dtmap = {'F32': torch.float32, 'F16': torch.float16, 'BF16': torch.bfloat16,
+                  'I8': torch.int8, 'I32': torch.int32, 'I64': torch.int64}
+        for k, v in hdr.items():
+            if k == '__metadata__':
+                continue
+            begin, end = v['data_offsets']
+            f.seek(8 + n + begin)
+            raw = f.read(end - begin)
+            dt = _dtmap.get(v.get('dtype'), torch.float32)
+            sd[k] = torch.frombuffer(raw, dtype=dt).reshape(v['shape'])
+    return sd
+
+
+def _fv_key_to_comfy(key):
+    """FastVideo 模块 key → ComfyUI MiniMax-H3 模块 key (不含 .weight/.bias)。
+
+    注意替换顺序: 先处理含 'audio_proj' 的长名, 再处理 'proj_in/proj_out',
+    避免子串误替换。
+    """
+    k = key
+    k = k.replace('transformer_blocks.', 'blocks.')
+    k = k.replace('token_refiner.refiner_blocks.', 'token_refiner.blocks.')
+    k = k.replace('.attn.to_out.0', '.attn.out_proj')
+    k = k.replace('.ff.net.0.proj', '.mlp.fc1')
+    k = k.replace('.ff.net.2', '.mlp.fc2')
+    # 外围 delta 模块映射 (长名优先)
+    k = k.replace('audio_proj_in', 'audio_patch_proj')
+    k = k.replace('audio_proj_out', 'final_layer.audio_out')
+    k = k.replace('proj_in', 'video_patch_proj')
+    k = k.replace('proj_out', 'final_layer.video_out')
+    k = k.replace('context_embedder', 'condition_proj')
+    k = k.replace('time_embedder.linear_1', 'time_embedder.proj_in')
+    k = k.replace('time_embedder.linear_2', 'time_embedder.proj_out')
+    k = k.replace('norm_out.norm', 'final_layer.norm')
+    k = k.replace('norm_out.linear', 'final_layer.adaln_proj.linear')
+    return k
+
+
+def _fastvideo_lora_to_comfy_patches(sd, rank=64):
+    """把 FastVideo 格式 FastH3 LoRA state dict 转换为 ComfyUI patch dict。
+
+    返回 (lora_patches, delta_patches, stats):
+      lora_patches:  {模型key: (lora_A, lora_B, alpha)}  —— 标准 LoRA 补丁
+      delta_patches: {模型key: ('diff', (diff,))}        —— delta 直写补丁
+      stats: {'pairs': n, 'delta': n, 'skipped': [...]}
+    """
+    import torch
+    from comfy.weight_adapter.lora import LoRAAdapter
+    lora_patches = {}
+    delta_patches = {}
+    stats = {'pairs': 0, 'delta': 0, 'skipped': []}
+
+    # ---- 1) 收集标准 lora_A/lora_B 对 ----
+    ab = {}
+    for k, v in sd.items():
+        if k == '__metadata__':
+            continue
+        if k.endswith('.lora_A.weight'):
+            base = k[:-len('.lora_A.weight')]
+            bk = base + '.lora_B.weight'
+            if bk in sd:
+                ab[base] = (v, sd[bk])
+
+    # ---- 2) qkv 融合: to_q/to_k/to_v 三元组 → qkv_proj 块对角 ----
+    trio_groups = {}
+    for base in list(ab.keys()):
+        for role in ('.attn.to_q', '.attn.to_k', '.attn.to_v'):
+            if base.endswith(role):
+                attn_prefix = base[:base.rfind('.')]
+                trio_groups.setdefault(attn_prefix, {})[role.rsplit('.', 1)[-1]] = ab.pop(base)
+                break
+    for attn_prefix, trio in trio_groups.items():
+        if all(r in trio for r in ('to_q', 'to_k', 'to_v')):
+            A_q, B_q = trio['to_q']; A_k, B_k = trio['to_k']; A_v, B_v = trio['to_v']
+            r = A_q.shape[0]
+            hidden = A_q.shape[1]
+            inner = B_q.shape[0]
+            # 块对角 A: [3r, hidden]; 块对角 B: [3*inner, 3r]
+            A = torch.zeros((3 * r, hidden), dtype=A_q.dtype, device=A_q.device)
+            A[:r] = A_q; A[r:2*r] = A_k; A[2*r:] = A_v
+            B = torch.zeros((3 * inner, 3 * r), dtype=B_q.dtype, device=B_q.device)
+            B[:inner, :r] = B_q; B[inner:2*inner, r:2*r] = B_k; B[2*inner:, 2*r:] = B_v
+            target = 'diffusion_model.' + _fv_key_to_comfy(attn_prefix) + '.qkv_proj.weight'
+            lora_patches[target] = LoRAAdapter(None, (B, A, float(rank), None, None, None))
+            stats['pairs'] += 1
+        else:
+            for role, val in trio.items():
+                ab[attn_prefix + '.attn.' + role] = val
+
+    # ---- 3) 1:1 标准 LoRA ----
+    for base, (A, B) in ab.items():
+        target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.weight'
+        lora_patches[target] = LoRAAdapter(None, (B, A, float(rank), None, None, None))
+        stats['pairs'] += 1
+
+    # ---- 4) delta (.diff/.diff_b) ----
+    for k, v in sd.items():
+        if k == '__metadata__':
+            continue
+        if k.endswith('.diff_b'):
+            base = k[:-len('.diff_b')]
+            target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.bias'
+            delta_patches[target] = ('diff', (v,))
+            stats['delta'] += 1
+        elif k.endswith('.diff'):
+            base = k[:-len('.diff')]
+            target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.weight'
+            delta_patches[target] = ('diff', (v,))
+            stats['delta'] += 1
+
+    return lora_patches, delta_patches, stats
+
+
 class BSAI_SolH3_Loader:
     """BSAI Sol-H3 一键加载器: 加载H3模型 + FastH3 LoRA + Sol-Attn(全套精细参数)"""
 
@@ -208,86 +349,46 @@ class BSAI_SolH3_Loader:
             lora_path = folder_paths.get_full_path("loras", lora_name) if folder_paths else lora_name
             if lora_path and os.path.exists(lora_path):
                 try:
-                    import comfy.utils
-                    sd = comfy.utils.load_torch_file(lora_path, safe_load=True)
-                    
-                    # v2.5.3: 分离标准LoRA格式和delta格式(.diff/.diff_b)
-                    lora_sd = {}  # 标准LoRA (lora_A/lora_B)
-                    delta_sd = {}  # 直接delta权重 (.diff/.diff_b)
-                    
-                    for k, v in sd.items():
-                        if k.endswith('.diff_b') or k.endswith('.diff'):
-                            delta_sd[k] = v
-                        else:
-                            lora_sd[k] = v
-                    
-                    # 加载标准LoRA部分
-                    if lora_sd:
-                        model.add_patches(lora_sd, strength_patch=lora_strength, strength_model=lora_strength)
-                    
-                    # v2.5.4: 智能加载delta格式权重 (.diff/.diff_b)
-                    # 自动匹配模型实际参数key（处理前缀、.weight/.bias后缀）
-                    delta_loaded = 0
-                    if delta_sd:
-                        try:
-                            model_sd = model.model_state_dict()
-                            model_keys = list(model_sd.keys())
-                            
-                            # 建立反向索引：去掉前缀后的key → 实际key
-                            key_map = {}
-                            for mk in model_keys:
-                                # 尝试去掉常见前缀
-                                clean = mk
-                                for prefix in ['diffusion_model.', 'model.']:
-                                    if clean.startswith(prefix):
-                                        clean = clean[len(prefix):]
-                                key_map[mk] = mk
-                                key_map[clean] = mk
-                            
-                            for k, v in delta_sd.items():
-                                target_key = None
-                                
-                                if k.endswith('.diff_b'):
-                                    # diff_b 对应 bias
-                                    base = k[:-len('.diff_b')]
-                                    candidates = [
-                                        f"{base}.bias",
-                                        f"{base}.weight",  # 有些层只有weight没有bias
-                                    ]
-                                else:
-                                    # diff 对应 weight
-                                    base = k[:-len('.diff')]
-                                    candidates = [
-                                        f"{base}.weight",
-                                        base,
-                                    ]
-                                
-                                # 在key_map里找匹配
-                                for cand in candidates:
-                                    # 带前缀找
-                                    for prefix in ['diffusion_model.', 'model.', '']:
-                                        full = prefix + cand
-                                        if full in model_sd:
-                                            target_key = full
-                                            break
-                                    if target_key:
-                                        break
-                                    # 模糊匹配：模型key包含cand
-                                    if cand in key_map:
-                                        target_key = key_map[cand]
-                                        break
-                                
-                                if target_key and target_key in model_sd:
-                                    with torch.no_grad():
-                                        model_sd[target_key].add_(v.to(model_sd[target_key].dtype) * lora_strength)
-                                    delta_loaded += 1
-                            
-                            print(f"[BSAI-Sol-H3] delta权重加载: {delta_loaded}/{len(delta_sd)}个key已应用", flush=True)
-                        except Exception as delta_e:
-                            print(f"[BSAI-Sol-H3] delta权重加载失败(不影响主LoRA): {delta_e}", flush=True)
-                    
-                    lora_state = f"{lora_name} x{lora_strength:.2f}"
-                    print(f"[BSAI-Sol-H3] LoRA已加载: {lora_name} strength={lora_strength:.2f} (LoRA:{len(lora_sd)//2}对 + delta:{delta_loaded}个)", flush=True)
+                    sd = _load_torch_file_safe(lora_path)
+
+                    # v2.6: FastVideo FastH3 LoRA → ComfyUI MiniMax-H3 结构转换加载
+                    # (to_q/to_k/to_v → qkv_proj 块对角, ff.net → mlp.fc,
+                    #  .diff/.diff_b delta → ('diff', ...) 量化感知 patch)
+                    lora_patches, delta_patches, lstats = _fastvideo_lora_to_comfy_patches(sd)
+
+                    # 形状过滤: curve 版模型(adaln [*,8]/无 time_embedder)与全宽度
+                    # LoRA 部分不兼容, 跳过形状不匹配的 patch, 避免 calculate_weight
+                    # 的形状警告与失败; 其余 patch 照常生效。
+                    def _shape_filter(patches, exp_shape_fn):
+                        keep = {}
+                        dropped = 0
+                        model_sd = model.model_state_dict()
+                        for k, v in patches.items():
+                            exp = exp_shape_fn(v)
+                            if k in model_sd and tuple(exp) == tuple(model_sd[k].shape):
+                                keep[k] = v
+                            else:
+                                dropped += 1
+                        return keep, dropped
+                    lora_patches, lora_dropped = _shape_filter(
+                        lora_patches, lambda v: (v.weights[0].shape[0], v.weights[1].shape[1]))
+                    delta_patches, delta_dropped = _shape_filter(
+                        delta_patches, lambda v: tuple(v[1][0].shape))
+
+                    n_lora = 0
+                    if lora_patches:
+                        n_lora = len(model.add_patches(lora_patches, strength_patch=lora_strength, strength_model=1.0))
+                    n_delta = 0
+                    if delta_patches:
+                        n_delta = len(model.add_patches(delta_patches, strength_patch=lora_strength, strength_model=1.0))
+
+                    if n_lora or n_delta:
+                        lora_state = f"{lora_name} x{lora_strength:.2f}"
+                        print(f"[BSAI-Sol-H3] LoRA已加载: {lora_name} strength={lora_strength:.2f} "
+                              f"(LoRA补丁:{n_lora}/{len(lora_patches)}+跳过{lora_dropped} + delta补丁:{n_delta}/{len(delta_patches)}+跳过{delta_dropped})", flush=True)
+                    else:
+                        print(f"[BSAI-Sol-H3] LoRA加载失败(0个key匹配模型): {lora_name} "
+                              f"(LoRA:{len(lora_patches)}对 delta:{len(delta_patches)}个)", flush=True)
                 except Exception as e:
                     print(f"[BSAI-Sol-H3] LoRA加载失败: {e}", flush=True)
             else:
