@@ -234,6 +234,14 @@ VAELoader×2 (video VAE + audio VAE)
 **Q6: Sol-Attn 未生效（速度慢、显存高）？**
 > 确认 Loader `sol_attn=ON` 且 `sink_conditioning≠off`；日志应出现 `Sol-Attn已安装`，且无 `kernel failed`。/ Verify `sol_attn=ON`, `sink_conditioning≠off`, and no `kernel failed` in logs.
 
+**Q7: 报错 `ERROR lora diffusion_model.blocks.N.adaln_proj.linear.weight shape '[96768, 2688]' is invalid for input of size 774144`（blocks.0~49 刷屏）？**
+> 原因：官方 `Lora Loader Stack (rgthree)` 里挂了一个结构不兼容的 LoRA——`minimax_h3_lms_v1.0_r64-细节纹理增强lora.safetensors`（部分版本文件名无连字符：`minimax_h3_lms_v1.0_r64细节纹理增强.safetensors`）的 `adaln_proj.linear.lora_A` 形状是 `[64, 8]`（输入 8 维），而 H3 模型该层输入是 2688 维 → 缝补时 reshape 失败（96768×8=774144 元素）。报错会逐 block 刷屏但**不中断生成**；该 LoRA 实际不生效。
+> 解决：把该 LoRA 的 strength 改为 **0**（或从栈中移除）；`FastH3-4step-LoRA` **不要**再挂官方栈（它由 Sol-H3 Loader 内置转换加载，日志出现 `[BSAI-Sol-H3] LoRA已加载: FastH3-4step-LoRA.safetensors strength=0.70 (LoRA补丁:258/258...)` 即为生效）；官方栈只保留结构正常的 LoRA（如 `H3电影质感V0.4 .safetensors`，rank16，`adaln_proj A=[16, 2688]`）。
+> EN: An incompatible LoRA sits in the official `Lora Loader Stack (rgthree)` — `minimax_h3_lms_v1.0_r64-细节纹理增强lora.safetensors` has `adaln_proj.linear.lora_A` shaped `[64, 8]` (8-dim input) while the H3 layer expects 2688 → patch reshape fails (96768×8=774144). It spams per-block errors but does not abort generation; the LoRA is simply not applied. Fix: set its strength to **0** (or remove it); do **not** put `FastH3-4step-LoRA` in the official stack (the Sol-H3 Loader loads it natively — look for `[BSAI-Sol-H3] LoRA已加载: FastH3-4step-LoRA... 258/258`); keep only structurally valid LoRAs in the stack (e.g. `H3电影质感V0.4`, rank16, `adaln_proj A=[16, 2688]`).
+
+**Q8: 加了 `ModelAttentionBackend`（comfy kitchen attention）后 Sol-Attn 不生效 / 显存没降？**
+> 删掉这个节点（或断开它的 model 链）。它执行 `set_model_optimized_attention`，写入的 `transformer_options["optimized_attention_override"]` 与 Loader 内置 Sol-Attn 是**同一个槽位**；按节点执行顺序它在 Loader 之后运行，会直接**覆盖** Sol-Attn，稀疏注意力失效。int8 权重的计算走 comfy_kitchen 张量层（ops），不依赖该节点。/ Remove it. It writes the same `optimized_attention_override` slot as the Loader's built-in Sol-Attn and overwrites it when executed later, disabling sparse attention. INT8 math runs in comfy_kitchen's tensor layer and does not need this node.
+
 ---
 
 ## 硬件要求 / Requirements
