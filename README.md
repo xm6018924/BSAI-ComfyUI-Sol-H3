@@ -104,6 +104,8 @@ VAELoader(audio VAE) ──> VAEDecodeAudio
 > When `sol_attn=True`, the Loader already installs the Sol-Attn sparse-attention patch. Do **not** add any of these on the same model path: KJNodes `MiniMaxH3MemoryEfficientSageAttentionPatch` (re-quantizes inside Sol-Attn, doubles VRAM → OOM), the legacy single-file `SolAttnMiniMax` node (delete the stale `custom_nodes/sol_attn_minimax_v2.py`; v2.2+ always loads the built-in copy), or T8 `MiniMaxLowVRAMAttention`. Stacking them chains `Sol-Attn → kitchen → Sage int8/fp8`, each layer allocating intermediate tensors, and OOMs the main pass even on a 24GB RTX 5090 Laptop.
 >
 > 保留 `ModelAttentionBackend`（comfy kitchen attention）**不影响**——它是底层 kernel 后端，Sol-Attn 正常工作依赖它。Keep `ModelAttentionBackend` (comfy kitchen attention) — it is the underlying kernel backend Sol-Attn relies on.
+>
+> ❗ **更正 / Correction：`ModelAttentionBackend` 必须删除/断开，不能保留。** 该节点执行 `set_model_optimized_attention`，写入的正是 `transformer_options["optimized_attention_override"]`——与 Loader 内置 Sol-Attn **同一个槽位**；节点图按依赖顺序执行，Loader 先装 Sol-Attn，`ModelAttentionBackend` 后执行会**直接覆盖**，Sol-Attn 稀疏注意力被禁用。int8 权重的 int8_linear 走 comfy_kitchen 的张量层（ops），不需要该节点。**请删掉工作流中的 `ModelAttentionBackend`（302/264）节点，将 Loader → ChunkFF → SigmaShift 直接连到采样器**。
 
 ### Loader 参数说明 / Loader Parameters
 
