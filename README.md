@@ -250,6 +250,55 @@ VAELoader×2 (video VAE + audio VAE)
 
 ---
 
+## SolEngine 两级精修旁支 / SolEngine Two-Stage Refiner Branch (v2.7)
+
+> **完全旁支，不影响原有三个节点。** 你可以继续用原来的 H3 双采 Self-Lift，也可以走新的 NVIDIA Sol Engine 两级流水线。
+> Fully additive — the original three nodes are untouched. Use the classic H3 dual-sample Self-Lift or the new NVIDIA Sol Engine two-stage pipeline.
+
+参考 NVIDIA Sol Engine / H3 Super Acceleration（2026-09 开源）：
+
+```
+Stage 1: H3 在 672x384 出草稿（4步 FastH3，原有 Loader 不变）
+   ↓ VAEDecode -> IMAGE, VAEDecodeAudio -> AUDIO
+Stage 2: BSAI SolEngine Refiner 节点内部自动完成：
+   帧裁剪/resize (960x544 encode) -> LTX-2.5 VAE 编码 -> x2 latent 放大 (1920x1088)
+   -> T8mars patch + official sigma=0.909 3步 euler 精修 -> LTX VAE 解码
+   ↓ 输出精修 IMAGE + 裁剪后的 H3 原音频
+```
+
+社区 5090 实测：冷启动 ~40s，热启动 ~30s，5 秒 1344x768 带音频视频。
+Community RTX 5090: cold start ~40s, warm start ~30s for 5s 1344×768 video with audio.
+
+**依赖（本机已全部就位）/ Dependencies (all present on this machine)**：
+- `T8mars/comfyui-minimax-h3-audio-T8`（SolEngine 核心 patch / core patch）
+- LTX-2.5 transformer: `ltx-2.5-22b-dev-transformer-comfy-int8-convrot.safetensors` (~20GB)
+- LTX-2.5 video VAE: `ltx-2.5-video-vae-conv-bf16.safetensors` (~1.4GB)
+- LTX-2.5 text encoder: `gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors` (~14.6GB)
+- LTX-2.5 x2 spatial upscaler: `ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` (~950MB)
+- Distilled LoRA: `ltx-2.5-22b-distilled-lora-450-bf16.safetensors` (~8.5GB, strength=0.8)
+
+**使用 / Usage**：H3 草稿跑完后，把 `VAEDecode` 的 IMAGE 和 `VAEDecodeAudio` 的 AUDIO 接到新节点 `BSAI Sol-H3 SolEngine 两级精修 (LTX-2.5)`，填 prompt + 目标分辨率，输出直接接 `VHS_VideoCombine`。
+After H3 draft finishes, wire `VAEDecode` IMAGE + `VAEDecodeAudio` AUDIO into the new `BSAI Sol-H3 SolEngine 两级精修 (LTX-2.5)` node, fill in the prompt + target resolution, and output directly to `VHS_VideoCombine`.
+
+**关键参数 / Key Parameters**:
+- `target_width/target_height`: 默认 1920×1088（encode 自动降到 960×544 后 x2 放大）/ Default 1920×1088 (encode auto-downscaled to 960×544, then x2 upscaled)
+- `schedule_mode`: 默认 `official_0p909`（NVIDIA 官方 3步 sigma: 0.909/0.725/0.421875）/ Default `official_0p909` (NVIDIA official 3-step sigmas)
+- `refiner_lora_strength`: 默认 0.8 / Default 0.8
+
+示例工作流：`workflows/SolH3_SolEngine_LTX25_Refine_V2.json`。
+Example workflow: `workflows/SolH3_SolEngine_LTX25_Refine_V2.json`.
+
+| | 原双采 Self-Lift / Classic Self-Lift | SolEngine 旁支 / SolEngine Branch |
+|---|---|---|
+| 二采模型 / Second-pass model | H3 自身 4步 LoRA | **LTX-2.5 22B 蒸馏**，3步 / LTX-2.5 22B distilled, 3 steps |
+| Handoff | latent 空间 bilinear 放大 / latent bilinear | **像素空间**裁剪+LTX VAE 重编码 / pixel-space crop + LTX VAE re-encode |
+| 精修起点 / Refine start | denoise=0.55 | sigma=0.909（official） |
+| 5090 耗时 / RTX 5090 time | 2-3 分钟 / 2-3 min | ~40 秒 / ~40 s |
+
+**VRAM 注意 / VRAM Note**: LTX-2.5 22B int8 ≈ 18GB, 24GB VRAM 需 `--lowvram --disable-dynamic-vram --reserve-vram 1.5` 启动参数。采样时 ComfyUI 会自动 offload 部分 transformer 权重到 CPU，速度略慢但可跑通。/ LTX-2.5 22B int8 ≈ 18GB; on 24GB VRAM use `--lowvram --disable-dynamic-vram --reserve-vram 1.5` launch flags. ComfyUI auto-offloads part of the transformer to CPU during sampling — slightly slower but fits.
+
+---
+
 ## 硬件要求 / Requirements
 
 - NVIDIA GPU: SM86 (RTX 30 系) / SM89 (RTX 40 系) / SM120 (RTX 50 系) / SM121 (DGX Spark)
@@ -259,6 +308,7 @@ VAELoader×2 (video VAE + audio VAE)
 
 ## 版本历史 / Changelog
 
+- **v2.7 (2026-09-29)**: **SolEngine 两级精修旁支** — 新增 BSAI_SolH3_SolEngine_Refiner 节点，封装 NVIDIA Sol Engine / H3 Super Acceleration Stage-2（H3 draft 像素 handoff → LTX-2.5 VAE encode → x2 latent 放大 → LTX-2.5 3步精修 → TAEHV 解码），保留 H3 原音频。原有三个节点完全不变，用户可选老路（H3 双采 Self-Lift）或新路（LTX-2.5 精修，5090 ~40s）。依赖 T8mars/comfyui-minimax-h3-audio-T8 + LTX-2.5 权重（本机已就位）。
 - **v2.6.1 (2026-09-12)**: docs(FAQ): Q7 扩展为双向 LoRA 兼容矩阵——新增反向案例（curve 模型如 fastvideo 4步极速 × 标准架构 LoRA `质感V0.4` → `shape '[96768, 8]' ... size 260112384`），修正原"质感V0.4 可任意挂官方栈"的误导；兼容性结论与电脑/磁盘无关。
 - **v2.6 (2026-09-12)**: **FastVideo LoRA 真正生效 / FastVideo LoRA fully works** — 内置 FastVideo→ComfyUI 结构转换（`transformer_blocks.attn.to_q/to_k/to_v`→`blocks.attn.qkv_proj` 块对角融合、`ff.net.0.proj/2`→`mlp.fc1/fc2`、`.diff/.diff_b`→量化感知 delta patch），并加形状过滤自动跳过 curve 版模型（adaln 8 维 / 无 time_embedder）不兼容的 patch；同时修复 FastVideo 导出 LoRA 文件 header 数据长度与实际文件不一致导致的 safetensors 0.8.0 严格校验失败（自动回退手动解析）。标准模型（adaln 全宽 2688）上 FastH3-4step-LoRA **258+85 全部生效**；curve 版模型（如 10Eros TURBO-hybrid）主体 208+80 生效、不兼容部分自动跳过。
 - **v2.5.4 (2026-09-11)**: Loader 支持 delta 权重（`.diff`/`.diff_b`）智能加载（自动 key 匹配 + 反量化应用）；示例工作流恢复并更新至 29 参数结构。

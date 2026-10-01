@@ -693,6 +693,21 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# SolEngine Stage-2 旁支 (NVIDIA H3 Super Acceleration: LTX-2.5 精修)
+# 不影响上面任何现有节点; 用户可选走老路(H3双采)或新路(LTX精修)
+# ---------------------------------------------------------------------------
+try:
+    from .solengine_stage2 import (
+        NODE_CLASS_MAPPINGS_SOLENGINE,
+        NODE_DISPLAY_NAME_MAPPINGS_SOLENGINE,
+    )
+    NODE_CLASS_MAPPINGS.update(NODE_CLASS_MAPPINGS_SOLENGINE)
+    NODE_DISPLAY_NAME_MAPPINGS.update(NODE_DISPLAY_NAME_MAPPINGS_SOLENGINE)
+except Exception as _e:
+    print(f"[BSAI-Sol-H3] SolEngine 旁支未加载(不影响主插件): {_e}", flush=True)
+
+
 def _patch_audio_vae_offload():
     """内存级补丁: 修复 ComfyUI 核心 H3 AudioVAE 的 DynamicVRAM 权重量流问题。
 
@@ -709,6 +724,7 @@ def _patch_audio_vae_offload():
     try:
         import comfy.sd as _sd
         from comfy.ldm.minimax.audio_vae import MiniMaxH3AudioVAE
+        from comfy.ldm.minimax.vae import MiniMaxH3VideoVAE
     except Exception:
         return
     if getattr(_patch_audio_vae_offload, "_applied", False):
@@ -720,17 +736,70 @@ def _patch_audio_vae_offload():
     def _wrapped_init(self, *args, **kwargs):
         _orig_init(self, *args, **kwargs)
         try:
-            if isinstance(getattr(self, "first_stage_model", None), MiniMaxH3AudioVAE) \
+            fsm = getattr(self, "first_stage_model", None)
+            if isinstance(fsm, MiniMaxH3AudioVAE) \
                     and not getattr(self, "disable_offload", False):
                 self.disable_offload = True
                 print("[BSAI-Sol-H3] 音频解码修复: H3 AudioVAE 已切换全量加载"
                       "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
+            if isinstance(fsm, MiniMaxH3VideoVAE) \
+                    and not getattr(self, "disable_offload", False):
+                self.disable_offload = True
+                print("[BSAI-Sol-H3] 视频解码修复: H3 VideoVAE 已切换全量加载"
+                      "(disable_offload=True), 消除 DynamicVRAM 抖动, 收尾解码提速",
+                      flush=True)
         except Exception:
             pass
 
     _sd.VAE.__init__ = _wrapped_init
-    print("[BSAI-Sol-H3] 音频解码修复已就绪: H3 AudioVAE 将全量加载(PR #15371 语义), "
+    print("[BSAI-Sol-H3] 音频/视频解码修复已就绪: H3 AudioVAE/VideoVAE 将全量加载(PR #15371 语义), "
           "不再走 DynamicVRAM 权重量流", flush=True)
 
 
 _patch_audio_vae_offload()
+
+
+def _patch_h3_clip_offload():
+    """修复 H3 文本编码器(qwen3vl_32b 15GB) 走 CoreModelPatcher 流式导致编码 5 分钟。
+
+    ComfyUI comfy/sd.py CLIP.__init__ 逻辑:
+        te_disable_dynamic = disable_dynamic or getattr(self.cond_stage_model, "disable_offload", False)
+        ModelPatcher = ModelPatcher if te_disable_dynamic else CoreModelPatcher
+    cond_stage_model 是 MiniMaxH3TEModel_（SD1ClipModel 子类, 内部含 MiniMaxH3ClipModel），
+    未设置 disable_offload -> 走 CoreModelPatcher 动态流式: 编码时逐层从 CPU 搬入 GPU,
+    一次 prompt 编码 3~5 分钟。
+    本补丁包装 MiniMaxH3TEModel.__init__ 与 MiniMaxH3ClipModel.__init__ 置
+    disable_offload=True, 使 sd.py 选择 ModelPatcher 全量加载, 编码 30~60 秒。
+    不改 ComfyUI 核心文件。
+    """
+    try:
+        from comfy.text_encoders import minimax as _mm
+    except Exception:
+        return
+    if getattr(_patch_h3_clip_offload, "_applied", False):
+        return
+    _patch_h3_clip_offload._applied = True
+
+    # cond_stage_model 的真实类（sd.py 读取 disable_offload 的对象）
+    _orig_te = _mm.MiniMaxH3TEModel.__init__
+
+    def _wrapped_te(self, *args, **kwargs):
+        _orig_te(self, *args, **kwargs)
+        self.disable_offload = True
+
+    _mm.MiniMaxH3TEModel.__init__ = _wrapped_te
+
+    # 内部 clip 模型（保险，双保险确保任意读取点都能读到 True）
+    _orig_cm = _mm.MiniMaxH3ClipModel.__init__
+
+    def _wrapped_cm(self, *args, **kwargs):
+        _orig_cm(self, *args, **kwargs)
+        self.disable_offload = True
+
+    _mm.MiniMaxH3ClipModel.__init__ = _wrapped_cm
+
+    print("[BSAI-Sol-H3] 编码器修复: MiniMaxH3TEModel/MiniMaxH3ClipModel "
+          "disable_offload=True (全量加载, H3 编码 5 分钟 -> 30~60 秒)", flush=True)
+
+
+_patch_h3_clip_offload()
