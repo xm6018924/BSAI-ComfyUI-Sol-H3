@@ -14,6 +14,11 @@ import json
 import sys
 import torch
 
+# 确保插件自身目录在 sys.path 中（h3_t8 vendored 包）
+_PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+if _PLUGIN_DIR not in sys.path:
+    sys.path.insert(0, _PLUGIN_DIR)
+
 try:
     import folder_paths
 except Exception:
@@ -33,18 +38,12 @@ def _load_t8():
     if _T8_IMPORT_ERROR is not None:
         return None
     try:
-        t8_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "comfyui-minimax-h3-audio-T8",
-        )
-        if t8_dir not in sys.path:
-            sys.path.insert(0, t8_dir)
+        # 直接从插件内置的 vendored h3_t8 包导入
         from h3_t8 import sol_engine_h3_super_advanced as _se
         _T8 = _se
     except Exception as e:
         _T8_IMPORT_ERROR = e
-        print(f"[BSAI-Sol-H3] SolEngine 旁支: T8mars 包导入失败({e}); "
-              f"请确认 custom_nodes/comfyui-minimax-h3-audio-T8 已安装", flush=True)
+        print(f"[BSAI-Sol-H3] SolEngine: h3_t8 包导入失败({e})", flush=True)
         return None
     return _T8
 

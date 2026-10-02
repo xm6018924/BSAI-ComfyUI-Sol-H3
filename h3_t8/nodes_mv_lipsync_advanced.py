@@ -1,0 +1,737 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import folder_paths
+from comfy_api.latest import InputImpl, io, ui
+
+from .mv_lipsync_advanced import (
+    MV_PROMPT_PLAN_TYPE,
+    MV_SCENE_PLAN_TYPE,
+    MV_VOCAL_LOCK_PROMPT_PLAN_TYPE,
+    build_mv_prompt_plan,
+    build_mv_scene_plan,
+    build_mv_vocal_lock_scene_plan,
+    build_mv_vocal_lock_prompt_plan,
+    build_mv_vocal_lock_visual_prompt_plan,
+    run_local_mv_in_node_loop,
+    run_local_mv_vocal_lock_in_node_loop,
+    run_local_mv_vocal_lock_visual_in_node_loop,
+)
+from .prompt_relay_events_advanced import PROMPT_RELAY_EVENTS_TYPE
+from .sampling import (
+    DEFAULT_SAMPLER_NAME,
+    DEFAULT_SCHEDULER_NAME,
+    SAMPLER_OPTIONS,
+    SCHEDULER_OPTIONS,
+)
+
+
+CATEGORY = "T8/MiniMax H3/MV & Lip Sync/Experimental"
+MVScenePlanIO = io.Custom(MV_SCENE_PLAN_TYPE)
+MVPromptPlanIO = io.Custom(MV_PROMPT_PLAN_TYPE)
+MVVocalLockPromptPlanIO = io.Custom(MV_VOCAL_LOCK_PROMPT_PLAN_TYPE)
+PromptRelayEventsIO = io.Custom(PROMPT_RELAY_EVENTS_TYPE)
+
+
+def _preview_video(path_value: str):
+    path = Path(path_value).resolve()
+    output_root = Path(folder_paths.get_output_directory()).resolve()
+    if output_root not in path.parents:
+        raise ValueError("Local MV preview is outside the ComfyUI output directory")
+    relative = path.relative_to(output_root)
+    saved = ui.SavedResult(relative.name, relative.parent.as_posix(), io.FolderType.output)
+    return InputImpl.VideoFromFile(str(path)), ui.PreviewVideo([saved])
+
+
+class MiniMaxH3MVVocalScenePlannerT8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3MVVocalScenePlannerT8Advanced",
+            display_name=(
+                "MiniMax H3 MV Vocal Scene Planner / 本地歌曲分镜 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Analyzes local AUDIO with deterministic CPU tensor math and chooses 5–10s "
+                "scene boundaries before generation. A local vocal stem is optional. No remote "
+                "LLM, TTS, music service or external API is called."
+            ),
+            category=CATEGORY,
+            inputs=[
+                io.Audio.Input("full_song", tooltip="最终成片使用的完整原曲。"),
+                io.Float.Input(
+                    "min_scene_seconds", default=5.0, min=1.0, max=None, step=0.1
+                ),
+                io.Float.Input(
+                    "target_scene_seconds", default=7.0, min=1.0, max=None, step=0.1
+                ),
+                io.Float.Input(
+                    "max_scene_seconds", default=10.0, min=1.0, max=None, step=0.1
+                ),
+                io.Int.Input(
+                    "analysis_hop_ms",
+                    default=100,
+                    min=20,
+                    max=500,
+                    step=10,
+                    advanced=True,
+                ),
+                io.Combo.Input(
+                    "vocal_policy",
+                    options=["assume_vocal", "energy_proxy", "vocal_stem_required"],
+                    default="assume_vocal",
+                    tooltip=(
+                        "没有人声干声时推荐 assume_vocal；energy_proxy 仅按能量估计；"
+                        "vocal_stem_required 要求连接本地干声。"
+                    ),
+                ),
+                io.String.Input(
+                    "manual_boundaries_json",
+                    default="",
+                    multiline=True,
+                    advanced=True,
+                    tooltip='可选秒数列表，例如 [5.2, 11.8]；留空自动分析。',
+                ),
+                io.Audio.Input("vocal_stem", optional=True, tooltip="可选的本地人声干声。"),
+            ],
+            outputs=[
+                MVScenePlanIO.Output("scene_plan"),
+                io.Int.Output("scene_count"),
+                io.Float.Output("duration_seconds"),
+                io.String.Output("timeline_json"),
+                io.String.Output("report_json"),
+            ],
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        return io.NodeOutput(*build_mv_scene_plan(**kwargs))
+
+
+class MiniMaxH3MVRef2VAPromptCompilerT8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3MVRef2VAPromptCompilerT8Advanced",
+            display_name=(
+                "MiniMax H3 MV Ref2VA Prompt Compiler / 本地口型分镜提示词 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Deterministically compiles one six-section Ref2VA prompt per local scene. "
+                "It uses <Picture 1>/<Audio 1>, never guesses lyrics and also exposes typed "
+                "Prompt Relay events. No LLM or external API is used."
+            ),
+            category=CATEGORY,
+            inputs=[
+                MVScenePlanIO.Input("scene_plan"),
+                io.String.Input(
+                    "global_creative_prompt",
+                    default=(
+                        "A singer performs through a coherent cinematic music video with "
+                        "natural expression and intentional scene changes."
+                    ),
+                    multiline=True,
+                    dynamic_prompts=True,
+                ),
+                io.String.Input(
+                    "performer_description",
+                    default="the same lead performer shown in the reference picture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "visual_style",
+                    default="cinematic music video, natural skin, realistic light and texture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "camera_pattern",
+                    default=(
+                        "stable medium close-up with subtle handheld movement\n"
+                        "smooth lateral tracking medium shot\n"
+                        "restrained slow push-in with a stable background"
+                    ),
+                    multiline=True,
+                    tooltip="每行或每个 | 一种镜头，按场景循环使用。",
+                ),
+                io.String.Input(
+                    "non_vocal_action",
+                    default="keeps the mouth naturally closed and moves with the rhythm",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "exact_lyrics_json",
+                    default="",
+                    multiline=True,
+                    advanced=True,
+                    tooltip=(
+                        "可选：按场景提供精确歌词字符串列表。留空时绝不猜歌词，也不生成字幕。"
+                    ),
+                ),
+            ],
+            outputs=[
+                MVPromptPlanIO.Output("mv_prompt_plan"),
+                io.String.Output("segment_prompts_json"),
+                PromptRelayEventsIO.Output("prompt_relay_events"),
+                io.String.Output("prompt_preview"),
+                io.String.Output("report_json"),
+            ],
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        return io.NodeOutput(*build_mv_prompt_plan(**kwargs))
+
+
+class MiniMaxH3LocalMVInNodeRendererT8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3LocalMVInNodeRendererT8Advanced",
+            display_name=(
+                "MiniMax H3 Local MV In-Node Renderer / 全本地MV内循环生成 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Generates every Ref2VA scene serially through the connected local H3 MODEL, "
+                "atomically resumes accepted scenes, assembles video with bounded memory and "
+                "muxes the original full song once. It never submits ComfyUI /prompt HTTP jobs "
+                "and never calls a remote video, LLM, TTS or music API."
+            ),
+            category=CATEGORY,
+            inputs=[
+                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
+                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Vae.Input("video_vae"),
+                io.Vae.Input("audio_vae"),
+                io.Image.Input("reference_image", tooltip="歌手/人物身份参考图。"),
+                io.Audio.Input("full_song", tooltip="驱动表演并最终一次性混入成片的原曲。"),
+                MVPromptPlanIO.Input("mv_prompt_plan"),
+                io.String.Input("chain_id", default="my_h3_local_mv"),
+                io.Int.Input(
+                    "width",
+                    default=1024,
+                    min=32,
+                    max=16384,
+                    step=32,
+                    tooltip="官方 Ref2V Turbo v0.1 验证尺寸；需要其他画幅时再显式修改。",
+                ),
+                io.Int.Input("height", default=768, min=32, max=16384, step=32),
+                io.Int.Input("base_seed", default=123456789, min=0, max=0xFFFFFFFFFFFFFFFF),
+                io.Int.Input("steps", default=8, min=1, max=1000),
+                io.Float.Input(
+                    "shift_video",
+                    default=6.0,
+                    min=0.01,
+                    max=100.0,
+                    step=0.01,
+                    advanced=True,
+                ),
+                io.Float.Input(
+                    "shift_audio",
+                    default=3.0,
+                    min=0.01,
+                    max=100.0,
+                    step=0.01,
+                    advanced=True,
+                ),
+                io.Combo.Input(
+                    "sampler_name",
+                    options=SAMPLER_OPTIONS,
+                    default=DEFAULT_SAMPLER_NAME,
+                ),
+                io.Combo.Input(
+                    "scheduler",
+                    options=SCHEDULER_OPTIONS,
+                    default=DEFAULT_SCHEDULER_NAME,
+                ),
+                io.Boolean.Input("resume_existing", default=True),
+                io.String.Input("filename_prefix", default="H3_Local_MV"),
+                io.Combo.Input("bit_depth", options=[8, 10], default=8, advanced=True),
+                io.Int.Input("crf", default=18, min=0, max=51, advanced=True),
+                io.String.Input(
+                    "model_id",
+                    default="user-selected-local-h3",
+                    advanced=True,
+                    tooltip="只写入审计报告，不校验文件名、大小或哈希。",
+                ),
+            ],
+            outputs=[
+                io.Video.Output("video"),
+                io.String.Output("video_path"),
+                io.String.Output("manifest_path"),
+                io.Int.Output("completed_scenes"),
+                io.String.Output("status"),
+                io.String.Output("report_json"),
+            ],
+            is_output_node=True,
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        video_path, manifest_path, completed, status, report = run_local_mv_in_node_loop(
+            **kwargs
+        )
+        video, preview = _preview_video(video_path)
+        return io.NodeOutput(
+            video,
+            video_path,
+            manifest_path,
+            completed,
+            status,
+            report,
+            ui=preview,
+        )
+
+
+MV_LIPSYNC_ADVANCED_NODE_CLASSES = [
+    MiniMaxH3MVVocalScenePlannerT8Advanced,
+    MiniMaxH3MVRef2VAPromptCompilerT8Advanced,
+    MiniMaxH3LocalMVInNodeRendererT8Advanced,
+]
+
+
+class MiniMaxH3MVVocalLockScenePlannerV2T8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3MVVocalLockScenePlannerV2T8Advanced",
+            display_name=(
+                "MiniMax H3 MV Vocal Lock Scene Planner V2 / 独立人声分镜 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Requires full_song and a timeline-aligned isolated vocal_lock_audio. It uses "
+                "local CPU energy analysis for boundaries and vocal-active intervals, without "
+                "transcription, remote separation, an LLM, or any external API."
+            ),
+            category=CATEGORY,
+            inputs=[
+                io.Audio.Input("full_song", tooltip="最终成片使用的完整原曲。"),
+                io.Audio.Input(
+                    "vocal_lock_audio",
+                    tooltip="必需：与原曲同起点、同时间线的本地隔离人声或清晰对白。",
+                ),
+                io.Float.Input(
+                    "min_scene_seconds", default=5.0, min=1.0, max=None, step=0.1
+                ),
+                io.Float.Input(
+                    "target_scene_seconds", default=7.0, min=1.0, max=None, step=0.1
+                ),
+                io.Float.Input(
+                    "max_scene_seconds", default=10.0, min=1.0, max=None, step=0.1
+                ),
+                io.Int.Input(
+                    "analysis_hop_ms",
+                    default=50,
+                    min=20,
+                    max=500,
+                    step=10,
+                    advanced=True,
+                ),
+                io.Float.Input(
+                    "vocal_active_ratio",
+                    default=0.12,
+                    min=0.0,
+                    max=1.0,
+                    step=0.01,
+                    advanced=True,
+                    tooltip="场景内高于本地人声能量门的最小时间比例。",
+                ),
+                io.String.Input(
+                    "manual_boundaries_json",
+                    default="",
+                    multiline=True,
+                    advanced=True,
+                    tooltip='可选秒数列表，例如 [5.2, 11.8]；留空自动分析。',
+                ),
+            ],
+            outputs=[
+                MVScenePlanIO.Output("scene_plan"),
+                io.Int.Output("scene_count"),
+                io.Float.Output("duration_seconds"),
+                io.String.Output("timeline_json"),
+                io.String.Output("report_json"),
+            ],
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        return io.NodeOutput(*build_mv_vocal_lock_scene_plan(**kwargs))
+
+
+class MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced",
+            display_name=(
+                "MiniMax H3 MV Vocal Lock Prompt Compiler V2 / 官方六段式口型提示词 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Compiles the official six-section Ref2VA structure with <Subject 1> from "
+                "<Picture 1>, isolated <Audio 1> reuse, fully_preserved/fully_copy markers, "
+                "and mandatory visible-mouth performance framing. It is deterministic and local."
+            ),
+            category=CATEGORY,
+            inputs=[
+                MVScenePlanIO.Input("scene_plan"),
+                io.String.Input(
+                    "global_creative_prompt",
+                    default=(
+                        "A coherent cinematic performance focused on the same lead performer, "
+                        "with natural expression and restrained motion."
+                    ),
+                    multiline=True,
+                    dynamic_prompts=True,
+                ),
+                io.String.Input(
+                    "performer_description",
+                    default="the same lead performer shown in the reference picture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "visual_style",
+                    default="cinematic realism, natural skin, realistic light and texture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "camera_pattern",
+                    default=(
+                        "locked-off static camera with stable framing, no camera movement, "
+                        "and continuous mouth visibility"
+                    ),
+                    multiline=True,
+                    tooltip=(
+                        "每行或每个 | 一种镜头方案。默认锁定机位以减少人物轮廓拖影；显式改为推拉、"
+                        "手持或横移会提高时域重影风险。V2仍强制中近景、正面或3/4脸。"
+                    ),
+                ),
+                io.Combo.Input(
+                    "vocal_content_type",
+                    options=["singing", "spoken_dialogue"],
+                    default="singing",
+                ),
+                io.String.Input("vocal_language", default="English", advanced=True),
+                io.String.Input(
+                    "exact_vocal_text_json",
+                    default="",
+                    multiline=True,
+                    advanced=True,
+                    tooltip=(
+                        "可选：按场景提供精确歌词/对白字符串列表；只有这里的原文会进入<d>，留空绝不猜词。"
+                    ),
+                ),
+                io.String.Input(
+                    "non_vocal_action",
+                    default="keeps the mouth naturally closed and breathes with the rhythm",
+                    multiline=True,
+                    advanced=True,
+                ),
+            ],
+            outputs=[
+                MVVocalLockPromptPlanIO.Output("mv_vocal_lock_prompt_plan"),
+                io.String.Output("segment_prompts_json"),
+                PromptRelayEventsIO.Output("prompt_relay_events"),
+                io.String.Output("prompt_preview"),
+                io.String.Output("report_json"),
+            ],
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        return io.NodeOutput(*build_mv_vocal_lock_prompt_plan(**kwargs))
+
+
+class MiniMaxH3LocalMVVocalLockRendererV2T8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3LocalMVVocalLockRendererV2T8Advanced",
+            display_name=(
+                "MiniMax H3 Local MV Vocal Lock Renderer V2 / 独立人声锁定生成 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Uses the required isolated vocal_lock_audio for each local H3 Ref2VA lock_source "
+                "window, samples strictly serially through the connected MODEL, and reserves "
+                "full_song for one final delivery mux. No HTTP prompt queue or external API is used."
+            ),
+            category=CATEGORY,
+            inputs=[
+                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
+                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Vae.Input("video_vae"),
+                io.Vae.Input("audio_vae"),
+                io.Image.Input("reference_image", tooltip="歌手/说话人物的身份参考图。"),
+                io.Audio.Input("full_song", tooltip="只在最终交付时一次性混入的完整原曲。"),
+                io.Audio.Input(
+                    "vocal_lock_audio",
+                    tooltip="必需：与full_song同时间线的本地隔离人声/清晰对白，逐场景直接驱动H3。",
+                ),
+                MVVocalLockPromptPlanIO.Input("mv_vocal_lock_prompt_plan"),
+                io.String.Input("chain_id", default="my_h3_local_mv_vocal_lock_v2"),
+                io.Int.Input("width", default=1056, min=32, max=16384, step=32),
+                io.Int.Input("height", default=608, min=32, max=16384, step=32),
+                io.Int.Input("base_seed", default=123456789, min=0, max=0xFFFFFFFFFFFFFFFF),
+                io.Int.Input("steps", default=8, min=1, max=1000),
+                io.Float.Input(
+                    "shift_video",
+                    default=6.0,
+                    min=0.01,
+                    max=100.0,
+                    step=0.01,
+                    advanced=True,
+                ),
+                io.Float.Input(
+                    "shift_audio",
+                    default=3.0,
+                    min=0.01,
+                    max=100.0,
+                    step=0.01,
+                    advanced=True,
+                ),
+                io.Combo.Input(
+                    "sampler_name",
+                    options=SAMPLER_OPTIONS,
+                    default=DEFAULT_SAMPLER_NAME,
+                ),
+                io.Combo.Input(
+                    "scheduler",
+                    options=SCHEDULER_OPTIONS,
+                    default=DEFAULT_SCHEDULER_NAME,
+                ),
+                io.Boolean.Input("resume_existing", default=True),
+                io.String.Input("filename_prefix", default="H3_Local_MV_VocalLock_V2"),
+                io.Combo.Input("bit_depth", options=[8, 10], default=8, advanced=True),
+                io.Int.Input("crf", default=18, min=0, max=51, advanced=True),
+                io.String.Input(
+                    "model_id",
+                    default="user-selected-local-h3-ref2va-vocal-lock",
+                    advanced=True,
+                    tooltip="只写入审计报告，不校验模型文件名、大小或哈希。",
+                ),
+            ],
+            outputs=[
+                io.Video.Output("video"),
+                io.String.Output("video_path"),
+                io.String.Output("manifest_path"),
+                io.Int.Output("completed_scenes"),
+                io.String.Output("status"),
+                io.String.Output("report_json"),
+            ],
+            is_output_node=True,
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        video_path, manifest_path, completed, status, report = (
+            run_local_mv_vocal_lock_in_node_loop(**kwargs)
+        )
+        video, preview = _preview_video(video_path)
+        return io.NodeOutput(
+            video,
+            video_path,
+            manifest_path,
+            completed,
+            status,
+            report,
+            ui=preview,
+        )
+
+
+MV_LIPSYNC_V2_ADVANCED_NODE_CLASSES = [
+    MiniMaxH3MVVocalLockScenePlannerV2T8Advanced,
+    MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced,
+    MiniMaxH3LocalMVVocalLockRendererV2T8Advanced,
+]
+
+
+class MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced",
+            display_name=(
+                "MiniMax H3 MV Vocal Lock Visual Director V3 / 单人物逐镜头导演 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Compiles one explicit six-section Ref2VA shot per scene with an exact one-person, "
+                "one-face contract that forbids mirrors, projections, screens, posters, duplicate "
+                "faces, background people and visible props. It is append-only and leaves V2 unchanged."
+            ),
+            category=CATEGORY,
+            inputs=[
+                MVScenePlanIO.Input("scene_plan"),
+                io.String.Input(
+                    "global_creative_prompt",
+                    default=(
+                        "A coherent cinematic performance focused on the same lead performer, "
+                        "with natural expression and restrained motion."
+                    ),
+                    multiline=True,
+                    dynamic_prompts=True,
+                ),
+                io.String.Input(
+                    "performer_description",
+                    default="the same lead performer shown in the reference picture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "visual_style",
+                    default="cinematic realism, natural skin, realistic light and texture",
+                    multiline=True,
+                ),
+                io.String.Input(
+                    "scene_directions_json",
+                    default="",
+                    multiline=True,
+                    tooltip=(
+                        "可选：必须与scene_count等长，每项为camera/lighting/performance/emotion对象。"
+                        "留空使用安全棚拍弧线；冲突的镜像、投影、海报、屏幕、背景人物和道具词会拒绝。"
+                    ),
+                ),
+                io.Combo.Input(
+                    "vocal_content_type",
+                    options=["singing", "spoken_dialogue"],
+                    default="singing",
+                ),
+                io.String.Input("vocal_language", default="English", advanced=True),
+                io.String.Input(
+                    "exact_vocal_text_json",
+                    default="",
+                    multiline=True,
+                    advanced=True,
+                    tooltip="可选：按场景提供精确歌词/对白；留空绝不猜词。",
+                ),
+                io.String.Input(
+                    "non_vocal_action",
+                    default="keeps the mouth naturally closed and breathes with the rhythm",
+                    multiline=True,
+                    advanced=True,
+                ),
+            ],
+            outputs=[
+                MVVocalLockPromptPlanIO.Output("mv_vocal_lock_prompt_plan"),
+                io.String.Output("segment_prompts_json"),
+                PromptRelayEventsIO.Output("prompt_relay_events"),
+                io.String.Output("prompt_preview"),
+                io.String.Output("report_json"),
+            ],
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        return io.NodeOutput(*build_mv_vocal_lock_visual_prompt_plan(**kwargs))
+
+
+class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced",
+            display_name=(
+                "MiniMax H3 Local MV Vocal Lock Visual Renderer V3 / 单人物视觉合同生成 "
+                "(Advanced EXP/T8)"
+            ),
+            description=(
+                "Runs only V3 visual-director prompt plans through the connected local H3 MODEL, "
+                "using an independent resume contract and preserving full_song for one final mux."
+            ),
+            category=CATEGORY,
+            inputs=[
+                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
+                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP，可接前缀缓存包装器。"),
+                io.Vae.Input("video_vae"),
+                io.Vae.Input("audio_vae"),
+                io.Image.Input("reference_image", tooltip="正面或3/4脸的清晰人物身份参考图。"),
+                io.Audio.Input("full_song", tooltip="只在最终交付时一次性混入的完整原曲。"),
+                io.Audio.Input(
+                    "vocal_lock_audio",
+                    tooltip="与full_song同时间线的人声/对白，逐场景直接驱动H3。",
+                ),
+                MVVocalLockPromptPlanIO.Input("mv_vocal_lock_prompt_plan"),
+                io.String.Input("chain_id", default="my_h3_local_mv_vocal_lock_v3"),
+                io.Int.Input("width", default=1056, min=32, max=16384, step=32),
+                io.Int.Input("height", default=608, min=32, max=16384, step=32),
+                io.Int.Input("base_seed", default=123456789, min=0, max=0xFFFFFFFFFFFFFFFF),
+                io.Int.Input(
+                    "steps",
+                    default=4,
+                    min=1,
+                    max=1000,
+                    tooltip="官方 Ref2V Turbo v0.1 使用 4 NFE；不要把该蒸馏 LoRA 当作 8 步档运行。",
+                ),
+                io.Float.Input(
+                    "shift_video",
+                    default=12.0,
+                    min=0.01,
+                    max=100.0,
+                    step=0.01,
+                    advanced=True,
+                    tooltip="官方 Ref2VA Turbo4 视频 shift。",
+                ),
+                io.Float.Input(
+                    "shift_audio", default=3.0, min=0.01, max=100.0, step=0.01, advanced=True
+                ),
+                io.Combo.Input(
+                    "sampler_name", options=SAMPLER_OPTIONS, default="euler"
+                ),
+                io.Combo.Input(
+                    "scheduler", options=SCHEDULER_OPTIONS, default="simple"
+                ),
+                io.Boolean.Input("resume_existing", default=True),
+                io.String.Input("filename_prefix", default="H3_Local_MV_VocalLock_V3"),
+                io.Combo.Input("bit_depth", options=[8, 10], default=8, advanced=True),
+                io.Int.Input("crf", default=18, min=0, max=51, advanced=True),
+                io.String.Input(
+                    "model_id",
+                    default="minimax_h3_ref2va+official_ref2v_turbo4_v0.1",
+                    advanced=True,
+                    tooltip="只写入审计报告，不校验模型文件名、大小或哈希。",
+                ),
+            ],
+            outputs=[
+                io.Video.Output("video"),
+                io.String.Output("video_path"),
+                io.String.Output("manifest_path"),
+                io.Int.Output("completed_scenes"),
+                io.String.Output("status"),
+                io.String.Output("report_json"),
+            ],
+            is_output_node=True,
+            is_experimental=True,
+        )
+
+    @classmethod
+    def execute(cls, **kwargs):
+        video_path, manifest_path, completed, status, report = (
+            run_local_mv_vocal_lock_visual_in_node_loop(**kwargs)
+        )
+        video, preview = _preview_video(video_path)
+        return io.NodeOutput(
+            video,
+            video_path,
+            manifest_path,
+            completed,
+            status,
+            report,
+            ui=preview,
+        )
+
+
+MV_LIPSYNC_V3_ADVANCED_NODE_CLASSES = [
+    MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced,
+    MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced,
+]
