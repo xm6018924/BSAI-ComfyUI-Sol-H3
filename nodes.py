@@ -48,6 +48,26 @@ try:
 except Exception:
     folder_paths = None
 
+# ==== BSAI 插件协同 SDK：加载即自动注册（失败不拖垮插件） ====
+# 说明：本顶层文件为模型加载器/Info/Latent对齐节点；GPU 去噪循环在下游 ComfyUI
+# SamplerCustomAdvanced 与各子模块，本文件无独立耗时推理循环，按最小安全原则仅 register。
+try:
+    import sys as _bsai_sys, os as _bsai_os
+    _BSAI_ORCH_DIR = _bsai_os.path.join(
+        _bsai_os.path.dirname(_bsai_os.path.abspath(__file__)),
+        "..", "BSAI-ComfyUI-Orchestrator")
+    if _bsai_os.path.isdir(_BSAI_ORCH_DIR) and _BSAI_ORCH_DIR not in _bsai_sys.path:
+        _bsai_sys.path.insert(0, _BSAI_ORCH_DIR)
+    from bsai_orch_client import BSAIOrch  # noqa: E402
+    BSAIOrch.register(
+        name="BSAI-Sol-H3",
+        kind="sampling",
+        hardware=["cuda"],
+    )
+except Exception as _bsai_e:  # 注册失败不得拖垮插件
+    print(f"[BSAI SDK] BSAI-Sol-H3 注册失败(忽略): {_bsai_e}")
+# ==== BSAI SDK 块结束 ====
+
 # 可选: 3D latent upscaler 模型支持(Comfyui_Minimax_h3_latent_Upscaler 插件)
 _UPSCALER_MOD = None
 try:
@@ -300,6 +320,13 @@ class BSAI_SolH3_Loader:
                 "lora_name": ((_loras if _loras else ["FastH3-4step-LoRA.safetensors"]),
                               {"default": "FastH3-4step-LoRA.safetensors"}),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
+                # ---- v2.8: NVIDIA Sol-H3 论文 §3.4 安全轨 (追加末尾, 保旧工作流对齐) ----
+                # tau 随采样进度在 1.0→1.5 区间线性递增 (早期高噪声步保守保
+                # 全局构图, 后期低噪声步激进提速), 官方实测对长视频更稳。
+                "sol_tau_ramp": ("BOOLEAN", {"default": True}),
+                # 官方: 前两个 transformer block 全程 dense——全局结构尚在成形
+                # 时引入的误差会持续到后续层。与手动 dense_blocks 自动合并。
+                "dense_first_blocks": ("INT", {"default": 2, "min": 0, "max": 8}),
             }
         }
 
@@ -315,6 +342,7 @@ class BSAI_SolH3_Loader:
              min_tokens, sol_tau, start_percent, end_percent,
              morton, morton_curve, centroid_tail, routed_cap_percent,
              reuse_qkv_memory, verbose, dense_blocks, tau_profile,
+             sol_tau_ramp=True, dense_first_blocks=2,
              lora_name="FastH3-4step-LoRA.safetensors", lora_strength=1.0):
         from comfy.sd import load_diffusion_model
 
@@ -399,6 +427,12 @@ class BSAI_SolH3_Loader:
         if sol_attn and sink_conditioning != "off":
             try:
                 sam = _load_sol_attn_module()
+                # v2.8: 官方 §3.4 安全轨 —— 前 N 层 block 强制 dense, 与用户
+                # 手写 dense_blocks 合并(逗号拼接, parse_blocks 两种语法都吃)。
+                _db = (dense_blocks or "").strip()
+                if dense_first_blocks and dense_first_blocks > 0:
+                    _pre = f"0-{dense_first_blocks - 1}"
+                    _db = f"{_pre},{_db}" if _db else _pre
                 out = sam._apply_patch(
                     model,
                     tau=sol_tau,
@@ -408,12 +442,13 @@ class BSAI_SolH3_Loader:
                     sink_conditioning=sink_conditioning,
                     morton=morton,
                     morton_curve=morton_curve,
-                    dense_blocks=dense_blocks,
+                    dense_blocks=_db,
                     verbose=verbose,
                     tau_profile=tau_profile,
                     routed_cap_percent=routed_cap_percent,
                     centroid_tail=centroid_tail,
-                    reuse_qkv_memory=reuse_qkv_memory)
+                    reuse_qkv_memory=reuse_qkv_memory,
+                    tau_ramp=(min(1.0, sol_tau), max(1.5, sol_tau)) if sol_tau_ramp else None)
                 # _apply_patch 返回 clone 后的模型
                 if hasattr(out, "result") and out.result:
                     model = out.result[0]
@@ -422,7 +457,9 @@ class BSAI_SolH3_Loader:
                 sol_attn_state = "ON"
                 print(f"[BSAI-Sol-H3] Sol-Attn已安装: tau={sol_tau:.1f} "
                       f"({start_percent:.0%}->{end_percent:.0%}) min_tokens={min_tokens} "
-                      f"sink={sink_conditioning} morton={morton} (新API: sink_blocks/tail)", flush=True)
+                      f"sink={sink_conditioning} morton={morton} (新API: sink_blocks/tail) "
+                      f"ramp={'%.1f→%.1f' % (min(1.0, sol_tau), max(1.5, sol_tau)) if sol_tau_ramp else 'off'} "
+                      f"dense_first={dense_first_blocks}", flush=True)
             except Exception as e:
                 print(f"[BSAI-Sol-H3] Sol-Attn安装失败(回退Dense): {e}", flush=True)
         elif sol_attn:

@@ -308,6 +308,12 @@ Example workflow: `workflows/SolH3_SolEngine_LTX25_Refine_V2.json`.
 
 ## 版本历史 / Changelog
 
+- **v2.8 (2026-10-04)**: **对齐 NVIDIA Sol-H3 RSI 论文 (arXiv 2609.35110) + SoL-Refiner (arXiv 2609.37969) 四项升级** ——
+  1. **SolEngine Refiner Stage-2 稀疏注意力默认启用** (`stage2_attention=sol_attn_sparse`)：v2.7 写死 `dense_reference`，把内置 h3_t8 已实现的官方 Stage-2 Sol-Attn 路径（论文 §3.4：3 步精修逐步 tau 1.0/1.25/1.5 + 第 0 层 dense 保护）关掉了；现默认接通，内核缺失自动回退 dense 并如实上报。
+  2. **Stage-2 条件缓存** (`stage2_cond_cache=ON`)：论文 §4.2 prompt caching 的 ComfyUI 落地——按 (clip文件, prompt, fps) 进程内缓存精修条件，同提示词复跑直接跳过 14.6GB Gemma 的"卸载→加载→编码→卸载"整段。官方 RTX 5090 实测里该编码器每请求重建占端到端 **34.1%** 耗时（13.568s 中前向仅 0.518s），24GB 显存本机收益更大，同时显著压低 Windows 提交内存峰值（os error 1455 诱因）。
+  3. **一步精修模式** (`schedule_mode=one_step_sol`)：复刻官方 Stage-2 首段 0.85→0 单步降噪，耗时≈3 步方案 1/3，定位 4K 快速预览。真·SoL-Refiner（HR持续训练+RL后训练+单步蒸馏，3840×2176）权重官方尚未公开，出正式 4K 建议 official_0p85(3步) + BSAI-H3-upscale-4K 超分。
+  4. **4K tiled 解码** (`decode_mode=auto`)：输出面积 >1.6MP（高于 1080p 档）自动走核心 `decode_tiled` 分块解码（论文 §3.6 并行瓦片同路线，与全量最大偏差约 0.02 视觉不可见），24GB 显存可跑满 3840×2176；`target_height` 上限同步放开到 2176。
+  5. **Loader 官方安全轨** (`sol_tau_ramp=ON` + `dense_first_blocks=2`)：一采稀疏注意力按采样进度线性递增 tau（早期高噪声步保守保全局构图，后期激进提速），且前 2 个 block 强制 dense（论文原话：全局结构成形期引入的误差会持续到后续层）；与手动 dense_blocks 自动合并。新增参数均追加在输入列表末尾，旧工作流加载不受影响。
 - **v2.7 (2026-09-29)**: **SolEngine 两级精修旁支** — 新增 BSAI_SolH3_SolEngine_Refiner 节点，封装 NVIDIA Sol Engine / H3 Super Acceleration Stage-2（H3 draft 像素 handoff → LTX-2.5 VAE encode → x2 latent 放大 → LTX-2.5 3步精修 → TAEHV 解码），保留 H3 原音频。原有三个节点完全不变，用户可选老路（H3 双采 Self-Lift）或新路（LTX-2.5 精修，5090 ~40s）。依赖 T8mars/comfyui-minimax-h3-audio-T8 + LTX-2.5 权重（本机已就位）。
 - **v2.6.1 (2026-09-12)**: docs(FAQ): Q7 扩展为双向 LoRA 兼容矩阵——新增反向案例（curve 模型如 fastvideo 4步极速 × 标准架构 LoRA `质感V0.4` → `shape '[96768, 8]' ... size 260112384`），修正原"质感V0.4 可任意挂官方栈"的误导；兼容性结论与电脑/磁盘无关。
 - **v2.6 (2026-09-12)**: **FastVideo LoRA 真正生效 / FastVideo LoRA fully works** — 内置 FastVideo→ComfyUI 结构转换（`transformer_blocks.attn.to_q/to_k/to_v`→`blocks.attn.qkv_proj` 块对角融合、`ff.net.0.proj/2`→`mlp.fc1/fc2`、`.diff/.diff_b`→量化感知 delta patch），并加形状过滤自动跳过 curve 版模型（adaln 8 维 / 无 time_embedder）不兼容的 patch；同时修复 FastVideo 导出 LoRA 文件 header 数据长度与实际文件不一致导致的 safetensors 0.8.0 严格校验失败（自动回退手动解析）。标准模型（adaln 全宽 2688）上 FastH3-4step-LoRA **258+85 全部生效**；curve 版模型（如 10Eros TURBO-hybrid）主体 208+80 生效、不兼容部分自动跳过。

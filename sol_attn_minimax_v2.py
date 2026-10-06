@@ -498,13 +498,29 @@ def make_override(tau=1.0, min_tokens=4096,
                   sigma_start=None, sigma_end=None, verbose=False,
                   sink_conditioning="exact_kv", dense_blocks=frozenset(),
                   tau_profile=None, previous=None, routed_cap_percent=0,
-                  centroid_tail=True, reuse_qkv_memory=False):
+                  centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None):
     """Build an optimized_attention_override callable.
 
     ``previous`` chains any override already installed on the model: every path
     that declines hands off to it first, falling through to ``func`` only if
     there is none.
+
+    ``tau_ramp=(lo,hi)`` (v2.8, NVIDIA Sol-H3 论文 §3.4): 官方观测"早期高噪声步
+    稀疏化对全局构图影响大, 后期低噪声步才该激进", 因此精修 3 步的 tau 递增为
+    1.0/1.25/1.5。这里按当前 sigma 在 [sigma_end, sigma_start] 区间线性插值:
+    早期(高sigma)取 lo(保守), 后期(低sigma)取 hi(激进)。tau_profile(逐块覆盖)
+    优先级更高, 二者不冲突。
     """
+
+    def _ramped_tau(base, sigma):
+        if tau_ramp is None or sigma is None:
+            return base
+        lo, hi = tau_ramp
+        if sigma_start is None or sigma_end is None or sigma_start <= sigma_end:
+            return base
+        t = (sigma_start - sigma) / (sigma_start - sigma_end)
+        t = min(max(t, 0.0), 1.0)
+        return lo + (hi - lo) * t
 
     def override(func, q, k, v, heads, mask=None, attn_precision=None,
                  skip_reshape=False, skip_output_reshape=False, **kwargs):
@@ -521,12 +537,23 @@ def make_override(tau=1.0, min_tokens=4096,
 
         # Depth gates: a block can be kept dense outright or given its own tau.
         block = None
-        if dense_blocks or tau_profile:
+        if dense_blocks or tau_profile or tau_ramp:
             block = kwargs.get("transformer_options", {}).get("sol_block")
         if block in dense_blocks:
             _stats["dense_block"] += 1
             return dense()
+        _cur_sigma = None
+        if tau_ramp is not None:
+            _sig = kwargs.get("transformer_options", {}).get("sigmas")
+            if _sig is not None:
+                try:
+                    _cur_sigma = float(_sig[0])
+                except Exception:
+                    _cur_sigma = None
         block_tau = tau_profile.get(block, tau) if tau_profile else tau
+        # 逐块覆盖优先: 仅该 block 没有 profile 自定义值时才应用进度 ramp
+        if block not in (tau_profile or {}):
+            block_tau = _ramped_tau(block_tau, _cur_sigma)
 
         # Sampling-percentage gate, so the paper's dense warm-up steps work.
         if sigma_start is not None or sigma_end is not None:
@@ -639,7 +666,7 @@ def _install_compose_hooks(model, attn_attr):
 def _apply_patch(model, *, tau, start_percent, end_percent, min_tokens,
                  sink_conditioning, morton, morton_curve, dense_blocks,
                  verbose, tau_profile, routed_cap_percent=0,
-                 centroid_tail=True, reuse_qkv_memory=False):
+                 centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None):
     diffusion_model = model.get_model_object("diffusion_model")
     is_h3 = hasattr(diffusion_model, "rope_freqs") and hasattr(diffusion_model, "_forward")
 
@@ -702,7 +729,8 @@ def _apply_patch(model, *, tau, start_percent, end_percent, min_tokens,
                       verbose=verbose, sink_conditioning=sink_conditioning,
                       dense_blocks=dense, tau_profile=profile, previous=previous,
                       routed_cap_percent=routed_cap_percent,
-                      centroid_tail=centroid_tail, reuse_qkv_memory=reuse_qkv_memory)
+                      centroid_tail=centroid_tail, reuse_qkv_memory=reuse_qkv_memory,
+                      tau_ramp=tau_ramp)
     if reorder:
         m.model_options["transformer_options"]["sol_morton"] = True
         m.model_options["transformer_options"]["sol_morton_curve"] = morton_curve
