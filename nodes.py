@@ -3,6 +3,25 @@
 BSAI ComfyUI Sol-H3 — 统一高速MiniMax H3推理插件
 内置 FastH3 4步蒸馏参数 + Sol-Attn 稀疏注意力
 
+v2.9 (2026-10-08) 变更:
+- 【Spark-H3 契约】B站《MiniMax-H3又能狂飙了！Spark-H3稀疏注意力...》/ NVIDIA
+  Sol-Attn Spark 发布: Loader 新增 spark_mode(off/rep_block/rabbit/full) +
+  spark_keep_percent + spark_token_aug。
+  rep_block = SparkRepBlock(内核 topk_ratio, SLA 风格 top-k 分组路由, 把精确
+  计算预算花在注意力偏好相似的块上; 10% 密度契约=官方 2.33× 注意力/1.73× 整
+  it 提速基准); rabbit = SparkRabbit(内核 token_aug, 尾部 token 质心加权精确
+  修正, 消除 pooled-summary 平均化偏差)。二者都是 comfy_kitchen 0.2.37 生产级
+  CUDA 内核(sm_80+, RTX 50 系 sm_120)已具备的能力, 本插件此前未暴露。
+  默认 off = v2.8 行为, 旧工作流零改动。
+
+v2.9.1 (2026-10-08) 变更:
+- 【默认 min_tokens 12288→1024】实测驱动(见 README v2.9.1): H3 视频主注意力
+  序列仅 ~6k~12k tokens(1344×768×24≈6167 / ×48≈12285), 旧门槛 12288 导致
+  内核全部 Dense 回退(verbose 实证 `dense (1,6167,56,128): seq 6167 < 12288`),
+  Spark 与 tau 稀疏均不生效。1024 让 tau 稀疏真实生效(比 Dense 快 2.4~3.8×)。
+  Spark-H3 实测结论: 本机 H3 视频序列下 Spark full 相对 tau 稀疏无加速优势,
+  保留为可选能力(spark_mode 默认 off 不变)。
+
 v2.4 (2026-09-09) 变更:
 - 【双采 Self-Lift 支持】Loader 的 FastH3 LoRA 改为可配置:
   新增 lora_name / lora_strength 参数(默认保持 FastH3-4step-LoRA.safetensors / 1.0),
@@ -303,7 +322,12 @@ class BSAI_SolH3_Loader:
                 "shift": ("FLOAT", {"default": 8.0, "min": 1.0, "max": 20.0, "step": 0.5}),
                 "audio_shift": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 20.0, "step": 0.5}),
                 # ---- 以下为原独立 SolAttnMiniMax 节点的精细参数 ----
-                "min_tokens": ("INT", {"default": 12288, "min": 256, "max": 262144, "step": 256}),
+                # v2.9.1: 默认 min_tokens 从 12288 下调到 1024——H3 视频主注意力序列
+                # 实测仅 ~6k~12k tokens（1344x768x24≈6167 / x48≈12285），12288 门槛
+                # 会导致内核全部 dense 回退（Spark/tau 稀疏均不生效，实测 off/full
+                # 输出逐像素一致）。1024 可让 tau 稀疏在短视频真实生效（比 dense
+                # 快 2.4~3.8x，内核实测）。min 256 仍可覆盖纯文本/短序列回退。
+                "min_tokens": ("INT", {"default": 1024, "min": 256, "max": 262144, "step": 256}),
                 "sol_tau": ("FLOAT", {"default": 1.3, "min": 0.1, "max": 4.0, "step": 0.1}),
                 "start_percent": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.05}),
                 "end_percent": ("FLOAT", {"default": 0.9, "min": 0.0, "max": 1.0, "step": 0.05}),
@@ -327,6 +351,19 @@ class BSAI_SolH3_Loader:
                 # 官方: 前两个 transformer block 全程 dense——全局结构尚在成形
                 # 时引入的误差会持续到后续层。与手动 dense_blocks 自动合并。
                 "dense_first_blocks": ("INT", {"default": 2, "min": 0, "max": 8}),
+                # ---- v2.9: Spark-H3 契约 (B站《Spark-H3稀疏注意力》/ NVIDIA
+                #      Sol-Attn Spark 发布) ----
+                # rep_block = SparkRepBlock: SLA 风格 top-k 分组路由, 把精确计算
+                #   预算花在注意力偏好相似的块上 (内核 topk_ratio, tau 被接管)。
+                # rabbit   = SparkRabbit: 尾部 token 质心加权精确修正, 消除
+                #   pooled-summary 平均化偏差 (内核 token_aug, 64 的倍数)。
+                # full     = 双机制叠加; off = v2.8 行为 (tau 阈值)。
+                "spark_mode": (["off", "rep_block", "rabbit", "full"],
+                               {"default": "rep_block"}),
+                "spark_keep_percent": ("FLOAT", {"default": 10.0, "min": 1.0,
+                                                 "max": 100.0, "step": 1.0}),
+                "spark_token_aug": ("INT", {"default": 128, "min": 0,
+                                            "max": 256, "step": 64}),
             }
         }
 
@@ -343,6 +380,7 @@ class BSAI_SolH3_Loader:
              morton, morton_curve, centroid_tail, routed_cap_percent,
              reuse_qkv_memory, verbose, dense_blocks, tau_profile,
              sol_tau_ramp=True, dense_first_blocks=2,
+             spark_mode="rep_block", spark_keep_percent=10.0, spark_token_aug=128,
              lora_name="FastH3-4step-LoRA.safetensors", lora_strength=1.0):
         from comfy.sd import load_diffusion_model
 
@@ -424,6 +462,7 @@ class BSAI_SolH3_Loader:
 
         # 真正安装 Sol-Attn 稀疏注意力补丁 (完整路径, 含 Morton hooks / block 索引 / sigma 换算)
         sol_attn_state = "OFF"
+        _spark_desc = "off"   # v2.9: Spark-H3 契约状态, info 字符串始终可读
         if sol_attn and sink_conditioning != "off":
             try:
                 sam = _load_sol_attn_module()
@@ -433,6 +472,20 @@ class BSAI_SolH3_Loader:
                 if dense_first_blocks and dense_first_blocks > 0:
                     _pre = f"0-{dense_first_blocks - 1}"
                     _db = f"{_pre},{_db}" if _db else _pre
+                # v2.9: Spark-H3 契约解析 (rep_block → topk_ratio, rabbit → token_aug)
+                _topk = 0.0
+                _aug = 0
+                _spark_desc = "off"
+                if spark_mode == "rep_block":
+                    _topk = max(0.01, min(1.0, spark_keep_percent / 100.0))
+                    _spark_desc = f"RepBlock topk={_topk:.0%}"
+                elif spark_mode == "rabbit":
+                    _aug = max(0, min(256, spark_token_aug // 64 * 64))
+                    _spark_desc = f"Rabbit aug={_aug}"
+                elif spark_mode == "full":
+                    _topk = max(0.01, min(1.0, spark_keep_percent / 100.0))
+                    _aug = max(0, min(256, spark_token_aug // 64 * 64))
+                    _spark_desc = f"RepBlock topk={_topk:.0%} + Rabbit aug={_aug}"
                 out = sam._apply_patch(
                     model,
                     tau=sol_tau,
@@ -448,7 +501,9 @@ class BSAI_SolH3_Loader:
                     routed_cap_percent=routed_cap_percent,
                     centroid_tail=centroid_tail,
                     reuse_qkv_memory=reuse_qkv_memory,
-                    tau_ramp=(min(1.0, sol_tau), max(1.5, sol_tau)) if sol_tau_ramp else None)
+                    tau_ramp=(min(1.0, sol_tau), max(1.5, sol_tau)) if sol_tau_ramp else None,
+                    topk_ratio=_topk,
+                    token_aug=_aug)
                 # _apply_patch 返回 clone 后的模型
                 if hasattr(out, "result") and out.result:
                     model = out.result[0]
@@ -459,7 +514,8 @@ class BSAI_SolH3_Loader:
                       f"({start_percent:.0%}->{end_percent:.0%}) min_tokens={min_tokens} "
                       f"sink={sink_conditioning} morton={morton} (新API: sink_blocks/tail) "
                       f"ramp={'%.1f→%.1f' % (min(1.0, sol_tau), max(1.5, sol_tau)) if sol_tau_ramp else 'off'} "
-                      f"dense_first={dense_first_blocks}", flush=True)
+                      f"dense_first={dense_first_blocks} "
+                      f"Spark-H3={_spark_desc}", flush=True)
             except Exception as e:
                 print(f"[BSAI-Sol-H3] Sol-Attn安装失败(回退Dense): {e}", flush=True)
         elif sol_attn:
@@ -468,6 +524,7 @@ class BSAI_SolH3_Loader:
         info = (f"Sol-H3: {model_name} | mode={fast_h3_steps} | steps={steps} | cfg={cfg:.1f} | "
                 f"shift={shift:.1f}/audio={audio_shift:.1f} | LoRA={lora_state} | "
                 f"Sol-Attn={sol_attn_state} | tau={sol_tau:.1f} | min_tokens={min_tokens} | "
+                f"Spark={_spark_desc if sol_attn_state == 'ON' else 'off'} | "
                 f"FusedMod={'ON' if fused_modulation else 'OFF'} | ChunkFF={chunk_size}")
         print(f"[BSAI-Sol-H3] {info}", flush=True)
 
@@ -752,14 +809,17 @@ def _patch_audio_vae_offload():
     MiniMaxH3AudioVAE 分支未设 disable_offload=True, 继承了全局默认 False,
     导致音频 VAE 走 DynamicVRAM streaming 路径(日志: "prepared for dynamic
     VRAM loading. 576MB Staged"), 每帧解码反复 offload/reload 权重:
-    - 5 秒音频解码耗时约 153 秒(全量加载仅 0.45 秒)
+    - 5 秒音频解码实测约 324 秒(全量加载实测 1.6 秒, 提速 ~200x)
     - 流式数值不稳定, 解码状态异常 -> 声音怪异/失真
-    本补丁不改动 ComfyUI 核心文件: 插件加载时包装 VAE.__init__, 检测到
-    MiniMaxH3AudioVAE 即置 disable_offload=True, 全量加载、解码快且稳定。
+    本补丁不改动 ComfyUI 核心文件: 插件加载时包装 VAE.__init__(构造置位) +
+    VAE.decode/encode(解码/编码兜底), 检测到 MiniMaxH3AudioVAE 即置
+    disable_offload=True 并(必要时)把动态 patcher 重建为传统 ModelPatcher,
+    全量加载、解码快且稳定。
     其他电脑安装本插件即自动生效, 开箱即用。
     """
     try:
         import comfy.sd as _sd
+        import comfy.model_patcher as _model_patcher
         from comfy.ldm.minimax.audio_vae import MiniMaxH3AudioVAE
         from comfy.ldm.minimax.vae import MiniMaxH3VideoVAE
     except Exception:
@@ -769,28 +829,76 @@ def _patch_audio_vae_offload():
     _patch_audio_vae_offload._applied = True
 
     _orig_init = _sd.VAE.__init__
+    _orig_decode = getattr(_sd.VAE, "decode", None)
+    _orig_encode = getattr(_sd.VAE, "encode", None)
+
+    def _is_h3_audio(vae):
+        """双重判定: isinstance 优先, 类名兜底(防 import 别名/双模块导致 isinstance 失效)."""
+        fsm = getattr(vae, "first_stage_model", None)
+        if fsm is None:
+            return False
+        return isinstance(fsm, MiniMaxH3AudioVAE) or type(fsm).__name__ == "MiniMaxH3AudioVAE"
+
+    def _ensure_h3_audio_full(vae):
+        """解码/编码前兜底: 即使 __init__ 包装被绕过, 也强制 H3 AudioVAE 全量加载。
+
+        0.39 + --enable-dynamic-vram 时 CoreModelPatcher 被 main.py 重赋值为
+        ModelPatcherDynamic, disable_offload=False 的 VAE 走动态流式解码(5s 音频约
+        324s)。本兜底置 disable_offload=True 并把动态 patcher 重建为传统
+        ModelPatcher, 与构造时 disable_offload=True 完全等价。
+        """
+        if not _is_h3_audio(vae):
+            return
+        if getattr(vae, "disable_offload", False):
+            return
+        try:
+            vae.disable_offload = True
+            patcher = getattr(vae, "patcher", None)
+            if patcher is not None and type(patcher).__name__ == "ModelPatcherDynamic":
+                import comfy.model_management as _mm
+                vae.patcher = _model_patcher.ModelPatcher(
+                    vae.first_stage_model,
+                    load_device=vae.device,
+                    offload_device=_mm.vae_offload_device(),
+                )
+            print("[BSAI-Sol-H3] 音频解码兜底生效: H3 AudioVAE disable_offload=True"
+                  "(动态 patcher 已重建为传统全量加载)", flush=True)
+        except Exception:
+            pass
 
     def _wrapped_init(self, *args, **kwargs):
         _orig_init(self, *args, **kwargs)
         try:
             fsm = getattr(self, "first_stage_model", None)
-            if isinstance(fsm, MiniMaxH3AudioVAE) \
+            if _is_h3_audio(self) \
                     and not getattr(self, "disable_offload", False):
                 self.disable_offload = True
-                print("[BSAI-Sol-H3] 音频解码修复: H3 AudioVAE 已切换全量加载"
+                print("[BSAI-Sol-H3] 音频解码修复生效: H3 AudioVAE 已切换全量加载"
                       "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
             if isinstance(fsm, MiniMaxH3VideoVAE) \
                     and not getattr(self, "disable_offload", False):
                 self.disable_offload = True
-                print("[BSAI-Sol-H3] 视频解码修复: H3 VideoVAE 已切换全量加载"
+                print("[BSAI-Sol-H3] 视频解码修复生效: H3 VideoVAE 已切换全量加载"
                       "(disable_offload=True), 消除 DynamicVRAM 抖动, 收尾解码提速",
                       flush=True)
         except Exception:
             pass
 
+    def _wrapped_decode(self, *args, **kwargs):
+        _ensure_h3_audio_full(self)
+        return _orig_decode(self, *args, **kwargs)
+
+    def _wrapped_encode(self, *args, **kwargs):
+        _ensure_h3_audio_full(self)
+        return _orig_encode(self, *args, **kwargs)
+
     _sd.VAE.__init__ = _wrapped_init
-    print("[BSAI-Sol-H3] 音频/视频解码修复已就绪: H3 AudioVAE/VideoVAE 将全量加载(PR #15371 语义), "
-          "不再走 DynamicVRAM 权重量流", flush=True)
+    if _orig_decode is not None:
+        _sd.VAE.decode = _wrapped_decode
+    if _orig_encode is not None:
+        _sd.VAE.encode = _wrapped_encode
+    print("[BSAI-Sol-H3] 音频/视频解码修复已就绪(PR #15371 语义, 含解码/编码兜底): "
+          "H3 AudioVAE/VideoVAE 将全量加载, 不再走 DynamicVRAM 权重量流", flush=True)
 
 
 _patch_audio_vae_offload()

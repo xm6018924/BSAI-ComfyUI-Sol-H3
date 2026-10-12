@@ -26,7 +26,7 @@
 ### 亮点 / Highlights
 - **一个节点替代多个优化节点**：模型加载、LoRA 挂载、Sol-Attn 稀疏注意力安装（含 Morton hooks / block 索引 / sigma 换算）全部在 `BSAI Sol-H3 Loader` 内完成。
 - **双采 Self-Lift 开箱即用**：`LatentUpscaleAlign` 不经过 VAE 编解码直接放大 latent（无画质损失），按 H3 官方 32px 步进对齐（避免边缘色条），可选 CONST 重加噪，音频默认锁定，输出可直接接 `SamplerCustomAdvanced + DisableNoise` 精修。
-- **音频问题根治**：内置音频修复（`audio_shift` 独立缩放 + H3 AudioVAE 全量加载补丁，对应官方 PR #15371），5 秒音频解码从约 153 秒降到约 0.45 秒，声音不再怪异。
+- **音频问题根治**：内置音频修复（`audio_shift` 独立缩放 + H3 AudioVAE 全量加载补丁，对应官方 PR #15371，含解码/编码兜底），5 秒音频解码从约 300+ 秒（0.39 DynamicVRAM 流式）降到约 1.6 秒，声音不再怪异。
 - **delta 权重（.diff/.diff_b）智能加载**：v2.5.4 起自动识别 delta 格式 LoRA，自动匹配模型参数 key 并反量化应用，兼容标准 LoRA 与直连 delta 两种格式。
 - **3D Latent Upscaler 支持**：可选神经网络语义放大（比 bilinear 插值保留更多细节），模型文件自动搜索 `models/latent_upscale_models/` 与 `models/h3_latent_upscalers/`。
 
@@ -126,7 +126,7 @@ VAELoader(audio VAE) ──> VAEDecodeAudio
 | 13 | cfg | 4.0 | 提示词引导强度 / CFG guidance |
 | 14 | shift | 8.0 | 视频流 flow matching 时间偏移（官方默认 12.0）<br>Video flow-matching shift (official default 12.0) |
 | 15 | **audio_shift** | 3.0 | 音频流独立时间偏移（官方默认 3.0；修音频怪异核心参数）<br>Audio shift — fixes weird audio |
-| 16 | **min_tokens** | 12288 | 序列长度阈值：低于此长度用 Dense（省显存/保质量）<br>Below this token count, attention stays dense |
+| 16 | **min_tokens** | 1024 | 序列长度阈值：低于此长度用 Dense（省显存/保质量）。**v2.9.1 起默认从 12288 下调到 1024**——H3 视频主注意力实测仅 ~6k~12k tokens（1344×768×24≈6167 / ×48≈12285），旧门槛会导致内核全部 Dense 回退、稀疏不生效；1024 让 tau 稀疏在短视频真实生效（内核实测比 Dense 快 2.4~3.8×）。<br>Below this token count, attention stays dense. v2.9.1 lowered default from 12288 → 1024 (H3 video main attention is only ~6k~12k tokens). |
 | 17 | **sol_tau** | 1.3 | Sol-Attn 稀疏强度（越大越稀疏、越省显存）<br>Sol-Attn sparsity strength |
 | 18 | **start_percent** | 0.2 | 稀疏生效起始采样比例（前 20% 步数 Dense 热身）<br>Sparse starts after 20% of steps (dense warmup) |
 | 19 | **end_percent** | 0.9 | 稀疏生效结束采样比例（最后 10% 步数 Dense 收尾）<br>Sparse ends at 90% (dense tail) |
@@ -138,8 +138,11 @@ VAELoader(audio VAE) ──> VAEDecodeAudio
 | 25 | **verbose** | OFF | Sol-Attn 详细日志 / Verbose logging |
 | 26 | **dense_blocks** | 空 | 强制全 Dense 的块索引，如 `0,1,2` / Force-dense block list |
 | 27 | **tau_profile** | 空 | 逐块 tau 覆盖，如 `0-4=2.0; 20-24=0.8`（分号/换行分隔）<br>Per-block tau overrides |
-| 28 | **lora_name** | FastH3-4step-LoRA.safetensors | 主 LoRA（双采一采可改 8 步 LoRA 文件名，权重约 0.75）<br>Main LoRA (use an 8-step LoRA at ~0.75 for first pass) |
-| 29 | **lora_strength** | 1.0 | 主 LoRA 强度（0=禁用 LoRA）<br>LoRA strength (0 = disable) |
+| 28 | **spark_mode** | off | **v2.9 Spark-H3 契约**：off / rep_block / rabbit / full。<br>rep_block=SparkRepBlock（SLA 风格 top-k 分组路由，把精确预算花在注意力偏好相似的块上）；rabbit=SparkRabbit（尾部 token 质心加权精确修正，消除 pooled-summary 平均化偏差）；full=双机制叠加。默认 off=v2.8 行为。<br>**v2.9 Spark-H3 contract**: off / rep_block / rabbit / full. |
+| 29 | **spark_keep_percent** | 10.0 | rep_block/full 时保留的 key-block 比例（%）：**10% 密度契约 = 视频官方基准（注意力 2.33× / 整 it 1.73×，PSNR 23.30dB 比 Veda 高 ~3dB）**。<br>Key-block fraction kept (%), 10% = official Spark benchmark. |
+| 30 | **spark_token_aug** | 128 | rabbit/full 时尾部 token 增强数（64 的倍数，0-256，自动向下取整到 64）。<br>Tail-token augmentation (multiple of 64). |
+| 31 | **lora_name** | FastH3-4step-LoRA.safetensors | 主 LoRA（双采一采可改 8 步 LoRA 文件名，权重约 0.75）<br>Main LoRA (use an 8-step LoRA at ~0.75 for first pass) |
+| 32 | **lora_strength** | 1.0 | 主 LoRA 强度（0=禁用 LoRA）<br>LoRA strength (0 = disable) |
 
 > **delta 权重说明 / Delta weights**: v2.5.4 起 `lora_name` 同时支持标准 LoRA（`lora_A`/`lora_B`）与直连 delta 权重（`.diff`/`.diff_b` 后缀，按模型 key 自动匹配反量化应用）。/ Since v2.5.4 both standard LoRA and raw delta weights (`.diff`/`.diff_b`) are auto-detected and applied.
 
@@ -223,7 +226,7 @@ VAELoader×2 (video VAE + audio VAE)
 > `comfy_kitchen` 过旧，请升级 ComfyUI / comfy_kitchen 到支持 `sink_blocks/sink_q/tail` 新 API 的版本。/ Upgrade comfy_kitchen.
 
 **Q3: 音频怪异或解码极慢？**
-> 检查 Loader 的 `audio_shift` 是否为默认 3.0；启动日志应有 `[BSAI-Sol-H3] 音频解码修复已就绪`（AudioVAE 全量加载补丁已生效），生成时无 `prepared for dynamic VRAM loading. 576MB Staged` 字样。/ Ensure `audio_shift=3.0`; the AudioVAE full-load patch is applied automatically.
+> 检查 Loader 的 `audio_shift` 是否为默认 3.0。**必须先重启 ComfyUI**（补丁在插件加载时生效）；启动日志应有 `[BSAI-Sol-H3] 音频/视频解码修复已就绪(PR #15371 语义, 含解码/编码兜底)`，生成时音频 VAE 应打印 `音频解码修复生效`（构造时）或 `音频解码兜底生效`（解码时），且**不再出现** `prepared for dynamic VRAM loading. 576MB Staged` 字样。若仍见 `576MB Staged`，说明进程加载的是旧版 nodes.py，请彻底重启（关闭所有 ComfyUI 窗口再启动）。/ Ensure `audio_shift=3.0` and **restart ComfyUI**; the AudioVAE full-load patch (with decode/encode fallback) is applied on plugin load. The audio VAE must print `音频解码修复生效`/`音频解码兜底生效` and must NOT log `prepared for dynamic VRAM loading. 576MB Staged`.
 
 **Q4: 双采出鬼影/重影？**
 > 放大方法改回 `bilinear`；二采 `denoise` 提到 0.5-0.6；一采步数 ≤8 且 LoRA 强度适当。/ Use bilinear upscale; raise second-pass denoise to 0.5-0.6.
@@ -308,6 +311,11 @@ Example workflow: `workflows/SolH3_SolEngine_LTX25_Refine_V2.json`.
 
 ## 版本历史 / Changelog
 
+- **v2.9.1 (2026-10-08)**: **默认 min_tokens 12288 → 1024**（实测驱动）—— 对 1344×768×24 H3 视频（主注意力仅 6167 tokens，×48 帧 12285 tokens）跑真实采样对比（off tau 路由 vs full Spark RepBlock 10%+Rabbit 128）发现：旧门槛下主注意力全部 Dense 回退（verbose 日志实证 `dense (1,6167,56,128): seq 6167 < 12288`），Spark 与 tau 稀疏均未生效（off/full 同种子输出逐像素一致 maxdiff=0.00）。下调到 1024 后稀疏真实生效（输出差异 PSNR 26~34dB/SSIM 0.94~0.96），且 tau 稀疏比 Dense 内核快 2.4~3.8×（RTX 5090 Laptop 实测）。**Spark-H3 结论**：参数透传保留为可选能力（`spark_mode` 默认 off 不变），实测在本机 H3 视频序列（6k~12k tokens）下 Spark full 相对 tau 稀疏无加速优势（48 帧反而慢 80%，内核级 topk+aug 比 tau 慢 1.8×）；官方 1.73× 提速基线是 dense/Veda，非 tau 稀疏。超长序列（数万 tokens）场景可对照实验。
+- **v2.9 (2026-10-08)**: **Spark-H3 契约**（B站《MiniMax-H3又能狂飙了！Spark-H3稀疏注意力让10秒768p视频提速1.73倍质量还更强》/ NVIDIA Sol-Attn Spark 发布）—— Loader 新增 `spark_mode`（off / rep_block / rabbit / full）+ `spark_keep_percent` + `spark_token_aug` 三参数：
+  1. **SparkRepBlock**（`spark_mode=rep_block`）：映射内核 `topk_ratio`——SLA 风格每 query-block top-k 分组路由，把精确计算预算花在注意力偏好相似的块上（sink 与对角块仍恒精确）。**10% 密度契约**（`spark_keep_percent=10`）= 视频官方基准：注意力 2.33×、整 it 1.73× 提速，PSNR 23.30dB（比 Veda 高近 3dB），且不改权重、显存占用不变。
+  2. **SparkRabbit**（`spark_mode=rabbit`）：映射内核 `token_aug`——尾部 token 按质心评分加权精确修正（每行额外精确关注高分未路由 token，其余尾部对质心精确而非按块池化），消除 pooled-summary 平均化偏差。
+  3. `full` = 双机制叠加；`off` = v2.8 行为（tau 阈值），旧工作流零改动。内核已由 comfy_kitchen 0.2.37 生产级 CUDA 内核提供（sm_80+，RTX 50 系 sm_120 专属路径），无需改模型权重。新增参数均追加在输入列表末尾。
 - **v2.8 (2026-10-04)**: **对齐 NVIDIA Sol-H3 RSI 论文 (arXiv 2609.35110) + SoL-Refiner (arXiv 2609.37969) 四项升级** ——
   1. **SolEngine Refiner Stage-2 稀疏注意力默认启用** (`stage2_attention=sol_attn_sparse`)：v2.7 写死 `dense_reference`，把内置 h3_t8 已实现的官方 Stage-2 Sol-Attn 路径（论文 §3.4：3 步精修逐步 tau 1.0/1.25/1.5 + 第 0 层 dense 保护）关掉了；现默认接通，内核缺失自动回退 dense 并如实上报。
   2. **Stage-2 条件缓存** (`stage2_cond_cache=ON`)：论文 §4.2 prompt caching 的 ComfyUI 落地——按 (clip文件, prompt, fps) 进程内缓存精修条件，同提示词复跑直接跳过 14.6GB Gemma 的"卸载→加载→编码→卸载"整段。官方 RTX 5090 实测里该编码器每请求重建占端到端 **34.1%** 耗时（13.568s 中前向仅 0.518s），24GB 显存本机收益更大，同时显著压低 Windows 提交内存峰值（os error 1455 诱因）。

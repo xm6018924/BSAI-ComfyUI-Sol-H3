@@ -5,6 +5,15 @@ Single-file node: installs an ``optimized_attention_override`` on the model
 Morton reordering of the video span, per-block tau/dense gating, and override
 chaining. Requires comfy_kitchen with ``sol_attn`` (bf16, head_dim 128,
 sm_80+); everything else falls back to the existing attention backend.
+
+v2.9 adds the Spark-H3 contract (B 站《MiniMax-H3又能狂飙了！Spark-H3稀疏注意
+力》 / NVIDIA Sol-Attn Spark 发布): ``topk_ratio`` = SparkRepBlock, SLA-style
+per-query-block top-k routing that spends the exact-compute budget on the
+blocks whose tokens attend alike; ``token_aug`` = SparkRabbit, centroid-weighted
+exact refinement of the tail tokens that fixes the pooled-summary bias. Both
+are kernel-side options of comfy_kitchen.sol_attn (bf16, head_dim 128); the
+eager reference supports topk_ratio and ignores token_aug, so Spark-H3 needs
+the fused CUDA backend (sm_80+, RTX 50-series sm_120 production kernels).
 """
 
 import logging
@@ -421,8 +430,18 @@ def _ineligible(q, k, mask, dim_head, min_tokens):
 
 def _run(q, k, v, heads, skip_reshape, skip_output_reshape, scale,
          tau, min_tokens, verbose, sink_blocks=(0, 0), sink_q=(0, 0),
-         routed_cap_percent=0, centroid_tail=True, reuse_qkv_memory=False):
-    """Returns the attention output, or None if this call should stay dense."""
+         routed_cap_percent=0, centroid_tail=True, reuse_qkv_memory=False,
+         topk_ratio=0.0, token_aug=0):
+    """Returns the attention output, or None if this call should stay dense.
+
+    ``topk_ratio`` (>0) is the Spark-H3 RepBlock contract: SLA-style
+    per-query-block top-k routing keeps that fraction of key blocks (sinks and
+    the diagonal ride on top); tau is ignored then. ``token_aug`` (0 or a
+    multiple of 64 up to 256) is the Spark-H3 Rabbit contract: every row also
+    attends up to ``token_aug`` unrouted tokens with the highest centroid
+    scores and the remaining tail is exact for the centroid instead of pooled,
+    fixing the pooled-summary bias on the tail tokens.
+    """
     if skip_reshape:
         b, _, _, dim_head = q.shape          # BHND
         qs, ks, vs = (t.transpose(1, 2) for t in (q, k, v))
@@ -448,13 +467,13 @@ def _run(q, k, v, heads, skip_reshape, skip_output_reshape, scale,
         out = _ck_cuda.sol_attn(
             qs, ks, vs, tau=tau, scale=scale,
             sink_blocks=list(sink_blocks), sink_q=list(sink_q),
-            tail=centroid_tail,
+            tail=centroid_tail, topk_ratio=topk_ratio, token_aug=token_aug,
         )  # BTHD
     else:
         out = _ck.sol_attn(
             qs, ks, vs, tau=tau, scale=scale,
             sink_blocks=list(sink_blocks), sink_q=list(sink_q),
-            tail=centroid_tail,
+            tail=centroid_tail, topk_ratio=topk_ratio, token_aug=token_aug,
         )  # BTHD
     _stats["sparse"] += 1
     if verbose:
@@ -498,7 +517,8 @@ def make_override(tau=1.0, min_tokens=4096,
                   sigma_start=None, sigma_end=None, verbose=False,
                   sink_conditioning="exact_kv", dense_blocks=frozenset(),
                   tau_profile=None, previous=None, routed_cap_percent=0,
-                  centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None):
+                  centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None,
+                  topk_ratio=0.0, token_aug=0):
     """Build an optimized_attention_override callable.
 
     ``previous`` chains any override already installed on the model: every path
@@ -510,6 +530,10 @@ def make_override(tau=1.0, min_tokens=4096,
     1.0/1.25/1.5。这里按当前 sigma 在 [sigma_end, sigma_start] 区间线性插值:
     早期(高sigma)取 lo(保守), 后期(低sigma)取 hi(激进)。tau_profile(逐块覆盖)
     优先级更高, 二者不冲突。
+
+    ``topk_ratio`` / ``token_aug`` (v2.9, Spark-H3 契约): 见 _run 的文档注释。
+    topk_ratio>0 时以 SLA 风格 top-k 分组路由替代 tau 阈值; token_aug 对尾部
+    token 做质心加权精确修正, 减少 pooled-summary 偏差。
     """
 
     def _ramped_tau(base, sigma):
@@ -576,7 +600,7 @@ def make_override(tau=1.0, min_tokens=4096,
             out = _run(q, k, v, heads, skip_reshape, skip_output_reshape,
                        kwargs.get("scale", None), block_tau, min_tokens, verbose,
                        sink, sink_q, routed_cap_percent, centroid_tail,
-                       reuse_qkv_memory)
+                       reuse_qkv_memory, topk_ratio, token_aug)
         except Exception as exc:
             _stats["errors"] += 1
             _log_kernel_failure(exc)
@@ -666,7 +690,8 @@ def _install_compose_hooks(model, attn_attr):
 def _apply_patch(model, *, tau, start_percent, end_percent, min_tokens,
                  sink_conditioning, morton, morton_curve, dense_blocks,
                  verbose, tau_profile, routed_cap_percent=0,
-                 centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None):
+                 centroid_tail=True, reuse_qkv_memory=False, tau_ramp=None,
+                 topk_ratio=0.0, token_aug=0):
     diffusion_model = model.get_model_object("diffusion_model")
     is_h3 = hasattr(diffusion_model, "rope_freqs") and hasattr(diffusion_model, "_forward")
 
@@ -685,6 +710,14 @@ def _apply_patch(model, *, tau, start_percent, end_percent, min_tokens,
     count = len(blocks) if blocks is not None else 0
     dense = parse_blocks(dense_blocks, count)
     profile = parse_tau_profile(tau_profile or "", count)
+    if topk_ratio > 0.0 or token_aug > 0:
+        _mode = []
+        if topk_ratio > 0.0:
+            _mode.append(f"RepBlock topk={topk_ratio:.0%}")
+        if token_aug > 0:
+            _mode.append(f"Rabbit aug={token_aug}")
+        logging.info(f"[sol_attn] Spark-H3 ON: {' + '.join(_mode)} "
+                     f"(tau 被 topk_ratio 接管后仅用于 sink/dense 门控)")
     if (dense or profile) and not _install_block_index(diffusion_model):
         logging.warning(
             f"[sol_attn] dense_blocks/tau_profile ignored: "
@@ -730,7 +763,8 @@ def _apply_patch(model, *, tau, start_percent, end_percent, min_tokens,
                       dense_blocks=dense, tau_profile=profile, previous=previous,
                       routed_cap_percent=routed_cap_percent,
                       centroid_tail=centroid_tail, reuse_qkv_memory=reuse_qkv_memory,
-                      tau_ramp=tau_ramp)
+                      tau_ramp=tau_ramp, topk_ratio=topk_ratio,
+                      token_aug=token_aug)
     if reorder:
         m.model_options["transformer_options"]["sol_morton"] = True
         m.model_options["transformer_options"]["sol_morton_curve"] = morton_curve
@@ -749,9 +783,9 @@ class SolAttnMiniMax(io.ComfyNode):
             description="Training-free block-sparse attention (Sol-Attn, arXiv "
                         "2607.24027) for MiniMax-H3, using comfy_kitchen.sol_attn. "
                         "bf16 + head_dim 128 only; ineligible calls fall back to the "
-                        "existing attention backend. The win grows with sequence "
-                        "length; below ~12k tokens dense is usually faster, so leave "
-                        "min_tokens high.",
+                        "existing attention backend. v2.9.1: min_tokens default 1024 — "
+                        "H3 video main attention is only ~6k~12k tokens; tau sparsity "
+                        "measured 2.4~3.8x faster than dense on RTX 5090 Laptop.",
             inputs=[
                 io.Model.Input("model"),
                 io.Float.Input("tau", default=1.3, min=0.0, max=4.0, step=0.05,
@@ -760,8 +794,10 @@ class SolAttnMiniMax(io.ComfyNode):
                 io.Float.Input("start_percent", default=0.2, min=0.0, max=1.0, step=0.01,
                                tooltip="Run dense before this point. The paper uses 0.2."),
                 io.Float.Input("end_percent", default=0.9, min=0.0, max=1.0, step=0.01),
-                io.Int.Input("min_tokens", default=12288, min=0, max=1 << 20, step=512,
-                             tooltip="Sequences shorter than this stay dense."),
+                io.Int.Input("min_tokens", default=1024, min=0, max=1 << 20, step=512,
+                             tooltip="Sequences shorter than this stay dense. Default "
+                                     "1024 since v2.9.1: H3 video main attention is only "
+                                     "~6k~12k tokens."),
                 io.Combo.Input("sink_conditioning",
                                options=["exact_kv", "exact_kv_and_rows", "off"],
                                default="exact_kv_and_rows",
@@ -813,7 +849,8 @@ class SolAttnMiniMax(io.ComfyNode):
     def execute(cls, model, tau, start_percent, end_percent, min_tokens,
                 sink_conditioning, morton, morton_curve, dense_blocks, verbose,
                 tau_profile=None, routed_cap_percent=0,
-                centroid_tail=True, reuse_qkv_memory=False) -> io.NodeOutput:
+                centroid_tail=True, reuse_qkv_memory=False,
+                topk_ratio=0.0, token_aug=0) -> io.NodeOutput:
         if _ck is None:
             raise RuntimeError(f"comfy_kitchen unavailable: {_CK_IMPORT_ERROR}")
         if not hasattr(_ck, "sol_attn"):
@@ -826,7 +863,8 @@ class SolAttnMiniMax(io.ComfyNode):
             morton=morton, morton_curve=morton_curve, dense_blocks=dense_blocks,
             verbose=verbose, tau_profile=tau_profile,
             routed_cap_percent=routed_cap_percent, centroid_tail=centroid_tail,
-            reuse_qkv_memory=reuse_qkv_memory)
+            reuse_qkv_memory=reuse_qkv_memory,
+            topk_ratio=topk_ratio, token_aug=token_aug)
 
 
 class SolAttnMiniMaxExtension(ComfyExtension):
