@@ -839,30 +839,56 @@ def _patch_audio_vae_offload():
             return False
         return isinstance(fsm, MiniMaxH3AudioVAE) or type(fsm).__name__ == "MiniMaxH3AudioVAE"
 
+    def _rebuild_h3_vae_patcher(vae, label="音频"):
+        """若 H3 VAE 的 patcher 仍为 ModelPatcherDynamic，重建为传统 ModelPatcher 全量加载。
+
+        修复关键: 0.39 + --enable-dynamic-vram 时, sd.py VAE.__init__ 内按
+        disable_offload(初始 False) 创建 patcher -> CoreModelPatcher 被 main.py
+        重赋值为 ModelPatcherDynamic(日志 "prepared for dynamic VRAM loading. XMB
+        Staged")。仅置 disable_offload=True 不会改变已创建的动态 patcher, 必须
+        重建为传统 ModelPatcher, 否则每帧解码反复 offload/reload 权重(5s 音频约
+        209~324s)。本函数以 patcher 实际类型为准做幂等重建。
+        """
+        try:
+            import comfy.model_management as _mm
+        except Exception:
+            return False
+        patcher = getattr(vae, "patcher", None)
+        if patcher is None:
+            return False
+        if type(patcher).__name__ != "ModelPatcherDynamic":
+            return False
+        try:
+            vae.patcher = _model_patcher.ModelPatcher(
+                vae.first_stage_model,
+                load_device=vae.device,
+                offload_device=_mm.vae_offload_device(),
+                fast_disk=getattr(patcher, "fast_disk", None),
+            )
+            print(f"[BSAI-Sol-H3] {label}解码修复: H3 VAE 动态 patcher 已重建为传统"
+                  f"ModelPatcher(全量加载), 不再走 DynamicVRAM 权重量流", flush=True)
+            return True
+        except Exception:
+            return False
+
     def _ensure_h3_audio_full(vae):
         """解码/编码前兜底: 即使 __init__ 包装被绕过, 也强制 H3 AudioVAE 全量加载。
 
         0.39 + --enable-dynamic-vram 时 CoreModelPatcher 被 main.py 重赋值为
         ModelPatcherDynamic, disable_offload=False 的 VAE 走动态流式解码(5s 音频约
-        324s)。本兜底置 disable_offload=True 并把动态 patcher 重建为传统
+        209~324s)。本兜底置 disable_offload=True 并把动态 patcher 重建为传统
         ModelPatcher, 与构造时 disable_offload=True 完全等价。
+        注意: 不能因 disable_offload 已为 True 就提前返回——patcher 可能仍是
+        动态的(构造置位发生在 patcher 创建之后), 必须以 patcher 实际类型为准。
         """
         if not _is_h3_audio(vae):
             return
-        if getattr(vae, "disable_offload", False):
-            return
         try:
-            vae.disable_offload = True
-            patcher = getattr(vae, "patcher", None)
-            if patcher is not None and type(patcher).__name__ == "ModelPatcherDynamic":
-                import comfy.model_management as _mm
-                vae.patcher = _model_patcher.ModelPatcher(
-                    vae.first_stage_model,
-                    load_device=vae.device,
-                    offload_device=_mm.vae_offload_device(),
-                )
-            print("[BSAI-Sol-H3] 音频解码兜底生效: H3 AudioVAE disable_offload=True"
-                  "(动态 patcher 已重建为传统全量加载)", flush=True)
+            if not getattr(vae, "disable_offload", False):
+                vae.disable_offload = True
+            if _rebuild_h3_vae_patcher(vae, "音频"):
+                print("[BSAI-Sol-H3] 音频解码兜底生效: H3 AudioVAE disable_offload=True"
+                      "(动态 patcher 已重建为传统全量加载)", flush=True)
         except Exception:
             pass
 
@@ -870,17 +896,19 @@ def _patch_audio_vae_offload():
         _orig_init(self, *args, **kwargs)
         try:
             fsm = getattr(self, "first_stage_model", None)
-            if _is_h3_audio(self) \
-                    and not getattr(self, "disable_offload", False):
-                self.disable_offload = True
-                print("[BSAI-Sol-H3] 音频解码修复生效: H3 AudioVAE 已切换全量加载"
-                      "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
-            if isinstance(fsm, MiniMaxH3VideoVAE) \
-                    and not getattr(self, "disable_offload", False):
-                self.disable_offload = True
-                print("[BSAI-Sol-H3] 视频解码修复生效: H3 VideoVAE 已切换全量加载"
-                      "(disable_offload=True), 消除 DynamicVRAM 抖动, 收尾解码提速",
-                      flush=True)
+            if _is_h3_audio(self):
+                if not getattr(self, "disable_offload", False):
+                    self.disable_offload = True
+                    print("[BSAI-Sol-H3] 音频解码修复生效: H3 AudioVAE 已切换全量加载"
+                          "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
+                _rebuild_h3_vae_patcher(self, "音频")
+            elif isinstance(fsm, MiniMaxH3VideoVAE):
+                if not getattr(self, "disable_offload", False):
+                    self.disable_offload = True
+                    print("[BSAI-Sol-H3] 视频解码修复生效: H3 VideoVAE 已切换全量加载"
+                          "(disable_offload=True), 消除 DynamicVRAM 抖动, 收尾解码提速",
+                          flush=True)
+                _rebuild_h3_vae_patcher(self, "视频")
         except Exception:
             pass
 
@@ -890,6 +918,22 @@ def _patch_audio_vae_offload():
 
     def _wrapped_encode(self, *args, **kwargs):
         _ensure_h3_audio_full(self)
+        # 修复 int8_convrot VideoVAE ref2va 编码: quant_conv bias 为 fp32、
+        # input/weight 为 fp16, PyTorch 2.13 严格 dtype 检查报
+        # "Input type (Half) and bias type (float) should be the same"。
+        # encode 前把 VAE 内 bias dtype 与 weight 对齐(幂等, 只转不匹配的层)。
+        try:
+            import torch as _torch
+            fsm = getattr(self, "first_stage_model", None)
+            if fsm is not None and not getattr(fsm, "_bsai_bias_aligned", False):
+                for _m in fsm.modules():
+                    _w = getattr(_m, "weight", None)
+                    _b = getattr(_m, "bias", None)
+                    if _b is not None and _w is not None and _b.dtype != _w.dtype:
+                        _m.bias = _torch.nn.Parameter(_b.to(_w.dtype))
+                fsm._bsai_bias_aligned = True
+        except Exception:
+            pass
         return _orig_encode(self, *args, **kwargs)
 
     _sd.VAE.__init__ = _wrapped_init
