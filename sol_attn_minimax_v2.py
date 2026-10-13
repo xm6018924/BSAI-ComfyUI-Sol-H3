@@ -36,7 +36,7 @@ HEAD_DIM = 128
 BLOCK_SIZE = 64
 
 _stats = {"sparse": 0, "dense_fallback": 0, "outside_range": 0,
-          "dense_block": 0, "errors": 0}
+          "dense_block": 0, "over_max_tokens": 0, "errors": 0}
 _seen = set()
 _BLOCK_INDEX_HOOKED = set()
 
@@ -590,6 +590,21 @@ def make_override(tau=1.0, min_tokens=4096,
                     return dense()
 
         tokens = q.shape[2] if skip_reshape else q.shape[1]
+        # v2.9.2 (2026-10-13): token 规模上限门 —— 绕开 sol_attn kernel 的超线性病态区。
+        # 独立基准实测(comfy_kitchen ck.sol_attn, RTX 5090 24GB, 与实机同参 h=14):
+        #   n=218k -> 0.97s / n=293k -> 0.70s (健康, 一采/时间分块 T36)
+        #   n=440k -> >45s / n=873k topk -> >600s / n=873k dense -> >60s (病态)
+        # 病态与 topk routing 无关, 是 kernel 在 n>=~440k 时超线性恶化.
+        # 宿主(如 Film-Factory 二采)通过 transformer_options["sol_max_tokens"] 注入上限;
+        # 超过即 dense 回退(走 KJNodes head 分组 + SageAttention, 对齐参考插件
+        # v14.82 实测 240s/步 无雪花). 未设置时保持原行为.
+        _max_tokens = kwargs.get("transformer_options", {}).get("sol_max_tokens")
+        if _max_tokens is not None and tokens > _max_tokens:
+            _stats["over_max_tokens"] += 1
+            if verbose:
+                _log_once((tokens, _max_tokens),
+                          f"token cap hit: {tokens} > {_max_tokens}, falling back to dense (host-refine gate)")
+            return dense()
         sink, sink_q = _sink_blocks(kwargs.get("transformer_options"), tokens,
                                     sink_conditioning)
         if verbose and sink != (0, 0):
