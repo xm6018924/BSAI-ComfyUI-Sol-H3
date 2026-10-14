@@ -33,10 +33,12 @@ PROVIDER_MODES = (
     "local_passthrough — 本地原文直通",
     "openai_compatible — OpenAI / LM Studio / llama.cpp",
     "ollama_chat — Ollama本地或远程服务",
+    "bsai_strata — BSAI Strata (Qwen3.8-Flash-Next @127.0.0.1:8080)",
 )
 DEFAULT_ENDPOINTS = {
     "openai_compatible": "http://127.0.0.1:1234/v1/chat/completions",
     "ollama_chat": "http://127.0.0.1:11434/api/chat",
+    "bsai_strata": "http://127.0.0.1:8080/v1/chat/completions",
 }
 ENV_NAME = re.compile(r"^[A-Z][A-Z0-9_]{1,63}$")
 OLLAMA_KEEP_ALIVE = re.compile(r"^(?:-1|0|[1-9]\d*(?:ms|s|m|h)?)$")
@@ -86,6 +88,8 @@ def _provider_key(value: str) -> str:
         return "openai_compatible"
     if raw.startswith("ollama_chat"):
         return "ollama_chat"
+    if raw.startswith("bsai_strata"):
+        return "bsai_strata"
     raise ValueError(f"unsupported provider_mode: {value}")
 
 
@@ -389,7 +393,7 @@ def _ollama_messages(
 def _response_text(provider: str, payload: Mapping[str, Any]) -> str:
     message: Mapping[str, Any] | None = None
     try:
-        if provider == "openai_compatible":
+        if provider in ("openai_compatible", "bsai_strata"):
             content = payload["choices"][0]["message"]["content"]
             if isinstance(content, list):
                 content = "".join(
@@ -564,7 +568,7 @@ def rewrite_prompt_provider(
         maximum_image_edge=int(maximum_image_edge),
         jpeg_quality=int(jpeg_quality),
     )
-    if provider == "openai_compatible":
+    if provider in ("openai_compatible", "bsai_strata"):
         body_object: dict[str, Any] = {
             "model": model,
             "messages": _openai_messages(
@@ -659,7 +663,7 @@ def rewrite_prompt_provider(
             findings=findings,
             dialogue_bindings=dialogue_bindings,
         )
-        if provider == "openai_compatible":
+        if provider in ("openai_compatible", "bsai_strata"):
             repair_body_object: dict[str, Any] = {
                 "model": model,
                 "messages": repair_messages,

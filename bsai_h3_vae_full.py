@@ -184,11 +184,13 @@ def apply_global_patch(owner="BSAI"):
         # 但 quant_conv 等层的 weight/bias 残留 fp32, encode 走普通 ops.Conv3d
         # (不像 CausalConv3d 有 cast_bias_weight 动态对齐), PyTorch 2.13 严格
         # dtype 检查报 input(Half) vs weight/bias(Float) 不匹配。
-        # 把 first_stage_model 内所有 fp32 Parameter(weight+bias) 转成 fp16。
+        # 只对 VideoVAE(有 quant_conv) 做 fp32->fp16 对齐; AudioVAE 加载 dtype=fp32,
+        # weight/bias 本来就是 fp32, 不能动, 否则 input(fp32) vs weight(fp16) 不匹配。
         try:
             import torch as _t
             fsm = getattr(self, "first_stage_model", None)
-            if fsm is not None and not getattr(fsm, "_bsai_enc_bias_fixed", False):
+            if (fsm is not None and hasattr(fsm, "quant_conv")
+                    and not getattr(fsm, "_bsai_enc_bias_fixed", False)):
                 fixed = []
                 for _name, _m in fsm.named_modules():
                     for _attr in ("weight", "bias"):
@@ -206,7 +208,7 @@ def apply_global_patch(owner="BSAI"):
                           f"weight dtype={getattr(getattr(_qc,'weight',None),'dtype',None)}, "
                           f"bias dtype={getattr(getattr(_qc,'bias',None),'dtype',None)}",
                           flush=True)
-                print(f"[BSAI-H3VAE] encode dtype 对齐: {len(fixed)} 个 fp32 参数已转 fp16",
+                print(f"[BSAI-H3VAE] VideoVAE encode dtype 对齐: {len(fixed)} 个 fp32 参数已转 fp16",
                       flush=True)
                 fsm._bsai_enc_bias_fixed = True
         except Exception as _e:
