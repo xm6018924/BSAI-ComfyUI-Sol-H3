@@ -85,6 +85,25 @@ def is_h3_video_vae(vae):
     return type(fsm).__name__ == "MiniMaxH3VideoVAE"
 
 
+def is_light_vae(vae):
+    """LightVAE(Lite) 判定：官方 2026-10-15 #17049 支持 MiniMax-H3 LightVAE，
+    编码器 resnet 块被剪枝为 shortcut（encoder_kept_blocks 非空），或仅加载
+    编码器/解码器之一。识别到后走全量加载同样有效（Lite 更小，加载更快）。"""
+    fsm = getattr(vae, "first_stage_model", None)
+    if fsm is None or not is_h3_video_vae(vae):
+        return False
+    kept = getattr(fsm, "encoder_kept_blocks", None)
+    if kept:
+        return True
+    # 仅加载 decoder / encoder 之一（官方 sd.py 按权重自动推断）
+    try:
+        has_enc = getattr(fsm, "encoder", None) is not None
+        has_dec = getattr(fsm, "decoder", None) is not None
+        return (has_enc != has_dec)
+    except Exception:
+        return False
+
+
 def rebuild_patcher_if_dynamic(vae, label="H3 VAE"):
     """若 vae.patcher 仍为 ModelPatcherDynamic，重建为传统 ModelPatcher 全量加载。
 
@@ -126,12 +145,16 @@ def ensure_h3_vae_full(vae):
     if not (audio or video):
         return
     kind = "音频" if audio else "视频"
+    light = "LightVAE-Lite" if (video and is_light_vae(vae)) else ""
     try:
         if not getattr(vae, "disable_offload", False):
             vae.disable_offload = True
         if rebuild_patcher_if_dynamic(vae, kind):
-            print(f"[BSAI-H3VAE] {kind}解码兜底生效: H3 VAE disable_offload=True"
+            tag = f"[BSAI-H3VAE] {kind}解码兜底生效" + (f"({light}): " if light else ": ")
+            print(f"{tag}H3 VAE disable_offload=True"
                   f"(动态 patcher 已重建为传统全量加载)", flush=True)
+        elif light:
+            print(f"[BSAI-H3VAE] {kind}({light}) 已全量加载(disable_offload=True)", flush=True)
     except Exception:
         pass
 
@@ -168,8 +191,10 @@ def apply_global_patch(owner="BSAI"):
             elif is_h3_video_vae(self):
                 if not getattr(self, "disable_offload", False):
                     self.disable_offload = True
-                    print("[BSAI-H3VAE] 视频解码修复生效: H3 VideoVAE 已切换全量加载"
-                          "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
+                    _lt = "LightVAE-Lite" if is_light_vae(self) else ""
+                    print("[BSAI-H3VAE] 视频解码修复生效: H3 VideoVAE%s 已切换全量加载"
+                          "(disable_offload=True), 消除 DynamicVRAM 抖动"
+                          % (f"({_lt})" if _lt else ""), flush=True)
                 rebuild_patcher_if_dynamic(self, "视频")
         except Exception:
             pass
