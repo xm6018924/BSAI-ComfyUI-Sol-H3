@@ -14,7 +14,7 @@ class MiniMaxH3PromptSemanticContractAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3PromptSemanticContractAuditT8Advanced",
             display_name=(
-                "MiniMax H3 Prompt Semantic Contract Audit / 提示词语义合同审计 "
+                "MiniMax H3 Prompt Semantic Contract Audit"
                 "(Advanced/T8)"
             ),
             description=(

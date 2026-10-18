@@ -17,7 +17,7 @@ class MiniMaxH3NativeLatentTimelineConcatT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3NativeLatentTimelineConcatT8Advanced",
-            display_name="MiniMax H3 Native Latent Timeline Concat / 原生时格拼接 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Native Latent Timeline Concat (Advanced EXP/T8)",
             description=(
                 "Concatenates independently sampled complete H3 AV latents on the native temporal "
                 "grid: later video segments drop the exact 5-frame/2-latent prefix and audio drops "
@@ -74,7 +74,7 @@ class MiniMaxH3NativeLatentResumeManifestT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3NativeLatentResumeManifestT8Advanced",
             display_name=(
-                "MiniMax H3 Native Latent Resume Manifest / 原生Latent恢复清单 "
+                "MiniMax H3 Native Latent Resume Manifest"
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -144,7 +144,7 @@ class MiniMaxH3NativeLatentContinuationConcatT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NativeLatentContinuationConcatT8Advanced",
             display_name=(
                 "MiniMax H3 Native Latent Continuation Concat / "
-                "原生续段去重拼接 (Advanced EXP/T8)"
+                "Native Continuation Dedupe Concat (Advanced EXP/T8)"
             ),
             description=(
                 "Appends one H3 Long Video continuation and removes its complete proven "

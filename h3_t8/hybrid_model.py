@@ -446,7 +446,7 @@ def inspect_checkpoint_pair(
 
 
 def pair_report_text(plan: dict[str, Any]) -> str:
-    status = "COMPATIBLE / 可构建" if plan.get("compatible") else "REJECTED / 已拒绝"
+    status = "COMPATIBLE / buildable" if plan.get("compatible") else "REJECTED / rejected"
     recipe = plan.get("recipe", {})
     lines = [
         f"Status: {status}",

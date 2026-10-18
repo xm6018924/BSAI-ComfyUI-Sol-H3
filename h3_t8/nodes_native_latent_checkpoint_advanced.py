@@ -27,7 +27,7 @@ class MiniMaxH3NativeLatentCheckpointSaveT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NativeLatentCheckpointSaveT8Advanced",
             display_name=(
                 "MiniMax H3 Native AV Latent Checkpoint Save / "
-                "原生音画Latent检查点保存 (Advanced EXP/T8)"
+                "Native AV Latent Checkpoint Save (Advanced EXP/T8)"
             ),
             description=(
                 "Atomically saves one complete H3 nested video/audio latent as a no-pickle "
@@ -109,7 +109,7 @@ class MiniMaxH3NativeLatentCheckpointLoadT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NativeLatentCheckpointLoadT8Advanced",
             display_name=(
                 "MiniMax H3 Native AV Latent Checkpoint Load / "
-                "原生音画Latent检查点加载 (Advanced EXP/T8)"
+                "Native AV Latent Checkpoint Load (Advanced EXP/T8)"
             ),
             description=(
                 "Loads one H3 no-pickle AV latent checkpoint from the bounded ComfyUI output "

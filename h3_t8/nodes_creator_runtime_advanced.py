@@ -36,7 +36,7 @@ class MiniMaxH3CreatorRunReceiptT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3CreatorRunReceiptT8Advanced",
             display_name=(
-                "MiniMax H3 Creator Run Receipt / 候选运行回执 (Advanced/T8)"
+                "MiniMax H3 Creator Run Receipt / Candidate Run Receipt (Advanced/T8)"
             ),
             description=(
                 "Records one explicitly observed candidate outcome, attempt, prompt ID, cache "
@@ -84,7 +84,7 @@ class MiniMaxH3CreatorResumePlanT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3CreatorResumePlanT8Advanced",
             display_name=(
-                "MiniMax H3 Creator Resume Plan / 下一候选与继续位置 (Advanced/T8)"
+                "MiniMax H3 Creator Resume Plan / Next Candidate & Resume Position (Advanced/T8)"
             ),
             description=(
                 "Finds the next explicit render, review or retry from an immutable Creator "
@@ -128,7 +128,7 @@ class MiniMaxH3CreatorRetentionPlanT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3CreatorRetentionPlanT8Advanced",
             display_name=(
                 "MiniMax H3 Creator Artifact Retention Plan / "
-                "候选保留与拟删除清单 (Advanced/T8)"
+                "Candidate Keep/Delete List (Advanced/T8)"
             ),
             description=(
                 "Compiles each shot's retention policy against explicit run receipts. It emits "
@@ -178,7 +178,7 @@ class MiniMaxH3CreatorBackgroundStartT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3CreatorBackgroundStartT8Advanced",
             display_name=(
                 "MiniMax H3 Creator × Long Video Background Start / "
-                "创作工作区后台绑定 (Advanced/T8)"
+                "Creator Workspace Background Binding (Advanced/T8)"
             ),
             description=(
                 "Binds one Creator Workspace hash to the existing proven Long Video background "
@@ -298,7 +298,7 @@ class MiniMaxH3CreatorBackgroundRunSelectT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3CreatorBackgroundRunSelectT8Advanced",
             display_name=(
                 "MiniMax H3 Creator × Long Video Run Select / "
-                "按后台进度选择镜头 (Advanced/T8)"
+                "Select Shot by Background Progress (Advanced/T8)"
             ),
             description=(
                 "Uses the bound Long Video accepted_count and retry_count to choose the next "

@@ -17,7 +17,7 @@ class MiniMaxH3NativeMaskedVideoContextT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NativeMaskedVideoContextT8Advanced",
             display_name=(
                 "MiniMax H3 Native Masked Video Context / "
-                "原生画面硬续接 Plan B (Advanced EXP/T8)"
+                "Native Hard Visual Continuation Plan B (Advanced EXP/T8)"
             ),
             description=(
                 "Plan B for Long Video continuation. It copies the validated previous native "

@@ -36,7 +36,7 @@ class MiniMaxH3RavenStreamingProfileT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3RavenStreamingProfileT8Advanced",
             display_name=(
-                "MiniMax H3 RAVEN Streaming Profile / 流式参数配置 " "(Advanced EXP/T8)"
+                "MiniMax H3 RAVEN Streaming Profile" "(Advanced EXP/T8)"
             ),
             description=(
                 "Emits one synchronized RAVEN parameter set for both the T8 audit and the "
@@ -125,7 +125,7 @@ class MiniMaxH3RavenGuardedLoaderT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3RavenGuardedLoaderT8Advanced",
             display_name=(
-                "MiniMax H3 RAVEN Guarded Loader / 受保护加载器 " "(Advanced EXP/T8)"
+                "MiniMax H3 RAVEN Guarded Loader" "(Advanced EXP/T8)"
             ),
             description=(
                 "Preflights the separately installed MIT RAVEN ComfyUI plugin, full BF16 H3 "
@@ -184,7 +184,7 @@ class MiniMaxH3RavenRequestAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3RavenRequestAuditT8Advanced",
             display_name=(
-                "MiniMax H3 RAVEN Request Audit / 流式请求审计 " "(Advanced EXP/T8)"
+                "MiniMax H3 RAVEN Request Audit" "(Advanced EXP/T8)"
             ),
             description=(
                 "Delegates strict T2VA conditioning, empty-AV-latent and causal-MODEL checks "

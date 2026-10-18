@@ -15,7 +15,7 @@ class MiniMaxH3PromptRelayPreviewT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayPreviewT8Advanced",
-            display_name="MiniMax H3 Prompt Relay Preview / 时间线预检 (Advanced)",
+            display_name="MiniMax H3 Prompt Relay Preview (Advanced)",
             description=(
                 "Validates an authenticated Prompt Relay plan and shows every event's "
                 "frame/second range before any H3 model is loaded or sampling begins. "

@@ -18,7 +18,7 @@ class MiniMaxH3CreatorSegmentCacheT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3CreatorSegmentCacheT8Advanced",
-            display_name="MiniMax H3 Creator Segment Cache / 创作分段语义缓存计划 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Creator Segment Cache (Advanced EXP/T8)",
             description=(
                 "Hashes source/model/LoRA/prompt/sampling/effect contracts per shot variant, "
                 "reports declaration matches (not verified file/cache hits) and scoped invalidation, "

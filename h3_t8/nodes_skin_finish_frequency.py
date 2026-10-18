@@ -14,7 +14,7 @@ class MiniMaxH3SkinFinishFrequencySplitT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishFrequencySplitT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Frequency Split / 肤色纹理解耦 (Advanced EXP)"
+                "MiniMax H3 Skin Finish Frequency Split (Advanced EXP)"
             ),
             description=(
                 "Rebuilds a Skin Finish candidate from its low-frequency tone/brightness layer "

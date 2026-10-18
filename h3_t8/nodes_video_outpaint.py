@@ -144,9 +144,9 @@ class MiniMaxH3VideoOutpaintComposeT8(io.ComfyNode):
             inputs=[SampledIO.Input("sampled"), io.Vae.Input("video_vae"),
                 io.String.Input("output_name", default="outpaint"), io.Boolean.Input("color_match", default=True),
                 io.Boolean.Input("geometry_align", default=False, optional=True,
-                    tooltip="实验：校正扩画侧轮廓，原片像素不变；需OpenCV，未人审前不默认开启。"),
+                    tooltip="Experimental: corrects outpaint side contours; source pixels are unchanged. Requires OpenCV; not enabled by default before human review."),
                 io.Combo.Input("source_mode", options=["joint_decode", "preserve_source"], default="joint_decode", optional=True,
-                    tooltip="默认联合解码：原片也经过VAE重建，跳过接缝修色/几何校正；原音频不变。preserve_source可选精确保留原片像素，但接缝可能更明显。")],
+                    tooltip="Default joint decode: the source is also VAE-reconstructed, skipping seam color/geometry correction; original audio is unchanged. preserve_source optionally keeps source pixels exactly, but seams may be more visible.")],
             outputs=[io.Video.Output(display_name="video"), io.String.Output(display_name="delivery_report")])
 
     @classmethod

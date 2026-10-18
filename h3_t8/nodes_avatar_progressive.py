@@ -14,13 +14,13 @@ class MiniMaxH3AvatarProgressiveEXPT8(io.ComfyNode):
                 field.default = 4
             elif field.id == "task":
                 field.default = "i2va"
-        return io.Schema(node_id=cls.__name__, display_name="H3 Avatar 录音驱动渐进采样（EXP/T8）",
+        return io.Schema(node_id=cls.__name__, display_name="H3 Avatar Recording-Driven Progressive Sampling (EXP/T8)",
                          category="T8/MiniMax H3/Audio/Experimental", is_experimental=True,
                          inputs=original.inputs, outputs=original.outputs,
-                         description="人物首帧＋现成录音，经原 Audio Conditioning 的 lock_source 后接此节点。"
-                         "录音通过原生audio mask=0参与采样，不是仅保存时贴音轨；复用原learned3D与clean-anchor。"
-                         "默认LOW4＋HIGH4，支持可选独立HIGH MODEL／LoRA，旧渐进节点仍要求空AV。"
-                         "仅phase1独立单段；不含空间分块，不是同音色生成新台词。指定短片已验收，未知素材／组合需自行验证。")
+                         description="Character first frame + existing recording; connect after the original Audio Conditioning lock_source."
+                         "Recording participates in sampling via native audio mask=0; it is not just muxed onto the track at save. Reuses the original learned3D and clean-anchor."
+                         "Default LOW4 + HIGH4; optional independent HIGH MODEL / LoRA. Older progressive nodes still require empty AV."
+                         "Phase-1 standalone single segment only; no spatial chunking; not same-voice new-dialogue generation. The specified short film is validated; unknown assets/combos must be verified by the user.")
 
     @classmethod
     def execute(cls, **kwargs):

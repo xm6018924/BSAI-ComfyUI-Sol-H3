@@ -50,7 +50,7 @@ class MiniMaxH3LongVideoOrchestratorT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoOrchestratorT8",
-            display_name="MiniMax H3 Chain Orchestrator / 总时长自动分段 (EXP/T8)",
+            display_name="MiniMax H3 Chain Orchestrator (EXP/T8)",
             description=(
                 "Converts a total duration into a fixed-window H3 timeline and resumes at the "
                 "first unaccepted manifest segment. A completed final manifest blocks downstream "
@@ -108,13 +108,13 @@ class MiniMaxH3LongVideoOrchestratorT8(io.ComfyNode):
                     "sampler_name",
                     options=SAMPLER_OPTIONS,
                     default=DEFAULT_SAMPLER_NAME,
-                    display_name="sampler / 采样器",
+                    display_name="sampler",
                 ),
                 io.Combo.Input(
                     "scheduler",
                     options=SCHEDULER_OPTIONS,
                     default=DEFAULT_SCHEDULER_NAME,
-                    display_name="scheduler / 调度器",
+                    display_name="scheduler",
                 ),
             ],
             outputs=[
@@ -226,7 +226,7 @@ class MiniMaxH3LongVideoCandidateSaveT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoCandidateSaveT8",
-            display_name="MiniMax H3 Save Candidate / 保存候选片段 (EXP/T8)",
+            display_name="MiniMax H3 Save Candidate (EXP/T8)",
             description=(
                 "Atomically writes only the current trimmed segment plus its bounded AV tail. "
                 "It does not change accepted history; connect the descriptor to Review & Accept."
@@ -324,7 +324,7 @@ class MiniMaxH3LongVideoAcceptCandidateT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoAcceptCandidateT8",
-            display_name="MiniMax H3 Review & Accept / 预览并接受候选 (EXP/T8)",
+            display_name="MiniMax H3 Review & Accept (EXP/T8)",
             description=(
                 "Preview with accept_candidate=false. When true, atomically promotes the candidate "
                 "and updates the manifest. Replacing a segment invalidates all dependent later segments."
@@ -374,7 +374,7 @@ class MiniMaxH3LongVideoAcceptedContextLoadT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoAcceptedContextLoadT8",
-            display_name="MiniMax H3 Accepted Context / 读取已接受上下文 (EXP/T8)",
+            display_name="MiniMax H3 Accepted Context (EXP/T8)",
             description=(
                 "Loads segment N-1 only from the accepted manifest. It also returns the exact parent "
                 "candidate identity needed to prevent accepting a stale continuation."
@@ -411,7 +411,7 @@ class MiniMaxH3LongVideoComposeAcceptedT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoComposeAcceptedT8",
-            display_name="MiniMax H3 Compose Accepted / 合成已接受片段 (EXP/T8)",
+            display_name="MiniMax H3 Compose Accepted (EXP/T8)",
             description=(
                 "Verifies every accepted file and streams them into one MP4. Memory is bounded to one "
                 "video frame plus one segment of PCM; cosine_bridge preserves the exact sample count."
@@ -467,7 +467,7 @@ class MiniMaxH3LongVideoBackgroundStartT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoBackgroundStartT8",
-            display_name="MiniMax H3 Background Start / 后台长视频启动 (EXP/T8)",
+            display_name="MiniMax H3 Background Start (EXP/T8)",
             description=(
                 "Registers the current prompt before model execution so upstream OOM/errors can "
                 "be retried. review_only is non-mutating; auto_accept_and_continue must be selected "
@@ -574,7 +574,7 @@ class MiniMaxH3LongVideoAutoQueueT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoAutoQueueT8",
-            display_name="MiniMax H3 Auto Accept & Continue / 自动接受续跑 (EXP/T8)",
+            display_name="MiniMax H3 Auto Accept & Continue (EXP/T8)",
             description=(
                 "Terminal node for the explicit background workflow. It accepts the current "
                 "candidate, optionally composes a final MP4, requests the selected release policy "

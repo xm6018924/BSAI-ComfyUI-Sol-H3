@@ -15,7 +15,7 @@ class MiniMaxH3QwenReferencePrefixCacheT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3QwenReferencePrefixCacheT8Advanced",
-            display_name="MiniMax H3 Qwen Reference Prefix Cache / 参考前缀缓存 (Advanced)",
+            display_name="MiniMax H3 Qwen Reference Prefix Cache (Advanced)",
             description=(
                 "Opt-in, bounded CPU-memory cache for the exact visual-reference prefix of the "
                 "native H3 Qwen3-VL encoder. Prompt text is still recomputed. It wraps only this "
@@ -73,7 +73,7 @@ class MiniMaxH3QwenPrefixCacheStatsT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3QwenPrefixCacheStatsT8Advanced",
-            display_name="MiniMax H3 Qwen Prefix Cache Stats / 前缀缓存统计 (Advanced)",
+            display_name="MiniMax H3 Qwen Prefix Cache Stats (Advanced)",
             description=(
                 "Reads hit/miss/size counters from one bounded in-memory Qwen prefix cache. "
                 "Connect Conditioning.report to after_report to force this node to run later."

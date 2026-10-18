@@ -50,7 +50,7 @@ class MiniMaxH3MVVocalScenePlannerT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MVVocalScenePlannerT8Advanced",
             display_name=(
-                "MiniMax H3 MV Vocal Scene Planner / 本地歌曲分镜 "
+                "MiniMax H3 MV Vocal Scene Planner "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -60,7 +60,7 @@ class MiniMaxH3MVVocalScenePlannerT8Advanced(io.ComfyNode):
             ),
             category=CATEGORY,
             inputs=[
-                io.Audio.Input("full_song", tooltip="最终成片使用的完整原曲。"),
+                io.Audio.Input("full_song", tooltip="Full original song used in the final output."),
                 io.Float.Input(
                     "min_scene_seconds", default=5.0, min=1.0, max=None, step=0.1
                 ),
@@ -83,8 +83,8 @@ class MiniMaxH3MVVocalScenePlannerT8Advanced(io.ComfyNode):
                     options=["assume_vocal", "energy_proxy", "vocal_stem_required"],
                     default="assume_vocal",
                     tooltip=(
-                        "没有人声干声时推荐 assume_vocal；energy_proxy 仅按能量估计；"
-                        "vocal_stem_required 要求连接本地干声。"
+                        "assume_vocal is recommended when no vocal stem is available; energy_proxy estimates by energy only; "
+                        "vocal_stem_required requires a connected local vocal stem."
                     ),
                 ),
                 io.String.Input(
@@ -92,9 +92,9 @@ class MiniMaxH3MVVocalScenePlannerT8Advanced(io.ComfyNode):
                     default="",
                     multiline=True,
                     advanced=True,
-                    tooltip='可选秒数列表，例如 [5.2, 11.8]；留空自动分析。',
+                    tooltip='Optional list of seconds, e.g. [5.2, 11.8]; leave empty for auto-analysis.',
                 ),
-                io.Audio.Input("vocal_stem", optional=True, tooltip="可选的本地人声干声。"),
+                io.Audio.Input("vocal_stem", optional=True, tooltip="Optional local vocal stem."),
             ],
             outputs=[
                 MVScenePlanIO.Output("scene_plan"),
@@ -117,7 +117,7 @@ class MiniMaxH3MVRef2VAPromptCompilerT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MVRef2VAPromptCompilerT8Advanced",
             display_name=(
-                "MiniMax H3 MV Ref2VA Prompt Compiler / 本地口型分镜提示词 "
+                "MiniMax H3 MV Ref2VA Prompt Compiler "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -155,7 +155,7 @@ class MiniMaxH3MVRef2VAPromptCompilerT8Advanced(io.ComfyNode):
                         "restrained slow push-in with a stable background"
                     ),
                     multiline=True,
-                    tooltip="每行或每个 | 一种镜头，按场景循环使用。",
+                    tooltip="One shot per line or per | separator; cycles by scene.",
                 ),
                 io.String.Input(
                     "non_vocal_action",
@@ -168,7 +168,7 @@ class MiniMaxH3MVRef2VAPromptCompilerT8Advanced(io.ComfyNode):
                     multiline=True,
                     advanced=True,
                     tooltip=(
-                        "可选：按场景提供精确歌词字符串列表。留空时绝不猜歌词，也不生成字幕。"
+                        "Optional: provide exact lyric strings per scene. When empty, lyrics are never guessed and no subtitles are generated."
                     ),
                 ),
             ],
@@ -193,7 +193,7 @@ class MiniMaxH3LocalMVInNodeRendererT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LocalMVInNodeRendererT8Advanced",
             display_name=(
-                "MiniMax H3 Local MV In-Node Renderer / 全本地MV内循环生成 "
+                "MiniMax H3 Local MV In-Node Renderer "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -204,12 +204,12 @@ class MiniMaxH3LocalMVInNodeRendererT8Advanced(io.ComfyNode):
             ),
             category=CATEGORY,
             inputs=[
-                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
-                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Model.Input("model", tooltip="Local MiniMax H3 MODEL."),
+                io.Clip.Input("clip", tooltip="Local MiniMax H3 Qwen3-VL CLIP."),
                 io.Vae.Input("video_vae"),
                 io.Vae.Input("audio_vae"),
-                io.Image.Input("reference_image", tooltip="歌手/人物身份参考图。"),
-                io.Audio.Input("full_song", tooltip="驱动表演并最终一次性混入成片的原曲。"),
+                io.Image.Input("reference_image", tooltip="Singer/character identity reference image."),
+                io.Audio.Input("full_song", tooltip="Original song that drives the performance and is mixed into the final output once."),
                 MVPromptPlanIO.Input("mv_prompt_plan"),
                 io.String.Input("chain_id", default="my_h3_local_mv"),
                 io.Int.Input(
@@ -218,7 +218,7 @@ class MiniMaxH3LocalMVInNodeRendererT8Advanced(io.ComfyNode):
                     min=32,
                     max=16384,
                     step=32,
-                    tooltip="官方 Ref2V Turbo v0.1 验证尺寸；需要其他画幅时再显式修改。",
+                    tooltip="Official Ref2V Turbo v0.1 validated dimensions; override explicitly if another aspect is needed.",
                 ),
                 io.Int.Input("height", default=768, min=32, max=16384, step=32),
                 io.Int.Input("base_seed", default=123456789, min=0, max=0xFFFFFFFFFFFFFFFF),
@@ -257,7 +257,7 @@ class MiniMaxH3LocalMVInNodeRendererT8Advanced(io.ComfyNode):
                     "model_id",
                     default="user-selected-local-h3",
                     advanced=True,
-                    tooltip="只写入审计报告，不校验文件名、大小或哈希。",
+                    tooltip="Writes only to the audit report; does not verify filename, size, or hash.",
                 ),
             ],
             outputs=[
@@ -302,7 +302,7 @@ class MiniMaxH3MVVocalLockScenePlannerV2T8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MVVocalLockScenePlannerV2T8Advanced",
             display_name=(
-                "MiniMax H3 MV Vocal Lock Scene Planner V2 / 独立人声分镜 "
+                "MiniMax H3 MV Vocal Lock Scene Planner V2 "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -312,10 +312,10 @@ class MiniMaxH3MVVocalLockScenePlannerV2T8Advanced(io.ComfyNode):
             ),
             category=CATEGORY,
             inputs=[
-                io.Audio.Input("full_song", tooltip="最终成片使用的完整原曲。"),
+                io.Audio.Input("full_song", tooltip="Full original song used in the final output."),
                 io.Audio.Input(
                     "vocal_lock_audio",
-                    tooltip="必需：与原曲同起点、同时间线的本地隔离人声或清晰对白。",
+                    tooltip="Required: a local isolated vocal or clear dialogue aligned to the same start time and timeline as the original song.",
                 ),
                 io.Float.Input(
                     "min_scene_seconds", default=5.0, min=1.0, max=None, step=0.1
@@ -341,14 +341,14 @@ class MiniMaxH3MVVocalLockScenePlannerV2T8Advanced(io.ComfyNode):
                     max=1.0,
                     step=0.01,
                     advanced=True,
-                    tooltip="场景内高于本地人声能量门的最小时间比例。",
+                    tooltip="Minimum fraction of time within a scene above the local vocal energy threshold.",
                 ),
                 io.String.Input(
                     "manual_boundaries_json",
                     default="",
                     multiline=True,
                     advanced=True,
-                    tooltip='可选秒数列表，例如 [5.2, 11.8]；留空自动分析。',
+                    tooltip='Optional list of seconds, e.g. [5.2, 11.8]; leave empty for auto-analysis.',
                 ),
             ],
             outputs=[
@@ -372,7 +372,7 @@ class MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced",
             display_name=(
-                "MiniMax H3 MV Vocal Lock Prompt Compiler V2 / 官方六段式口型提示词 "
+                "MiniMax H3 MV Vocal Lock Prompt Compiler V2 "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -410,8 +410,8 @@ class MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced(io.ComfyNode):
                     ),
                     multiline=True,
                     tooltip=(
-                        "每行或每个 | 一种镜头方案。默认锁定机位以减少人物轮廓拖影；显式改为推拉、"
-                        "手持或横移会提高时域重影风险。V2仍强制中近景、正面或3/4脸。"
+                        "One shot plan per line or per | separator. Camera is locked by default to reduce character contour ghosting; explicitly switch to push/pull, "
+                        "handheld, or lateral movement increases temporal ghosting risk. V2 still enforces medium close-up, front or 3/4 face."
                     ),
                 ),
                 io.Combo.Input(
@@ -426,7 +426,7 @@ class MiniMaxH3MVVocalLockPromptCompilerV2T8Advanced(io.ComfyNode):
                     multiline=True,
                     advanced=True,
                     tooltip=(
-                        "可选：按场景提供精确歌词/对白字符串列表；只有这里的原文会进入<d>，留空绝不猜词。"
+                        "Optional: provide exact lyric/dialogue strings per scene; only the text here enters <d>. When empty, no words are guessed."
                     ),
                 ),
                 io.String.Input(
@@ -457,7 +457,7 @@ class MiniMaxH3LocalMVVocalLockRendererV2T8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LocalMVVocalLockRendererV2T8Advanced",
             display_name=(
-                "MiniMax H3 Local MV Vocal Lock Renderer V2 / 独立人声锁定生成 "
+                "MiniMax H3 Local MV Vocal Lock Renderer V2 "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -467,15 +467,15 @@ class MiniMaxH3LocalMVVocalLockRendererV2T8Advanced(io.ComfyNode):
             ),
             category=CATEGORY,
             inputs=[
-                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
-                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Model.Input("model", tooltip="Local MiniMax H3 MODEL."),
+                io.Clip.Input("clip", tooltip="Local MiniMax H3 Qwen3-VL CLIP."),
                 io.Vae.Input("video_vae"),
                 io.Vae.Input("audio_vae"),
-                io.Image.Input("reference_image", tooltip="歌手/说话人物的身份参考图。"),
-                io.Audio.Input("full_song", tooltip="只在最终交付时一次性混入的完整原曲。"),
+                io.Image.Input("reference_image", tooltip="Identity reference image of the singer/speaking character."),
+                io.Audio.Input("full_song", tooltip="Full original song mixed into the final delivery once."),
                 io.Audio.Input(
                     "vocal_lock_audio",
-                    tooltip="必需：与full_song同时间线的本地隔离人声/清晰对白，逐场景直接驱动H3。",
+                    tooltip="Required: local isolated vocal/clear dialogue on the same timeline as full_song; drives H3 per scene.",
                 ),
                 MVVocalLockPromptPlanIO.Input("mv_vocal_lock_prompt_plan"),
                 io.String.Input("chain_id", default="my_h3_local_mv_vocal_lock_v2"),
@@ -517,7 +517,7 @@ class MiniMaxH3LocalMVVocalLockRendererV2T8Advanced(io.ComfyNode):
                     "model_id",
                     default="user-selected-local-h3-ref2va-vocal-lock",
                     advanced=True,
-                    tooltip="只写入审计报告，不校验模型文件名、大小或哈希。",
+                    tooltip="Writes only to the audit report; does not verify model filename, size, or hash.",
                 ),
             ],
             outputs=[
@@ -562,7 +562,7 @@ class MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced",
             display_name=(
-                "MiniMax H3 MV Vocal Lock Visual Director V3 / 单人物逐镜头导演 "
+                "MiniMax H3 MV Vocal Lock Visual Director V3 "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -597,8 +597,8 @@ class MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced(io.ComfyNode):
                     default="",
                     multiline=True,
                     tooltip=(
-                        "可选：必须与scene_count等长，每项为camera/lighting/performance/emotion对象。"
-                        "留空使用安全棚拍弧线；冲突的镜像、投影、海报、屏幕、背景人物和道具词会拒绝。"
+                        "Optional: must be the same length as scene_count; each item is a camera/lighting/performance/emotion object."
+                        "Leave empty for a safe studio arc; conflicting mirror, projection, poster, screen, background-character, and prop words are rejected."
                     ),
                 ),
                 io.Combo.Input(
@@ -612,7 +612,7 @@ class MiniMaxH3MVVocalLockVisualDirectorV3T8Advanced(io.ComfyNode):
                     default="",
                     multiline=True,
                     advanced=True,
-                    tooltip="可选：按场景提供精确歌词/对白；留空绝不猜词。",
+                    tooltip="Optional: provide exact lyrics/dialogue per scene; when empty, no words are guessed.",
                 ),
                 io.String.Input(
                     "non_vocal_action",
@@ -642,7 +642,7 @@ class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced",
             display_name=(
-                "MiniMax H3 Local MV Vocal Lock Visual Renderer V3 / 单人物视觉合同生成 "
+                "MiniMax H3 Local MV Vocal Lock Visual Renderer V3 "
                 "(Advanced EXP/T8)"
             ),
             description=(
@@ -651,15 +651,15 @@ class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
             ),
             category=CATEGORY,
             inputs=[
-                io.Model.Input("model", tooltip="本地 MiniMax H3 MODEL。"),
-                io.Clip.Input("clip", tooltip="本地 MiniMax H3 Qwen3-VL CLIP，可接前缀缓存包装器。"),
+                io.Model.Input("model", tooltip="Local MiniMax H3 MODEL."),
+                io.Clip.Input("clip", tooltip="Local MiniMax H3 Qwen3-VL CLIP; a prefix-cache wrapper may be connected."),
                 io.Vae.Input("video_vae"),
                 io.Vae.Input("audio_vae"),
-                io.Image.Input("reference_image", tooltip="正面或3/4脸的清晰人物身份参考图。"),
-                io.Audio.Input("full_song", tooltip="只在最终交付时一次性混入的完整原曲。"),
+                io.Image.Input("reference_image", tooltip="Clear character identity reference image, front or 3/4 face."),
+                io.Audio.Input("full_song", tooltip="Full original song mixed into the final delivery once."),
                 io.Audio.Input(
                     "vocal_lock_audio",
-                    tooltip="与full_song同时间线的人声/对白，逐场景直接驱动H3。",
+                    tooltip="Vocal/dialogue on the same timeline as full_song; drives H3 per scene.",
                 ),
                 MVVocalLockPromptPlanIO.Input("mv_vocal_lock_prompt_plan"),
                 io.String.Input("chain_id", default="my_h3_local_mv_vocal_lock_v3"),
@@ -671,7 +671,7 @@ class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
                     default=4,
                     min=1,
                     max=1000,
-                    tooltip="官方 Ref2V Turbo v0.1 使用 4 NFE；不要把该蒸馏 LoRA 当作 8 步档运行。",
+                    tooltip="Official Ref2V Turbo v0.1 uses 4 NFE; do not run this distilled LoRA as an 8-step schedule.",
                 ),
                 io.Float.Input(
                     "shift_video",
@@ -680,7 +680,7 @@ class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
                     max=100.0,
                     step=0.01,
                     advanced=True,
-                    tooltip="官方 Ref2VA Turbo4 视频 shift。",
+                    tooltip="Official Ref2VA Turbo4 video shift.",
                 ),
                 io.Float.Input(
                     "shift_audio", default=3.0, min=0.01, max=100.0, step=0.01, advanced=True
@@ -699,7 +699,7 @@ class MiniMaxH3LocalMVVocalLockVisualRendererV3T8Advanced(io.ComfyNode):
                     "model_id",
                     default="minimax_h3_ref2va+official_ref2v_turbo4_v0.1",
                     advanced=True,
-                    tooltip="只写入审计报告，不校验模型文件名、大小或哈希。",
+                    tooltip="Writes only to the audit report; does not verify model filename, size, or hash.",
                 ),
             ],
             outputs=[

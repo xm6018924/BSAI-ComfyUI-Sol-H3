@@ -35,7 +35,7 @@ class MiniMaxH3LongVideoInNodeLoopT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LongVideoInNodeLoopT8Advanced",
             display_name=(
-                "MiniMax H3 In-Node Long Video Loop / 节点内循环长视频 (Advanced EXP/T8)"
+                "MiniMax H3 In-Node Long Video Loop (Advanced EXP/T8)"
             ),
             description=(
                 "One execution generates all H3 segments strictly in sequence, atomically "
@@ -119,13 +119,13 @@ class MiniMaxH3LongVideoInNodeLoopT8Advanced(io.ComfyNode):
                     "sampler_name",
                     options=SAMPLER_OPTIONS,
                     default=DEFAULT_SAMPLER_NAME,
-                    display_name="sampler / 采样器",
+                    display_name="sampler",
                 ),
                 io.Combo.Input(
                     "scheduler",
                     options=SCHEDULER_OPTIONS,
                     default=DEFAULT_SCHEDULER_NAME,
-                    display_name="scheduler / 调度器",
+                    display_name="scheduler",
                 ),
                 io.Combo.Input(
                     "task_type",

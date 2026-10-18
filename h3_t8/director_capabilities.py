@@ -15,7 +15,7 @@ from typing import Iterable, Mapping
 CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
     {
         "id": "long_video",
-        "label": "连续长片／二采",
+        "label": "Continuous long film / second pass",
         "entry_nodes": (
             "MiniMaxH3LongVideoPlannerT8",
             "MiniMaxH3LongVideoConditioningT8",
@@ -23,7 +23,7 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3LongVideoComposeAcceptedT8",
         ),
         "route": "native_long_video_workflow",
-        "note": "保留上下文、取消、恢复与已验收接缝；不把单段生成拼成连续长片。",
+        "note": "Preserves context, cancel, resume, and accepted seams; does not stitch single-segment generations into a continuous long film.",
     },
     {
         "id": "semantic_bridge",
@@ -33,7 +33,7 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3SemanticBridgeApplyT8",
         ),
         "route": "native_semantic_bridge_workflow",
-        "note": "Bridge 只改变条件链，不改既有采样、音频、时间偏置或接缝默认。",
+        "note": "Bridge changes only the conditioning chain; existing sampling, audio, time bias, and seam defaults are untouched.",
     },
     {
         "id": "prompt_relay",
@@ -43,7 +43,7 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3PromptRelayConditioningT8Advanced",
         ),
         "route": "native_prompt_relay_workflow",
-        "note": "按正式 Relay Plan→Conditioning 合同编译，原文空白与角色映射可审计。",
+        "note": "Compiled per the formal Relay Plan -> Conditioning contract; source blanks and role mapping are auditable.",
     },
     {
         "id": "fast_h3_v2",
@@ -54,17 +54,17 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3FastH3V2DualModelLongVideoEXPT8",
         ),
         "route": "native_fast_h3_v2_workflow",
-        "note": "仅在实际安装的 FastH3 V2 模型与对应 LoRA／审计节点齐全时开放。",
+        "note": "Available only when the actual installed FastH3 V2 model and corresponding LoRA/audit nodes are present.",
     },
     {
         "id": "eav",
-        "label": "EAV／增强音视频",
+        "label": "EAV / enhanced AV",
         "entry_nodes": (
             "MiniMaxH3EnhanceAVideoPromptRelayComposerT8Advanced",
             "MiniMaxH3EnhanceAVideoLongVideoComposerT8Advanced",
         ),
         "route": "native_eav_workflow",
-        "note": "EAV 与 Relay／长片有独立 wrapper 合同，未验收组合不会被导演台强行叠加。",
+        "note": "EAV and Relay/long-film have independent wrapper contracts; unvalidated combinations are not force-stacked by the director.",
     },
     {
         "id": "low_vram",
@@ -74,27 +74,27 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3ChunkFeedForwardT8Advanced",
         ),
         "route": "native_memory_workflow",
-        "note": "显存策略是显式可审计节点，不偷偷改变普通 H3 默认路径。",
+        "note": "VRAM policy is an explicit auditable node; it does not silently change the normal H3 default path.",
     },
     {
         "id": "taeh3_preview",
-        "label": "TAEH3 实时采样预览",
+        "label": "TAEH3 live sampling preview",
         "entry_nodes": (
             "MiniMaxH3TAEH3PreviewCapabilityT8Advanced",
             "MiniMaxH3TAEH3SamplingPreviewEXPT8",
         ),
         "route": "native_taeh3_preview_workflow",
-        "note": "预览是中间 x0 近似图，不是最终 VAE 成片；取消必须回到原生采样入口。",
+        "note": "The preview is an intermediate x0 approximation, not the final VAE output; cancellation must return to the native sampling entry.",
     },
     {
         "id": "topaz",
-        "label": "Topaz 高清放大",
+        "label": "Topaz upscale",
         "entry_nodes": (
             "MiniMaxH3TopazEnvironmentEXPT8",
             "MiniMaxH3TopazVideoEXPT8",
         ),
         "route": "native_topaz_workflow",
-        "note": "输入可为普通下载视频或 H3 输出；环境检测、取消与安全 H264 交付需分别通过。",
+        "note": "Input can be a regular downloaded video or H3 output; environment check, cancel, and safe H.264 delivery each must pass separately.",
     },
     {
         "id": "meridian",
@@ -106,7 +106,7 @@ CAPABILITY_SPECS: tuple[Mapping[str, object], ...] = (
             "MiniMaxH3MeridianGenerateEXPT8",
         ),
         "route": "native_meridian_workflow",
-        "note": "几何权重、ConvRot INT8 与完整 P2/P3/P4 质量门禁独立记录，不从 D2 生成结果冒充。",
+        "note": "Geometry weights, ConvRot INT8, and the full P2/P3/P4 quality gates are recorded independently; they are not faked from D2 generation results.",
     },
 )
 

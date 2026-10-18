@@ -90,7 +90,7 @@ class MiniMaxH3VoiceProfileT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VoiceProfileT8",
-            display_name="MiniMax H3 Voice Profile / 音色资料 (EXP/T8)",
+            display_name="MiniMax H3 Voice Profile (EXP/T8)",
             description=(
                 "Creates a workflow-memory voice profile. Reference mode prepares a "
                 "2-15s 32kHz stereo anchor and requires explicit rights confirmation."
@@ -193,7 +193,7 @@ class MiniMaxH3SpeechPlanT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechPlanT8",
-            display_name="MiniMax H3 Speech Plan / 语音规划 (EXP/T8)",
+            display_name="MiniMax H3 Speech Plan (EXP/T8)",
             description=(
                 "Separates spoken text from acting direction and performs language-aware "
                 "chunking. It never guesses the render duration."
@@ -286,7 +286,7 @@ class MiniMaxH3SpeechConditioningT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechConditioningT8",
-            display_name="MiniMax H3 Speech Conditioning / 语音条件 (EXP/T8)",
+            display_name="MiniMax H3 Speech Conditioning (EXP/T8)",
             description=(
                 "Builds native H3 audio-first conditioning without loading a model. "
                 "Described voice uses T2VA; reference voice uses Ref2VA with a dark image."
@@ -356,7 +356,7 @@ class MiniMaxH3SpeechDecodeT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechDecodeT8",
-            display_name="MiniMax H3 Speech Decode / 仅解码语音 (EXP/T8)",
+            display_name="MiniMax H3 Speech Decode (EXP/T8)",
             description=(
                 "Decodes only the H3 audio latent. Conservative energy trim is optional "
                 "and does not replace ASR or speaker verification."
@@ -416,7 +416,7 @@ class MiniMaxH3SpeechAssembleT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechAssembleT8",
-            display_name="MiniMax H3 Speech Assemble / 语音时间线 (EXP/T8)",
+            display_name="MiniMax H3 Speech Assemble (EXP/T8)",
             description=(
                 "Assembles rendered turns on exact sample boundaries and emits actual "
                 "audio-boundary timeline plus planned-text SRT/VTT."
@@ -487,7 +487,7 @@ class MiniMaxH3SpeechVerifyT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechVerifyT8",
-            display_name="MiniMax H3 Speech Verify & Align / ASR校验裁切 (EXP/T8)",
+            display_name="MiniMax H3 Speech Verify & Align (EXP/T8)",
             description=(
                 "Runs optional CPU faster-whisper verification. Exact-target mode removes "
                 "Ref2VA lead-in only when the complete requested text is found in order."
@@ -644,7 +644,7 @@ class MiniMaxH3DialogueScriptT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DialogueScriptT8",
-            display_name="MiniMax H3 Dialogue Script / 对话脚本 (EXP/T8)",
+            display_name="MiniMax H3 Dialogue Script (EXP/T8)",
             description=(
                 "Builds a two- or three-speaker, one-turn-at-a-time dialogue plan. "
                 "Use 'S1: text' lines or structured JSON for per-turn acting and timing."
@@ -706,7 +706,7 @@ class MiniMaxH3DialogueTurnSelectT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DialogueTurnSelectT8",
-            display_name="MiniMax H3 Dialogue Turn Select / 选择对白句 (EXP/T8)",
+            display_name="MiniMax H3 Dialogue Turn Select (EXP/T8)",
             description=(
                 "Selects one dialogue turn and its bound voice profile for independent "
                 "generation, retry, and replacement."
@@ -755,7 +755,7 @@ class MiniMaxH3SpeechGuardT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechGuardT8",
-            display_name="MiniMax H3 Speech Abnormal-Exit Guard / 异常释放保护 (EXP/T8)",
+            display_name="MiniMax H3 Speech Abnormal-Exit Guard (EXP/T8)",
             description=(
                 "Arms a prompt-lifecycle guard before speech conditioning. If OOM, cancellation, "
                 "or another upstream exception prevents Finalize, the selected error release is requested."
@@ -803,7 +803,7 @@ class MiniMaxH3SpeechVRAMPreflightT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechVRAMPreflightT8",
-            display_name="MiniMax H3 Speech VRAM Preflight / 显存预检 (EXP/T8)",
+            display_name="MiniMax H3 Speech VRAM Preflight (EXP/T8)",
             description=(
                 "Reports present whole-device free VRAM and DynamicVRAM configuration. "
                 "It cannot predict sampler peak and never grants a memory_safe label."
@@ -846,7 +846,7 @@ class MiniMaxH3SpeechFinalizeT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechFinalizeT8",
-            display_name="MiniMax H3 Speech Finalize & Release / 完成并释放 (EXP/T8)",
+            display_name="MiniMax H3 Speech Finalize & Release (EXP/T8)",
             description=(
                 "Passes AUDIO through, then requests the selected ComfyUI release policy. "
                 "unload_all_models is global and is never described as H3-only."
@@ -888,7 +888,7 @@ class MiniMaxH3SpeechStudioT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechStudioT8",
-            display_name="MiniMax H3 Speech Studio / 一站式语音 (EXP/T8)",
+            display_name="MiniMax H3 Speech Studio (EXP/T8)",
             description=(
                 "Native ComfyUI speech graph: conditioning -> sampler -> audio-only decode -> "
                 "explicit release. Stock res_multistep/simple is the initial quality baseline."
@@ -1156,7 +1156,7 @@ class MiniMaxH3VoiceLibrarySaveT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VoiceLibrarySaveT8",
-            display_name="MiniMax H3 Voice Library Save / 保存音色 (EXP/T8)",
+            display_name="MiniMax H3 Voice Library Save (EXP/T8)",
             description="Explicitly persists a voice profile and any reference audio in the local ComfyUI user directory.",
             category=SPEECH_CATEGORY,
             inputs=[
@@ -1179,7 +1179,7 @@ class MiniMaxH3VoiceLibraryLoadT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VoiceLibraryLoadT8",
-            display_name="MiniMax H3 Voice Library Load / 加载音色 (EXP/T8)",
+            display_name="MiniMax H3 Voice Library Load (EXP/T8)",
             category=SPEECH_CATEGORY,
             inputs=[io.String.Input("library_name", default="my_voice")],
             outputs=[VoiceProfile.Output("voice_profile"), io.String.Output("report_json")],
@@ -1197,7 +1197,7 @@ class MiniMaxH3VoiceLibraryDeleteT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VoiceLibraryDeleteT8",
-            display_name="MiniMax H3 Voice Library Delete / 删除音色 (EXP/T8)",
+            display_name="MiniMax H3 Voice Library Delete (EXP/T8)",
             description="Moves an entry to a recoverable local trash folder; it does not permanently erase it.",
             category=SPEECH_CATEGORY,
             inputs=[
@@ -1219,7 +1219,7 @@ class MiniMaxH3SpeechPerformanceT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechPerformanceT8",
-            display_name="MiniMax H3 Speech Performance Direction / 演绎控制 (EXP/T8)",
+            display_name="MiniMax H3 Speech Performance Direction (EXP/T8)",
             description=(
                 "Adds emotion, pace, pitch, energy and nonverbal prompt direction. "
                 "These model controls remain uncalibrated and are reported as such."
@@ -1260,7 +1260,7 @@ class MiniMaxH3SpeechADRFitT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechADRFitT8",
-            display_name="MiniMax H3 Speech ADR Exact Fit / 配音精确时长 (EXP/T8)",
+            display_name="MiniMax H3 Speech ADR Exact Fit (EXP/T8)",
             description=(
                 "Fits AUDIO to an exact sample count using refusal, pad/trim, or bounded phase-vocoder stretch. "
                 "Exact duration is not a lip-sync claim."
@@ -1301,7 +1301,7 @@ class MiniMaxH3SpeechLongFormStartT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechLongFormStartT8",
-            display_name="MiniMax H3 Speech Long Form Start/Resume / 长文本恢复 (EXP/T8)",
+            display_name="MiniMax H3 Speech Long Form Start/Resume (EXP/T8)",
             description=(
                 "Creates or resumes an atomic accepted-segment manifest. Render only next_index per prompt; "
                 "this avoids retaining every long-form latent in one execution."
@@ -1343,7 +1343,7 @@ class MiniMaxH3SpeechLongFormAcceptT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechLongFormAcceptT8",
-            display_name="MiniMax H3 Speech Long Form Accept / 接受语音分段 (EXP/T8)",
+            display_name="MiniMax H3 Speech Long Form Accept (EXP/T8)",
             description="Atomically stores one accepted chunk before advancing the manifest; safe to resume after a crash.",
             category=SPEECH_CATEGORY,
             inputs=[
@@ -1410,7 +1410,7 @@ class MiniMaxH3SpeechLongFormControlT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechLongFormControlT8",
-            display_name="MiniMax H3 Speech Long Form Control / 长文本控制 (EXP/T8)",
+            display_name="MiniMax H3 Speech Long Form Control (EXP/T8)",
             category=SPEECH_CATEGORY,
             inputs=[
                 io.String.Input("job_id", default="speech_job_001"),
@@ -1436,7 +1436,7 @@ class MiniMaxH3SpeechLongFormComposeT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeechLongFormComposeT8",
-            display_name="MiniMax H3 Speech Long Form Compose / 合成长文本 (EXP/T8)",
+            display_name="MiniMax H3 Speech Long Form Compose (EXP/T8)",
             category=SPEECH_CATEGORY,
             inputs=[
                 SpeechPlan.Input("speech_plan"),
@@ -1470,7 +1470,7 @@ class MiniMaxH3JointDialogueConditioningT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3JointDialogueConditioningT8",
-            display_name="MiniMax H3 Joint Dialogue Conditioning / 多人同段条件 (EXP/T8)",
+            display_name="MiniMax H3 Joint Dialogue Conditioning (EXP/T8)",
             description=(
                 "Builds an unverified 2-3 speaker joint Ref2VA experiment. It is not the stable dialogue path "
                 "and must not be described as identity-safe until leakage and identity-swap tests pass."

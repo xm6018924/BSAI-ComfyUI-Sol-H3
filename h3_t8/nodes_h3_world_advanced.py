@@ -33,7 +33,7 @@ class MiniMaxH3WorldActionTimelineT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3WorldActionTimelineT8Advanced",
-            display_name="MiniMax H3-World Action Timeline / 动作时间线 (T8)",
+            display_name="MiniMax H3-World Action Timeline (T8)",
             description=(
                 "Builds the exact 37-step H3-World action script for one 832x480, "
                 "124-frame clip. Custom ranges use end-exclusive latent indices."
@@ -76,7 +76,7 @@ class MiniMaxH3WorldModelComposerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3WorldModelComposerT8Advanced",
-            display_name="MiniMax H3-World Model Composer / 模型组合 (T8)",
+            display_name="MiniMax H3-World Model Composer (T8)",
             description=(
                 "Loads the H3-World LoRA and installs its required per-action text "
                 "refiner segmentation plus directed FlexAttention runtime."
@@ -169,7 +169,7 @@ class MiniMaxH3WorldSafeVideoSaveT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3WorldSafeVideoSaveT8Advanced",
-            display_name="MiniMax H3-World Safe Video Save / 安全视频保存 (T8)",
+            display_name="MiniMax H3-World Safe Video Save (T8)",
             description=(
                 "Saves the fixed 832x480x124 H3-World result with an isolated, "
                 "single-thread libx264 process. The MP4 is published only after strict "

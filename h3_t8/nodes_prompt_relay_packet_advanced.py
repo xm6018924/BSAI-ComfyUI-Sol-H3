@@ -22,7 +22,7 @@ class MiniMaxH3PromptPacketRelayPlanT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3PromptPacketRelayPlanT8Advanced",
             display_name=(
-                "MiniMax H3 Prompt Packet → Relay Plan / 编译提示词转时间线 "
+                "MiniMax H3 Prompt Packet to Relay Plan "
                 "(Advanced)"
             ),
             description=(
@@ -36,8 +36,8 @@ class MiniMaxH3PromptPacketRelayPlanT8Advanced(io.ComfyNode):
                 PromptPacketIO.Input(
                     "prompt_packet",
                     tooltip=(
-                        "直接连接 T8 Video Prompt Compiler；只接受 backend=minimax_h3 "
-                        "且哈希完整的 packet。"
+                        "Connect directly to the T8 Video Prompt Compiler; accepts only backend=minimax_h3 "
+                        "and a hash-complete packet."
                     ),
                 ),
                 io.String.Input(
@@ -50,8 +50,8 @@ class MiniMaxH3PromptPacketRelayPlanT8Advanced(io.ComfyNode):
                         '  {"prompt":"The camera pulls back into a wide shot."}\n]'
                     ),
                     tooltip=(
-                        "显式事件列表。auto_equal只写prompt；其他模式还要写start/end。"
-                        "使用[]表示只保留全局Prompt Packet且不安装Relay补丁。"
+                        "Explicit event list. auto_equal writes prompt only; other modes also write start/end."
+                        "Use [] to keep only the global Prompt Packet without installing a Relay patch."
                     ),
                 ),
                 io.Combo.Input(
@@ -59,14 +59,14 @@ class MiniMaxH3PromptPacketRelayPlanT8Advanced(io.ComfyNode):
                     options=["auto_equal", "frames", "seconds", "percent"],
                     default="auto_equal",
                     tooltip=(
-                        "frames的end为包含端点；seconds/percent的end为时间边界。"
+                        "frames end is inclusive; seconds/percent end is a time boundary."
                     ),
                 ),
                 io.Combo.Input(
                     "math_profile",
                     options=["paper_v1", "legacy_repo_compat"],
                     default="paper_v1",
-                    tooltip="默认使用Prompt Relay论文公式。",
+                    tooltip="Default uses the Prompt Relay paper formula.",
                 ),
                 io.Float.Input(
                     "epsilon",
@@ -82,7 +82,7 @@ class MiniMaxH3PromptPacketRelayPlanT8Advanced(io.ComfyNode):
                     "prompt_relay_events",
                     optional=True,
                     tooltip=(
-                        "可选：连接链式 Event 节点后以它为权威事件源；未连接时继续读取 events_json。"
+                        "Optional: connect a chained Event node as the authoritative event source; when unconnected, reads  events_json。"
                     ),
                 ),
             ],
@@ -105,7 +105,7 @@ class MiniMaxH3PromptRelayEventT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayEventT8Advanced",
-            display_name="MiniMax H3 Prompt Relay Event / 单事件串联 (Advanced)",
+            display_name="MiniMax H3 Prompt Relay Event (Advanced)",
             description=(
                 "Adds one explicit local action to a chainable Prompt Relay event list. "
                 "Duplicate this node for each event; start/end are interpreted by the "
@@ -119,7 +119,7 @@ class MiniMaxH3PromptRelayEventT8Advanced(io.ComfyNode):
                     multiline=True,
                     dynamic_prompts=True,
                     default="The subject performs one clearly observable action.",
-                    tooltip="只写这一时间段的局部动作，不重复全局人物/场景/声音设定。",
+                    tooltip="Write only local actions for this time range; do not repeat global character/scene/audio settings.",
                 ),
                 io.Float.Input(
                     "start",
@@ -128,8 +128,8 @@ class MiniMaxH3PromptRelayEventT8Advanced(io.ComfyNode):
                     max=100000.0,
                     step=0.01,
                     tooltip=(
-                        "auto_equal时忽略；frames为整数起始帧，seconds为秒，percent为0..100；"
-                        "多个Event必须按开始时间排序。"
+                        "Ignored in auto_equal; frames is integer start frame, seconds is seconds, percent is 0..100; "
+                        "Multiple Events must be sorted by start time."
                     ),
                 ),
                 io.Float.Input(
@@ -139,21 +139,21 @@ class MiniMaxH3PromptRelayEventT8Advanced(io.ComfyNode):
                     max=100000.0,
                     step=0.01,
                     tooltip=(
-                        "frames模式只接受整数并包含end帧；seconds/percent模式把end视为边界。"
+                        "frames mode accepts integers and includes the end frame; seconds/percent mode treats end as a boundary."
                     ),
                 ),
                 io.Boolean.Input(
                     "enabled",
                     default=True,
                     tooltip=(
-                        "关闭后不把本事件加入链；如果整条链都关闭，Plan会变成"
-                        "全局提示直通，不需要拆线。"
+                        "When off, this event is not added to the chain; if the whole chain is off, the Plan becomes "
+                        "a global-prompt passthrough; no need to disconnect wires."
                     ),
                 ),
                 PromptRelayEventsIO.Input(
                     "previous_events",
                     optional=True,
-                    tooltip="连接上一个Event节点；第一个Event留空。",
+                    tooltip="Connect the previous Event node; leave the first Event empty.",
                 ),
             ],
             outputs=[

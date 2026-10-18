@@ -69,7 +69,7 @@ class MiniMaxH3PDD8StepSetupT8Advanced(io.ComfyNode):
                     "base_variant",
                     options=list(PDD_VARIANTS),
                     default="FL2VA",
-                    display_name="base variant / 基模类型",
+                    display_name="base variant",
                     tooltip=(
                         "Select how the PDD runtime should interpret the adapter. File metadata "
                         "and variant mismatches are reported but do not block loading."

@@ -30,9 +30,9 @@ from .prompt_tags import MEDIA_TAG_RE, canonicalize_media_tags
 
 SCHEMA = "t8.minimax_h3.prompt_provider_router.v1"
 PROVIDER_MODES = (
-    "local_passthrough — 本地原文直通",
+    "local_passthrough — local raw passthrough",
     "openai_compatible — OpenAI / LM Studio / llama.cpp",
-    "ollama_chat — Ollama本地或远程服务",
+    "ollama_chat — local or remote Ollama service",
     "bsai_strata — BSAI Strata (Qwen3.8-Flash-Next @127.0.0.1:8080)",
 )
 DEFAULT_ENDPOINTS = {

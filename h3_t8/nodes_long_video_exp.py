@@ -22,7 +22,7 @@ class MiniMaxH3LongVideoPlannerT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoPlannerT8",
-            display_name="MiniMax H3 Segment Planner / 长视频分段规划 (EXP/T8)",
+            display_name="MiniMax H3 Segment Planner (EXP/T8)",
             description=(
                 "Plans one retry-safe H3 chain segment. Segment 0 has no overlap; later "
                 "segments render a 5/22/39-frame head context and expose exact AV trim metadata."
@@ -118,7 +118,7 @@ class MiniMaxH3LongVideoContextLoadT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoContextLoadT8",
-            display_name="MiniMax H3 Previous Context / 读取上一段上下文 (EXP/T8)",
+            display_name="MiniMax H3 Previous Context (EXP/T8)",
             description=(
                 "Segment 0 returns an empty passthrough context. Segment N loads only the "
                 "validated AV tail saved for segment N-1; it never selects the newest file."
@@ -157,7 +157,7 @@ class MiniMaxH3LongVideoConditioningT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoConditioningT8",
-            display_name="MiniMax H3 Long Video Conditioning / 长视频续写条件 (EXP/T8)",
+            display_name="MiniMax H3 Long Video Conditioning (EXP/T8)",
             description=(
                 "Independent long-video conditioning. It returns a cloned MODEL with a local "
                 "H3 payload/layout patch; the input MODEL and all stable T8 nodes remain unchanged."
@@ -401,7 +401,7 @@ class MiniMaxH3LongVideoContextSaveT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoContextSaveT8",
-            display_name="MiniMax H3 Save AV Tail / 保存下一段上下文 (EXP/T8)",
+            display_name="MiniMax H3 Save AV Tail (EXP/T8)",
             description=(
                 "Atomically saves only the bounded H3 AV tail for this segment. Re-running the "
                 "same segment replaces its own slot and never changes segment N-1."

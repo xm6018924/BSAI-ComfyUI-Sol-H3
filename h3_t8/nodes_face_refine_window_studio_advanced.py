@@ -24,7 +24,7 @@ class MiniMaxH3FaceRefineWindowStudioStartT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineWindowStudioStartT8Advanced",
             display_name=(
-                "MiniMax H3 Face Refine Window Studio Start / 多窗口串行启动 (Advanced)"
+                "MiniMax H3 Face Refine Window Studio Start / Multi-Window Serial Start (Advanced)"
             ),
             description=(
                 "Creates or resumes a source-bound multi-window manifest. review_only never "
@@ -150,7 +150,7 @@ class MiniMaxH3FaceRefineWindowStudioCommitT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineWindowStudioCommitT8Advanced",
             display_name=(
-                "MiniMax H3 Face Refine Window Studio Commit / 人工决策提交 (Advanced)"
+                "MiniMax H3 Face Refine Window Studio Commit / Human Decision Commit (Advanced)"
             ),
             description=(
                 "Validates the current source-bound candidate again, then atomically records "
@@ -263,7 +263,7 @@ class MiniMaxH3FaceRefineWindowStudioComposeT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineWindowStudioComposeT8Advanced",
             display_name=(
-                "MiniMax H3 Face Refine Window Studio Compose / 已接受窗口合成 (Advanced)"
+                "MiniMax H3 Face Refine Window Studio Compose / Accepted Window Compose (Advanced)"
             ),
             description=(
                 "Rebuilds the full IMAGE timeline from immutable source frames plus accepted "

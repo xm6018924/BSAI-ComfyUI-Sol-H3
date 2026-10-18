@@ -13,7 +13,7 @@ class MiniMaxH3ActivationChunkT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ActivationChunkT8Advanced",
-            display_name="MiniMax H3 MLP Activation Chunk / MLP激活分块 (Advanced)",
+            display_name="MiniMax H3 MLP Activation Chunk (Advanced)",
             description=(
                 "Clone-local H3 DiT MLP token chunking. Attention is unchanged. "
                 "Current TensorWise INT8 kernels already fuse SwiGLU and may show no memory benefit. "

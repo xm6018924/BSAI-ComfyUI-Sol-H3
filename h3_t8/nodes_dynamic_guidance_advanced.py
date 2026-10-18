@@ -17,7 +17,7 @@ class MiniMaxH3DynamicCFGGuiderT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DynamicCFGGuiderT8Advanced",
-            display_name="MiniMax H3 Dynamic Guidance / 动态引导 (Advanced)",
+            display_name="MiniMax H3 Dynamic Guidance (Advanced)",
             description=(
                 "Default-pass-through H3 guider. single_condition_gain_exp applies one "
                 "device-side sigma-dependent gain to the BasicGuider route and is not true "
@@ -108,7 +108,7 @@ class MiniMaxH3DynamicGuidanceAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DynamicGuidanceAuditT8Advanced",
-            display_name="MiniMax H3 Dynamic Guidance Audit / 动态引导审计 (Advanced)",
+            display_name="MiniMax H3 Dynamic Guidance Audit (Advanced)",
             description=(
                 "Place after sampling. It reports observed guider calls, physical model "
                 "forwards and cond/uncond branch batching without modifying the AV latent."

@@ -14,7 +14,7 @@ class MiniMaxH3SubjectSafeRGBCompositeT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SubjectSafeRGBCompositeT8Advanced",
             display_name=(
-                "MiniMax H3 Subject-Safe RGB Composite / 人物安全RGB合成 "
+                "MiniMax H3 Subject-Safe RGB Composite"
                 "(v8 Advanced EXP)"
             ),
             description=(

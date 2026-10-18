@@ -28,7 +28,7 @@ class MiniMaxH3UnifiedCastT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3UnifiedCastT8Advanced",
-            display_name="MiniMax H3 Unified Cast / 统一角色表 (Advanced)",
+            display_name="MiniMax H3 Unified Cast (Advanced)",
             description=(
                 "Builds one validated character-continuity contract for video prompts. "
                 "It stores text metadata only and does not load a face, voice, or vision model."
@@ -57,7 +57,7 @@ class MiniMaxH3SoundCanvasT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SoundCanvasT8Advanced",
-            display_name="MiniMax H3 Sound Canvas / 声音画布 (Advanced)",
+            display_name="MiniMax H3 Sound Canvas (Advanced)",
             description=(
                 "Plans dialogue, music, ambience and SFX on one explicit timeline. "
                 "The no-extra-speech guard preserves non-speech audio instead of trimming the master."
@@ -97,7 +97,7 @@ class MiniMaxH3PromptCompilerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptCompilerT8Advanced",
-            display_name="T8 Video Prompt Compiler / 多后端提示词编译 (Advanced)",
+            display_name="T8 Video Prompt Compiler (Advanced)",
             description=(
                 "Compiles one structured visual/audio brief for MiniMax H3, Wan 2.2, "
                 "LTX-Video or a generic cinematic backend. This is text compilation only."
@@ -176,7 +176,7 @@ class MiniMaxH3StudioTimelineT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3StudioTimelineT8Advanced",
-            display_name="MiniMax H3 Studio Timeline / 创作时间轴 (Advanced)",
+            display_name="MiniMax H3 Studio Timeline (Advanced)",
             description=(
                 "Compiles many shots into deterministic H3 17n+5 windows. Long visual-only "
                 "shots can be split explicitly; long dialogue must be split by the author."
@@ -269,7 +269,7 @@ class MiniMaxH3StudioShotSelectT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3StudioShotSelectT8Advanced",
-            display_name="MiniMax H3 Studio Shot Select / 镜头选择 (Advanced)",
+            display_name="MiniMax H3 Studio Shot Select (Advanced)",
             description=(
                 "Selects one planned shot and exposes prompt, length and seed for existing "
                 "Conditioning/Sampler nodes. It does not queue or load anything by itself."
@@ -311,7 +311,7 @@ class MiniMaxH3SelectiveSegmentRepairT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SelectiveSegmentRepairT8Advanced",
-            display_name="MiniMax H3 Selective Segment Repair / 选择性分段重做 (Advanced)",
+            display_name="MiniMax H3 Selective Segment Repair (Advanced)",
             description=(
                 "Creates a non-destructive repair list from explicit indices or quality evidence. "
                 "It never overwrites or automatically accepts existing media."
@@ -368,7 +368,7 @@ class MiniMaxH3RepairSegmentSelectT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3RepairSegmentSelectT8Advanced",
-            display_name="MiniMax H3 Repair Segment Select / 重做段选择 (Advanced)",
+            display_name="MiniMax H3 Repair Segment Select (Advanced)",
             description=(
                 "Selects one item from a non-destructive repair plan and exposes it to the "
                 "existing generation graph. Acceptance remains a separate user action."

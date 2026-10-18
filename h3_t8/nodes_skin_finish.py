@@ -87,7 +87,7 @@ class MiniMaxH3SkinFinishT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishT8",
-            display_name="MiniMax H3 Skin Finish / H3肤质收尾 (T8)",
+            display_name="MiniMax H3 Skin Finish (T8)",
             description=(
                 "Creates a conservative non-generative skin-finishing candidate only inside "
                 "an explicit MASK. Missing or unreliable masks ABSTAIN to the exact source. "
@@ -173,7 +173,7 @@ class MiniMaxH3SkinFinishAdvancedT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishAdvancedT8",
-            display_name="MiniMax H3 Skin Finish / H3肤质收尾 (Advanced)",
+            display_name="MiniMax H3 Skin Finish (Advanced)",
             description=(
                 "Append-only advanced P0 route with explicit mask provenance, area gates, "
                 "CPU-bounded chunks, exact outside-mask pixels, exact alpha/aux preservation, "
@@ -266,7 +266,7 @@ class MiniMaxH3SkinFinishPreviewAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishPreviewAuditT8Advanced",
-            display_name="MiniMax H3 Skin Finish Preview / 肤质收尾预览审计 (Advanced)",
+            display_name="MiniMax H3 Skin Finish Preview (Advanced)",
             description=(
                 "Builds a source/candidate split, full-resolution masked crop, used/rejected "
                 "mask view, amplified difference and a ±2-frame loop. The selected output "

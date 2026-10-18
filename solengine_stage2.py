@@ -116,12 +116,12 @@ class BSAI_SolH3_SolEngine_Refiner:
 
     @classmethod
     def INPUT_TYPES(cls):
-        ltxf = _list("diffusion_models", "ltx") or ["(缺 LTX-2.5 transformer)"]
-        vaef = _list("vae", "ltx") or ["(缺 LTX VAE)"]
-        clipf = _list("text_encoders", "ltx") or _list("text_encoders", "gemma4") or ["(缺 text encoder)"]
-        upf = _list("latent_upscale_models", "ltx") or ["(缺 LTX upscaler)"]
+        ltxf = _list("diffusion_models", "ltx") or ["(missing LTX-2.5 transformer)"]
+        vaef = _list("vae", "ltx") or ["(missing LTX VAE)"]
+        clipf = _list("text_encoders", "ltx") or _list("text_encoders", "gemma4") or ["(missing text encoder)"]
+        upf = _list("latent_upscale_models", "ltx") or ["(missing LTX upscaler)"]
         loras = _list("loras", "ltx")
-        lora_opts = ["(无 / distilled-transformer 已 bake)"] + loras
+        lora_opts = ["(none / distilled-transformer already baked)"] + loras
         return {
             "required": {
                 "h3_frames": ("IMAGE",),
@@ -161,7 +161,7 @@ class BSAI_SolH3_SolEngine_Refiner:
     RETURN_NAMES = ("image", "audio", "report")
     FUNCTION = "refine"
     CATEGORY = "BSAI/Sol-H3/SolEngine"
-    DESCRIPTION = "NVIDIA Sol Engine 两级 Stage-2: H3 draft → LTX-2.5 3步精修(旁支, 不影响原双采节点)"
+    DESCRIPTION = "NVIDIA Sol Engine two-stage Stage-2: H3 draft -> LTX-2.5 3-step refine (side branch; does not affect existing two-pass nodes)"
 
     # ------------------------------------------------------------------
     def _load_ltx_model(self, name):
@@ -228,13 +228,13 @@ class BSAI_SolH3_SolEngine_Refiner:
                refiner_lora, refiner_lora_strength, seed):
         t8 = _load_t8()
         if t8 is None:
-            raise RuntimeError("T8mars SolEngine 模块不可用")
+            raise RuntimeError("T8mars SolEngine module is unavailable")
 
         report = {"stage": "solengine_stage2", "schedule": schedule_mode,
                   "attention": stage2_attention}
 
         # 1) H3 draft 帧裁剪/resize → LTX encoder 半分辨率输入
-        print("[BSAI-SolEngine] Step1: 裁剪 H3 draft 帧...", flush=True)
+        print("[BSAI-SolEngine] Step1: cropping H3 draft frames...", flush=True)
         (enc_frames, enc_w, enc_h, kept_frames, dropped,
          duration, _) = t8.prepare_h3_draft_for_ltx_refiner(
             h3_frames, target_width, target_height, "trim_to_8n_plus_1", fps)
@@ -245,7 +245,7 @@ class BSAI_SolH3_SolEngine_Refiner:
         print(f"[BSAI-SolEngine]   encoder={enc_w}x{enc_h} frames={kept_frames} dropped={dropped}", flush=True)
 
         # 1.5) 卸载 H3 模型，释放 VRAM 给 LTX
-        print("[BSAI-SolEngine] Step1.5: 卸载 H3 模型，释放 VRAM...", flush=True)
+        print("[BSAI-SolEngine] Step1.5: unloading H3 model, freeing VRAM...", flush=True)
         import comfy.model_management as _mm_unload
         _mm_unload.unload_all_models()
 
@@ -280,7 +280,7 @@ class BSAI_SolH3_SolEngine_Refiner:
         latent_dict = {"samples": up_lat}
 
         # 4) 加载 LTX transformer
-        print("[BSAI-SolEngine] Step4: 加载 LTX-2.5 transformer...", flush=True)
+        print("[BSAI-SolEngine] Step4: loading LTX-2.5 transformer...", flush=True)
         ltx_model = self._load_ltx_model(ltx_transformer)
 
         # 检测 transformer 类型: distilled 已内置蒸馏权重, 不需 LoRA; dev 需要 LoRA
@@ -288,8 +288,8 @@ class BSAI_SolH3_SolEngine_Refiner:
 
         # 4b) refiner LoRA (仅 dev transformer 需要; distilled transformer 自动跳过)
         if is_distilled_tf:
-            print("[BSAI-SolEngine] Step5: distilled transformer 已内置蒸馏, 跳过 LoRA", flush=True)
-        elif schedule_mode != "step20_diag" and refiner_lora and "无" not in refiner_lora and refiner_lora_strength > 0:
+            print("[BSAI-SolEngine] Step5: distilled transformer has built-in distillation; skipping LoRA", flush=True)
+        elif schedule_mode != "step20_diag" and refiner_lora and "none" not in refiner_lora and refiner_lora_strength > 0:
             print(f"[BSAI-SolEngine] Step5: LoRA {refiner_lora} x{refiner_lora_strength}", flush=True)
             try:
                 import comfy.sd
@@ -300,7 +300,7 @@ class BSAI_SolH3_SolEngine_Refiner:
                     # int8/fp8 量化权重 → bypass 注入模式 (不修改权重,
                     # forward 时 output = base(x) + lora_path(x)),
                     # 避免 calculate_weight 对 QuantizedTensor 静默失败
-                    print("[BSAI-SolEngine]   量化 transformer → bypass LoRA 注入", flush=True)
+                    print("[BSAI-SolEngine]   quantized transformer -> bypass LoRA injection", flush=True)
                     ltx_model, _ = comfy.sd.load_bypass_lora_for_models(
                         ltx_model, None, lora_sd, refiner_lora_strength, 0)
                 else:
@@ -314,7 +314,7 @@ class BSAI_SolH3_SolEngine_Refiner:
                     f"[BSAI-SolEngine] LoRA 应用失败 (Stage-2 必需): {e}"
                 ) from e
         else:
-            print("[BSAI-SolEngine] Step5: 无 refiner LoRA", flush=True)
+            print("[BSAI-SolEngine] Step5: no refiner LoRA", flush=True)
 
         # 4c) ModelSamplingLTXV shift — 官方 Stage-2 硬编码 sigma 已含时间轨迹,
         # LTX 模型 timestep(sigma)=sigma (ModelSamplingFlux), 无需也不应改 shift;
@@ -345,10 +345,10 @@ class BSAI_SolH3_SolEngine_Refiner:
         elif schedule_mode == "one_step_sol":
             # v2.8 一步精修 (对齐 SoL-Refiner 论文 §3.1 Stage-2 首步): 真·
             # SoL-Refiner (arXiv 2609.37969) 权重尚未公开, 这里用 0.85→0 单步
-            # + 蒸馏 LoRA 0.8 复刻官方三段轨迹的第一段, 降噪量为 3 步方案 1/3
+            # + 蒸馏 LoRA 0.8 复刻官方三段轨迹的第一段, Denoise量为 3 步方案 1/3
             # 耗时; 细节低于 3 步, 定位=4K 快速预览。正式 4K 出片建议
             # official_0p85 (3步) + BSAI-H3-upscale-4K 超分链路。
-            print("[BSAI-SolEngine]   one_step_sol: 单步 sigma=0.85→0 (SoL-Refiner 权重未公开, 蒸馏近似)", flush=True)
+            print("[BSAI-SolEngine]   one_step_sol: single-step sigma=0.85->0 (SoL-Refiner weights not public; distilled approximation)", flush=True)
             patched, _, _, _ = t8.setup_ltx_stage2_refiner(
                 ltx_model, enabled=True, attention_backend=_attn_backend,
                 min_tokens=4096, kernel_precision="bf16_official", verbose=False)
@@ -358,14 +358,14 @@ class BSAI_SolH3_SolEngine_Refiner:
             # 蒸馏模型; dev+官方蒸馏 LoRA 450 的轨迹是 Lightricks 官方 0.85。
             # 0.909 已被两次实跑证明输出全噪点 → 旧保存值自动映射官方 0.85 轨迹,
             # 用户无需在 UI 手动切换。
-            print("[BSAI-SolEngine]   兼容映射: official_0p909(废弃) → Lightricks 官方 0.85 轨迹", flush=True)
+            print("[BSAI-SolEngine]   compat mapping: official_0p909 (deprecated) -> Lightricks official 0.85 trajectory", flush=True)
             patched, _, _, _ = t8.setup_ltx_stage2_refiner(
                 ltx_model, enabled=True, attention_backend=_attn_backend,
                 min_tokens=4096, kernel_precision="bf16_official", verbose=False)
             sigmas = torch.tensor(
                 [0.85, 0.725, 0.421875, 0.0], dtype=torch.float32)
         elif schedule_mode == "official_0p85":
-            print("[BSAI-SolEngine]   Lightricks 官方模板 sigma=0.85 3步", flush=True)
+            print("[BSAI-SolEngine]   Lightricks official template sigma=0.85 3 steps", flush=True)
             patched, _, _, _ = t8.setup_ltx_stage2_refiner(
                 ltx_model, enabled=True, attention_backend=_attn_backend,
                 min_tokens=4096, kernel_precision="bf16_official", verbose=False)
@@ -377,9 +377,9 @@ class BSAI_SolH3_SolEngine_Refiner:
             # LTX-2.5 蒸馏模型 Stage-2 官方步数可配置(ltx.io 官方文档: distilled
             # Stage-1 固定 8 步, Stage-2 精修 configurable)。3 步官方轨迹
             # (0.85/0.725/0.4219→0) 在"非 LTX Stage-1 采样"输入(H3 帧 encode 的
-            # latent)上大步降噪 → 细节生成不足 = 糊。8 步多步轨迹小步降噪,
+            # latent)上大步Denoise → 细节生成不足 = 糊。8 步多步轨迹小步Denoise,
             # 蒸馏模型充分迭代重建细节(仍 0.85 起点保 H3 结构 + euler_ancestral CFG 1)。
-            print("[BSAI-SolEngine]   official_0p85_8step: 0.85 起点 8 步(蒸馏多步精修)", flush=True)
+            print("[BSAI-SolEngine]   official_0p85_8step: 0.85 start 8 steps (distilled multi-step refine)", flush=True)
             patched, _, _, _ = t8.setup_ltx_stage2_refiner(
                 ltx_model, enabled=True, attention_backend=_attn_backend,
                 min_tokens=4096, kernel_precision="bf16_official", verbose=False)
@@ -393,7 +393,7 @@ class BSAI_SolH3_SolEngine_Refiner:
             # 迭代平均 → 高频细节炸成噪点。本模式保留 LoRA 但把 3 步扩到 10 步:
             #   正常画面 → 量化+步数问题, 用 10 步轨迹替代 3 步蒸馏即可修复;
             #   仍噪点   → LoRA 注入本身与 int8 不兼容, 需换 bf16 dev 或蒸馏模型。
-            print("[BSAI-SolEngine]   诊断: dev+LoRA 10 步 sigma=0.85→0 (euler)", flush=True)
+            print("[BSAI-SolEngine]   diag: dev+LoRA 10 steps sigma=0.85->0 (euler)", flush=True)
             patched = ltx_model
             import numpy as _np2
             sigmas = torch.from_numpy(_np2.linspace(0.85, 0.0, 11).astype(_np2.float32))
@@ -403,7 +403,7 @@ class BSAI_SolH3_SolEngine_Refiner:
             # 模型/条件根本性问题 (与 LoRA、3 步轨迹无关)。
             # 注: 原名 step20_diag 保留兼容旧工作流; 步数 20→10 缩短判别耗时,
             # 纯 dev 10 步已足够区分上述两种情形 (满量加载下约 5~8 分钟)。
-            print("[BSAI-SolEngine]   诊断 10 步 sigma=0.5→0 (纯 dev, 无 LoRA)", flush=True)
+            print("[BSAI-SolEngine]   diag 10 steps sigma=0.5->0 (dev only, no LoRA)", flush=True)
             patched = ltx_model
             import numpy as _np2
             sigmas = torch.from_numpy(_np2.linspace(0.5, 0.0, 11).astype(_np2.float32))
@@ -428,7 +428,7 @@ class BSAI_SolH3_SolEngine_Refiner:
             cond_pos = [list(c) for c in cond_pos]
             cond_neg = [list(c) for c in cond_neg]
             report["cond_cache"] = "HIT (gemma encode skipped)"
-            print("[BSAI-SolEngine] Step6.5-7.5: 条件缓存命中, 跳过 transformer 卸载/CLIP 编码/重载", flush=True)
+            print("[BSAI-SolEngine] Step6.5-7.5: conditioning cache hit; skipping transformer unload / CLIP encode / reload", flush=True)
         else:
             # CLIP encode 前先卸载 LTX transformer — 根治 Windows 提交内存峰值
             # (os error 1455): 20GB transformer 与 14.6GB gemma CLIP 同时驻留 +
@@ -594,5 +594,5 @@ NODE_CLASS_MAPPINGS_SOLENGINE = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS_SOLENGINE = {
-    "BSAI_SolH3_SolEngine_Refiner": "BSAI Sol-H3 SolEngine 两级精修 (LTX-2.5)",
+    "BSAI_SolH3_SolEngine_Refiner": "BSAI Sol-H3 SolEngine Two-Stage Refine (LTX-2.5)",
 }

@@ -14,7 +14,7 @@ class MiniMaxH3SkinFinishDichromaticT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishDichromaticT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Dichromatic Specular / 二色反射高光抑制 "
+                "MiniMax H3 Skin Finish Dichromatic Specular"
                 "(Advanced EXP)"
             ),
             description=(

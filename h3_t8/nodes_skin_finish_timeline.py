@@ -24,7 +24,7 @@ class MiniMaxH3SkinFinishTimelineKeyframeT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SkinFinishTimelineKeyframeT8Advanced",
             display_name=(
                 "MiniMax H3 Skin Finish Timeline Keyframe / "
-                "肤质时间关键帧 (Advanced EXP)"
+                "Skin Finish Timeline Keyframes (Advanced EXP)"
             ),
             description=(
                 "Adds one source-bound Skin Finish keyframe to a hashed Studio Timeline plan. "
@@ -90,7 +90,7 @@ class MiniMaxH3SkinFinishTimelineT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SkinFinishTimelineT8Advanced",
             display_name=(
                 "MiniMax H3 Skin Finish Studio Timeline / "
-                "逐人物肤质时间执行 (Advanced EXP)"
+                "Per-Person Skin Finish Timeline Execution (Advanced EXP)"
             ),
             description=(
                 "Applies reviewed Skin Finish keyframes to exact semantic skin owned by each "

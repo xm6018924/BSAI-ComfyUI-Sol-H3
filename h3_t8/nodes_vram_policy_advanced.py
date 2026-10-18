@@ -22,7 +22,7 @@ class MiniMaxH3VRAMPolicyT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3VRAMPolicyT8Advanced",
             display_name=(
-                "MiniMax H3 VRAM Policy / VBAR显存预留策略 (Advanced)"
+                "MiniMax H3 VRAM Policy (Advanced)"
             ),
             description=(
                 "Plans a guarded process-global ComfyUI reserve and DynamicVRAM/VBAR simple "

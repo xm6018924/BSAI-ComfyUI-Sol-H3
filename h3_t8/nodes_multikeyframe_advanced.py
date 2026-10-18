@@ -20,7 +20,7 @@ class MiniMaxH3KeyframePlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3KeyframePlanT8Advanced",
-            display_name="MiniMax H3 Keyframe Plan / 中间关键帧计划 (Advanced)",
+            display_name="MiniMax H3 Keyframe Plan (Advanced)",
             description=(
                 "Chains one middle timeline image with an explicit frame/second/percent "
                 "position and a raw per-frame H3 visual noise-augmentation value."
@@ -52,7 +52,7 @@ class MiniMaxH3KeyframePlanT8Advanced(io.ComfyNode):
                 ),
                 io.Float.Input(
                     "visual_noise_aug",
-                    display_name="raw visual noise_aug / 原始视觉混噪值",
+                    display_name="raw visual noise_aug",
                     default=DEFAULT_VISUAL_NOISE_AUG,
                     min=0.0,
                     max=1.0,
@@ -103,7 +103,7 @@ class MiniMaxH3MultiKeyframeConditioningT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3MultiKeyframeConditioningT8Advanced",
             display_name=(
-                "MiniMax H3 Multi-Keyframe Conditioning / 多关键帧条件 (Advanced)"
+                "MiniMax H3 Multi-Keyframe Conditioning (Advanced)"
             ),
             description=(
                 "Opt-in Advanced FL2VA/Hybrid conditioning with first, last, and chained "
@@ -170,7 +170,7 @@ class MiniMaxH3MultiKeyframeConditioningT8Advanced(io.ComfyNode):
                 ),
                 io.Float.Input(
                     "first_frame_noise_aug",
-                    display_name="first frame raw noise_aug / 首帧原始混噪值",
+                    display_name="first frame raw noise_aug",
                     default=DEFAULT_VISUAL_NOISE_AUG,
                     min=0.0,
                     max=1.0,
@@ -183,7 +183,7 @@ class MiniMaxH3MultiKeyframeConditioningT8Advanced(io.ComfyNode):
                 ),
                 io.Float.Input(
                     "last_frame_noise_aug",
-                    display_name="last frame raw noise_aug / 尾帧原始混噪值",
+                    display_name="last frame raw noise_aug",
                     default=DEFAULT_VISUAL_NOISE_AUG,
                     min=0.0,
                     max=1.0,
@@ -196,7 +196,7 @@ class MiniMaxH3MultiKeyframeConditioningT8Advanced(io.ComfyNode):
                 ),
                 io.Float.Input(
                     "reference_visual_noise_aug",
-                    display_name="reference raw noise_aug / 普通视觉参考全局值",
+                    display_name="reference raw noise_aug",
                     default=DEFAULT_VISUAL_NOISE_AUG,
                     min=0.0,
                     max=1.0,

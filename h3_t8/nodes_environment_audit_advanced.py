@@ -14,7 +14,7 @@ class MiniMaxH3EnvironmentAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3EnvironmentAuditT8Advanced",
-            display_name="MiniMax H3 Environment Audit / 环境兼容审计 (Advanced)",
+            display_name="MiniMax H3 Environment Audit (Advanced)",
             description=(
                 "Read-only audit of the current ComfyUI H3 core, known fix ancestry, VAE "
                 "chunking/tiled-decode contracts, wrapper ownership, DynamicVRAM and a requested "

@@ -13,7 +13,7 @@ class MiniMaxH3AVDecodeSafetyT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AVDecodeSafetyT8Advanced",
-            display_name="MiniMax H3 AV Decode Safety / 音视频安全解码 (T8 Advanced)",
+            display_name="MiniMax H3 AV Decode Safety (T8 Advanced)",
             description=(
                 "Isolated AV decode preflight with explicit H3 latent/VAE contracts, output-size "
                 "estimates and current headroom gates. preflight_only is the default and performs "

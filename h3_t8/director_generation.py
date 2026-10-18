@@ -77,16 +77,16 @@ def _director_generation_settings(project: Mapping[str, Any]) -> dict[str, Any]:
     if rows is None or (not rows and any(name not in ("auto", "none") for name in legacy)):
         rows = [{"name": name, "strength": raw.get("lora_strength", 1.0), "enabled": True} for name in legacy if name not in ("auto", "none")]
     if not isinstance(rows, list):
-        raise ValueError("LoRA 必须是列表")
+        raise ValueError("LoRA must be a list")
     lora_rows = [{"name": str(row["name"]), "strength": float(row.get("strength", 1.0)), "enabled": bool(row.get("enabled", True))} for row in rows]
     resolution = raw.get("resolution_mp", "auto")
     if resolution != "auto":
         try:
             resolution = float(resolution)
         except (TypeError, ValueError) as error:
-            raise ValueError("总像素必须选择自动或 0.2–1.0 MP") from error
+            raise ValueError("Total megapixels must be auto or 0.2-1.0 MP") from error
         if resolution < 0.2 or resolution > 1.0:
-            raise ValueError("总像素必须在 0.2–1.0 MP 之间")
+            raise ValueError("Total megapixels must be between 0.2 and 1.0 MP")
     return {
         "unet": str(raw.get("unet", "auto") or "auto"),
         "clip": str(raw.get("clip", "auto") or "auto"),
@@ -107,21 +107,21 @@ def director_model_catalog() -> dict[str, list[dict[str, str]]]:
         return result
 
     return {
-        "unet": [{"value": "auto", "label": "自动（按镜头类型）"}] + entries(
+        "unet": [{"value": "auto", "label": "Auto (by shot type)"}] + entries(
             "diffusion_models", lambda n: n.lower().endswith(".safetensors") and ("minimax_h3" in n.lower() or "fasth3" in n.lower())
         ),
-        "clip": [{"value": "auto", "label": "自动 H3 文本编码器"}] + entries(
+        "clip": [{"value": "auto", "label": "Auto H3 text encoder"}] + entries(
             "clip", lambda n: n.lower().endswith(".safetensors") and ("qwen3vl" in n.lower() or "minimax_h3" in n.lower())
         ),
-        "video_vae": [{"value": "auto", "label": "自动 H3 视频 VAE"}] + entries(
+        "video_vae": [{"value": "auto", "label": "Auto H3 video VAE"}] + entries(
             "vae", lambda n: "minimax_h3_video_vae" in n.lower()
         ),
-        "audio_vae": [{"value": "auto", "label": "自动 H3 音频 VAE"}] + entries(
+        "audio_vae": [{"value": "auto", "label": "Auto H3 audio VAE"}] + entries(
             "vae", lambda n: "minimax_h3_audio_vae" in n.lower()
         ),
         "lora": [
-            {"value": "auto", "label": "自动 Turbo LoRA"},
-            {"value": "none", "label": "不使用 LoRA"},
+            {"value": "auto", "label": "Auto Turbo LoRA"},
+            {"value": "none", "label": "No LoRA"},
         ] + entries("loras", lambda n: n.lower().endswith(".safetensors") and ("h3" in n.lower() or "minimax" in n.lower())),
     }
 
@@ -160,8 +160,8 @@ def _optional_semantic_bridge_model() -> str:
             if folder_paths.get_full_path("semantic_bridge", name):
                 return str(name)
     raise ValueError(
-        "导演台已启用 Semantic Bridge，但 models/semantic_bridge 没有可用 .safetensors；"
-        "请安装 Semantic-Bridge-Comfy 后刷新模型列表"
+        "The director has Semantic Bridge enabled, but no usable .safetensors under models/semantic_bridge; "
+        "Please install Semantic-Bridge-Comfy and refresh the model list"
     )
 
 
@@ -173,7 +173,7 @@ def _director_d3_settings(project: Mapping[str, Any], shot: Mapping[str, Any]) -
         if owner is None:
             continue
         if not isinstance(owner, Mapping):
-            raise ValueError("导演台 D3 配置必须是对象")
+            raise ValueError("Director D3 config must be an object")
         for key, value in owner.items():
             if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
                 merged[key] = {**merged[key], **value}
@@ -187,7 +187,7 @@ def _director_d3_settings(project: Mapping[str, Any], shot: Mapping[str, Any]) -
     )
     if inherit is False or local_active:
         if not isinstance(local, Mapping):
-            raise ValueError("导演台镜头 D3 配置必须是对象")
+            raise ValueError("Director shot D3 config must be an object")
         for key, value in local.items():
             if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
                 merged[key] = {**merged[key], **value}
@@ -262,13 +262,13 @@ def build_director_generation_prompt(
     checked = validate_project(project)
     raw_shot = next((item for item in checked["doc"]["shots"] if item["id"] == shot_id), None)
     if raw_shot is None:
-        raise ValueError("请选择项目内有效的镜头 UUID")
+        raise ValueError("Please select a valid shot UUID in the project")
     report = compile_project(checked, store)
     if not report["ready"]:
-        raise ValueError("导演台预检未通过：" + "; ".join(e["message"] for e in report["errors"]))
+        raise ValueError("Director preflight failed: " + "; ".join(e["message"] for e in report["errors"]))
     shot = next((item for item in report["shots"] if item["id"] == shot_id), None)
     if shot is None:
-        raise ValueError("请选择项目内有效的镜头 UUID")
+        raise ValueError("Please select a valid shot UUID in the project")
 
     task = shot["task_type"].lower()
     sound = raw_shot["sound"]
@@ -286,7 +286,7 @@ def build_director_generation_prompt(
     low_vram_enabled = bool(memory_cfg.get("low_vram", False))
     chunk_ffn_enabled = bool(memory_cfg.get("chunk_ffn", False))
     if fast_enabled and task != "t2va":
-        raise ValueError("导演台 FastH3 V2 当前只允许 T2VA；首尾/参考/原音请先关闭 FastH3 V2")
+        raise ValueError("Director FastH3 V2 currently allows T2VA only; turn off FastH3 V2 for first/last-frame, reference, or original-audio routes")
     unet_candidates = (
         _FAST_H3_UNET_CANDIDATES
         if fast_enabled
@@ -301,7 +301,7 @@ def build_director_generation_prompt(
 
     task_type_value = {"ref2va": "Ref2VA", "hybrid": "Hybrid"}.get(task, task.upper())
     if relay_enabled and bridge_enabled and not bridge_cfg.get("enabled", False):
-        raise ValueError("导演台 D3 Semantic Bridge 配置无效")
+        raise ValueError("Director D3 Semantic Bridge config is invalid")
 
     graph: dict[str, dict[str, Any]] = {
         "1": {"class_type": "UNETLoader", "inputs": {"unet_name": unet, "weight_dtype": "default"}},
@@ -328,7 +328,7 @@ def build_director_generation_prompt(
                 for row in requested_rows
             ]
     elif generation["lora_mode"] == "manual" and any(row["enabled"] for row in generation["loras"]):
-        raise ValueError("当前首尾/参考/Relay/FastH3 路线不支持手动 LoRA；请切回文字原生路线")
+        raise ValueError("The current first/last-frame/reference/Relay/FastH3 route does not support manual LoRA; please switch back to the native text route")
     for lora, strength in lora_names:
         graph[str(next_id)] = {
             "class_type": "MiniMaxH3LoRACompatibilityLoaderT8Advanced",

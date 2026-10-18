@@ -15,9 +15,9 @@ class MiniMaxH3VideoOutpaintGeometryPreviewT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VideoOutpaintGeometryPreviewT8",
-            display_name="H3 Video Outpaint · 扩画范围预览 (EXP)",
+            display_name="H3 Video Outpaint · Outpaint Range Preview (EXP)",
             category="T8/MiniMax H3/Video Outpaint EXP", is_experimental=True, is_output_node=True,
-            description="只预览原片位置和待补区域，不运行生成模型，也不代表扩画效果。请用独立预览工作流；连着采样分支不会暂停生成。",
+            description="Previews only the source position and the to-be-filled region; it does not run the generation model or represent the outpaint result. Use a separate preview workflow; connecting the sampling branch does not pause generation.",
             inputs=[PlanIO.Input("plan"), io.Int.Input("frame_index", default=0, min=0, max=None),
                     io.Int.Input("preview_max_edge", default=768, min=64, max=1536)],
             outputs=[PlanIO.Output(display_name="plan"), io.Image.Output(display_name="geometry_preview"),

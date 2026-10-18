@@ -14,7 +14,7 @@ class MiniMaxH3SkinFinishSurfaceT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishSurfaceT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Guided Surface / 引导滤波肤质收尾 "
+                "MiniMax H3 Skin Finish Guided Surface"
                 "(Advanced EXP)"
             ),
             description=(

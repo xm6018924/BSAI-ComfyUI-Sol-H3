@@ -13,7 +13,7 @@ class MiniMaxH3LongVideoSeamDriftT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoSeamDriftT8Advanced",
-            display_name="MiniMax H3 Long Video Seam Drift / 长视频接缝色彩漂移审计 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Long Video Seam Drift (Advanced EXP/T8)",
             description=(
                 "Reports seam brightness, white-balance, chroma, texture and optional person-ROI "
                 "changes. The opt-in candidate uses only bounded low-frequency gain/offset and "

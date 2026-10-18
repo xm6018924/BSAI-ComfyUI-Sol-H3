@@ -57,7 +57,7 @@ class MiniMaxH3HybridPairInspectorT8Advanced(io.ComfyNode):
         models = _diffusion_models()
         return io.Schema(
             node_id="MiniMaxH3HybridPairInspectorT8Advanced",
-            display_name="MiniMax H3 Hybrid Pair Inspector / 混合模型配对检查 (Advanced)",
+            display_name="MiniMax H3 Hybrid Pair Inspector (Advanced)",
             description=(
                 "Strictly checks the exact P0 FL2VA-pruned quality base and Ref2VA-pruned "
                 "reference overlay before any artifact can be built. Explicit profiles run "
@@ -157,7 +157,7 @@ class MiniMaxH3HybridArtifactBuilderT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3HybridArtifactBuilderT8Advanced",
-            display_name="MiniMax H3 Hybrid Artifact Builder / 小型混合补丁构建 (Advanced)",
+            display_name="MiniMax H3 Hybrid Artifact Builder (Advanced)",
             description=(
                 "Builds or reuses a content-addressed 13.8–83.1 MiB FP16 target-slice artifact "
                 "under ComfyUI/models/h3_hybrid_artifacts. It never copies a complete model and "
@@ -204,7 +204,7 @@ class MiniMaxH3HybridModelLoaderT8Advanced(io.ComfyNode):
         models = _diffusion_models()
         return io.Schema(
             node_id="MiniMaxH3HybridModelLoaderT8Advanced",
-            display_name="MiniMax H3 Hybrid Model Loader / 混合模型加载 (Advanced)",
+            display_name="MiniMax H3 Hybrid Model Loader (Advanced)",
             description=(
                 "Loads the quality base through ComfyUI's stock diffusion loader, preserving "
                 "DynamicVRAM/VBAR file-backed behavior, then applies only the connected small "
@@ -302,7 +302,7 @@ class MiniMaxH3HybridArtifactMaintenanceT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3HybridArtifactMaintenanceT8Advanced",
             display_name=(
-                "MiniMax H3 Hybrid Artifact Maintenance / 混合补丁安全维护 (Advanced)"
+                "MiniMax H3 Hybrid Artifact Maintenance (Advanced)"
             ),
             description=(
                 "Inspects one exact content-addressed Hybrid artifact by default. Explicit "

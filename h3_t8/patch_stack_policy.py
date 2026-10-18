@@ -24,7 +24,7 @@ def warn_patch_stack(message):
     if advisories is not None and message not in advisories:
         advisories.append(message)
     logging.warning(
-        "[MiniMax H3 compatibility advisory / 组合风险自负] %s; continuing. "
+        "[MiniMax H3 compatibility advisory / use at your own risk] %s; continuing. "
         "This is not a compatibility or quality guarantee. Existing patches may "
         "bypass this node; real execution errors still propagate.", message,
     )

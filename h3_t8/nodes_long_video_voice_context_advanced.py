@@ -18,7 +18,7 @@ class MiniMaxH3LongVideoVoiceContextT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoVoiceContextT8Advanced",
-            display_name="MiniMax H3 Long Video Voice Context / 长视频人物音色与句界 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Long Video Voice Context (Advanced EXP/T8)",
             description=(
                 "Compiles Character-to-<Audio N> bindings, exact global/local audio pin frames, "
                 "per-segment prompts and cross-boundary sentence diagnostics for the existing "
@@ -33,7 +33,7 @@ class MiniMaxH3LongVideoVoiceContextT8Advanced(io.ComfyNode):
                 io.String.Input("global_prompt", default="", multiline=True, dynamic_prompts=True),
                 io.String.Input(
                     "dialogue_timeline_json",
-                    default='[{"character_id":"Character_A","text":"你好。","start_seconds":0,"end_seconds":1.5}]',
+                    default='[{"character_id":"Character_A","text":"Hello.","start_seconds":0,"end_seconds":1.5}]',
                     multiline=True,
                 ),
                 io.String.Input(
@@ -69,7 +69,7 @@ class MiniMaxH3LongVideoVoiceReviewGateT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoVoiceReviewGateT8Advanced",
-            display_name="MiniMax H3 Voice Context Review Gate / 首段人工确认门 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Voice Context Review Gate (Advanced EXP/T8)",
             description=(
                 "Releases the compiled segment prompts only after the optional first-shot "
                 "human review is accepted. This is a planning gate; a real pause between "

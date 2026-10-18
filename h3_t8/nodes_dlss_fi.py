@@ -11,19 +11,19 @@ class MiniMaxH3DLSSFrameInterpolationEXPT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id='MiniMaxH3DLSSFrameInterpolationEXPT8',
-            display_name='MiniMax H3 DLSS 视频插帧 2x (T8 EXP)',
+            display_name='MiniMax H3 DLSS Video Frame Interpolation 2x (T8 EXP)',
             category='T8/MiniMax H3/Post FX/DLSS-FI',
-            description='独立成片插帧：24→48 / 30→60fps，时长和原音轨不变。不是超分，也不加速 H3 采样。'
-                        '仅 Windows 单 RTX 显卡、8bit SDR 恒定帧率文件；需要自行提供独立 DLSSG 运行文件。',
+            description='Standalone file frame interpolation: 24->48 / 30->60 fps; duration and original audio track are unchanged. This is not super-resolution and does not speed up H3 sampling.'
+                        'Windows-only, single RTX GPU, 8-bit SDR constant-frame-rate files. You must provide the standalone DLSSG runtime yourself.',
             is_experimental=True, is_output_node=True,
             inputs=[
                 io.Video.Input('source_video'),
-                io.String.Input('runtime_directory', default='', tooltip='留空使用 ComfyUI/models/DLSS-FI/310.7.0；'
-                                '也可填已安装运行目录。需要 dlssg-worker.exe 和 nvngx_dlssg.dll，不是 DLSS-NR 目录。'),
+                io.String.Input('runtime_directory', default='', tooltip='models/DLSS-FI/310.7.0；'
+                                'or set an installed runtime directory. Requires dlssg-worker.exe and nvngx_dlssg.dll; this is not the DLSS-NR directory.'),
                 io.String.Input('cut_frames', default='', advanced=True,
-                                tooltip='硬切后第一帧的索引，从 0 开始，例如 24,48。留空表示无硬切；不会自动识别镜头。'),
+                                tooltip='Index of the first frame after a hard cut, 0-based, e.g. 24,48. Leave empty for no hard cut; shot detection is not automatic.'),
                 io.Int.Input('timeout_seconds', default=600, min=30, max=3600, advanced=True,
-                             tooltip='完整文件处理的最长秒数；超时停止本节点自己的子进程，不重试。'),
+                             tooltip='Maximum seconds for full-file processing; on timeout the node kills its own subprocess and does not retry.'),
             ],
             outputs=[io.Video.Output('interpolated_video'), io.Video.Output('source_video'),
                      io.String.Output('saved_path'), io.String.Output('report_json')])

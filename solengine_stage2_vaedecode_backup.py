@@ -74,12 +74,12 @@ class BSAI_SolH3_SolEngine_Refiner:
 
     @classmethod
     def INPUT_TYPES(cls):
-        ltxf = _list("diffusion_models", "ltx") or ["(缺 LTX-2.5 transformer)"]
-        vaef = _list("vae", "ltx") or ["(缺 LTX VAE)"]
-        clipf = _list("text_encoders", "ltx") or _list("text_encoders", "gemma4") or ["(缺 text encoder)"]
-        upf = _list("latent_upscale_models", "ltx") or ["(缺 LTX upscaler)"]
+        ltxf = _list("diffusion_models", "ltx") or ["(missing LTX-2.5 transformer)"]
+        vaef = _list("vae", "ltx") or ["(missing LTX VAE)"]
+        clipf = _list("text_encoders", "ltx") or _list("text_encoders", "gemma4") or ["(missing text encoder)"]
+        upf = _list("latent_upscale_models", "ltx") or ["(missing LTX upscaler)"]
         loras = _list("loras", "ltx")
-        lora_opts = ["(无 / distilled-transformer 已 bake)"] + loras
+        lora_opts = ["(none / distilled-transformer already baked)"] + loras
         return {
             "required": {
                 "h3_frames": ("IMAGE",),
@@ -105,7 +105,7 @@ class BSAI_SolH3_SolEngine_Refiner:
     RETURN_NAMES = ("image", "audio", "report")
     FUNCTION = "refine"
     CATEGORY = "BSAI/Sol-H3/SolEngine"
-    DESCRIPTION = "NVIDIA Sol Engine 两级 Stage-2: H3 draft → LTX-2.5 3步精修(旁支, 不影响原双采节点)"
+    DESCRIPTION = "NVIDIA Sol Engine two-stage Stage-2: H3 draft -> LTX-2.5 3-step refine (side branch; does not affect existing two-pass nodes)"
 
     # ------------------------------------------------------------------
     def _load_ltx_model(self, name):
@@ -171,12 +171,12 @@ class BSAI_SolH3_SolEngine_Refiner:
                refiner_lora, refiner_lora_strength, seed):
         t8 = _load_t8()
         if t8 is None:
-            raise RuntimeError("T8mars SolEngine 模块不可用")
+            raise RuntimeError("T8mars SolEngine module is unavailable")
 
         report = {"stage": "solengine_stage2", "schedule": schedule_mode}
 
         # 1) H3 draft 帧裁剪/resize → LTX encoder 半分辨率输入
-        print("[BSAI-SolEngine] Step1: 裁剪 H3 draft 帧...", flush=True)
+        print("[BSAI-SolEngine] Step1: cropping H3 draft frames...", flush=True)
         (enc_frames, enc_w, enc_h, kept_frames, dropped,
          duration, _) = t8.prepare_h3_draft_for_ltx_refiner(
             h3_frames, target_width, target_height, "trim_to_8n_plus_1", fps)
@@ -217,7 +217,7 @@ class BSAI_SolH3_SolEngine_Refiner:
         latent_dict = {"samples": up_lat}
 
         # 4) 加载 LTX transformer
-        print("[BSAI-SolEngine] Step4: 加载 LTX-2.5 transformer...", flush=True)
+        print("[BSAI-SolEngine] Step4: loading LTX-2.5 transformer...", flush=True)
         ltx_model = self._load_ltx_model(ltx_transformer)
 
         # 检测 transformer 类型: distilled 已内置蒸馏权重, 不需 LoRA; dev 需要 LoRA
@@ -225,8 +225,8 @@ class BSAI_SolH3_SolEngine_Refiner:
 
         # 4b) refiner LoRA (仅 dev transformer 需要; distilled transformer 自动跳过)
         if is_distilled_tf:
-            print("[BSAI-SolEngine] Step5: distilled transformer 已内置蒸馏, 跳过 LoRA", flush=True)
-        elif refiner_lora and "无" not in refiner_lora and refiner_lora_strength > 0:
+            print("[BSAI-SolEngine] Step5: distilled transformer has built-in distillation; skipping LoRA", flush=True)
+        elif refiner_lora and "none" not in refiner_lora and refiner_lora_strength > 0:
             print(f"[BSAI-SolEngine] Step5: LoRA {refiner_lora} x{refiner_lora_strength}", flush=True)
             try:
                 import comfy.sd
@@ -238,7 +238,7 @@ class BSAI_SolH3_SolEngine_Refiner:
             except Exception as e:
                 print(f"[BSAI-SolEngine]   LoRA 失败(跳过): {e}", flush=True)
         else:
-            print("[BSAI-SolEngine] Step5: 无 refiner LoRA", flush=True)
+            print("[BSAI-SolEngine] Step5: no refiner LoRA", flush=True)
 
         # 4c) ModelSamplingLTXV shift
         if True:
@@ -264,12 +264,12 @@ class BSAI_SolH3_SolEngine_Refiner:
                 attention_backend="dense_reference",
                 min_tokens=4096, kernel_precision="bf16_official", verbose=False)
         elif schedule_mode == "official_0p909":
-            print("[BSAI-SolEngine]   sigma=0.08 8步", flush=True)
+            print("[BSAI-SolEngine]   sigma=0.08 8 steps", flush=True)
             patched = ltx_model
             import numpy as _np3
             sigmas = torch.from_numpy(_np3.linspace(0.08, 0.0, 9).astype(_np3.float32))
         else:
-            print("[BSAI-SolEngine]   20 步 sigma=0.5→0", flush=True)
+            print("[BSAI-SolEngine]   20 steps sigma=0.5->0", flush=True)
             patched = ltx_model
             import numpy as _np2
             sigmas = torch.from_numpy(_np2.linspace(0.5, 0.0, 21).astype(_np2.float32))
@@ -297,7 +297,7 @@ class BSAI_SolH3_SolEngine_Refiner:
             print(f"[BSAI-SolEngine]   LTXVConditioning 跳过({e})", flush=True)
 
         # 8) Round-trip: 跳过 transformer，直接用 x2 upscale latent（最清晰）
-        print("[BSAI-SolEngine] Step8: Round-trip (跳过 transformer)", flush=True)
+        print("[BSAI-SolEngine] Step8: Round-trip (skipping transformer)", flush=True)
         refined = up_lat.contiguous()
         print(f"[BSAI-SolEngine]   refined: {tuple(refined.shape)} dtype={refined.dtype} finite={torch.isfinite(refined).all().item()} min={refined.min().item():.4f} max={refined.max().item():.4f} mean={refined.mean().item():.4f}", flush=True)
 
@@ -346,5 +346,5 @@ NODE_CLASS_MAPPINGS_SOLENGINE = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS_SOLENGINE = {
-    "BSAI_SolH3_SolEngine_Refiner": "BSAI Sol-H3 SolEngine 两级精修 (LTX-2.5)",
+    "BSAI_SolH3_SolEngine_Refiner": "BSAI Sol-H3 SolEngine Two-Stage Refine (LTX-2.5)",
 }

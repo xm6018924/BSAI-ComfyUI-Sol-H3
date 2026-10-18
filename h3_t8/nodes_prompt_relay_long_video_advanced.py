@@ -22,7 +22,7 @@ class MiniMaxH3PromptRelayLongVideoPlanT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayLongVideoPlanT8Advanced",
             display_name=(
-                "MiniMax H3 Prompt Relay Long Video Window / 长视频绝对时间窗口 (Advanced)"
+                "MiniMax H3 Prompt Relay Long Video Window (Advanced)"
             ),
             description=(
                 "Projects one global Prompt Relay timeline into the exact rendered Long Video "
@@ -34,7 +34,7 @@ class MiniMaxH3PromptRelayLongVideoPlanT8Advanced(io.ComfyNode):
             inputs=[
                 PromptRelayPlanIO.Input(
                     "prompt_relay_plan",
-                    tooltip="整条长视频只创建一次的全局 Prompt Relay Plan。",
+                    tooltip="Global Prompt Relay Plan created once for the entire long video.",
                 ),
                 io.Int.Input(
                     "segment_index",
@@ -50,7 +50,7 @@ class MiniMaxH3PromptRelayLongVideoPlanT8Advanced(io.ComfyNode):
                     max=None,
                     step=17,
                     force_input=True,
-                    tooltip="直接连接 Long Video Planner 的 length。",
+                    tooltip="Connect directly to the Long Video Planner length.",
                 ),
                 io.Int.Input(
                     "context_frames",
@@ -58,7 +58,7 @@ class MiniMaxH3PromptRelayLongVideoPlanT8Advanced(io.ComfyNode):
                     min=0,
                     max=39,
                     force_input=True,
-                    tooltip="直接连接 Long Video Planner 的 context_frames。",
+                    tooltip="Connect directly to the Long Video Planner context_frames.",
                 ),
                 io.Float.Input(
                     "timeline_start_seconds",
@@ -95,7 +95,7 @@ class MiniMaxH3PromptRelayLongVideoConditioningT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayLongVideoConditioningT8Advanced",
             display_name=(
-                "MiniMax H3 Prompt Relay Long Video Conditioning / 长视频分段路由条件 (Advanced)"
+                "MiniMax H3 Prompt Relay Long Video Conditioning (Advanced)"
             ),
             description=(
                 "Isolated composition of the existing Long Video motion-context payload repair "
@@ -105,14 +105,14 @@ class MiniMaxH3PromptRelayLongVideoConditioningT8Advanced(io.ComfyNode):
             category=CATEGORY,
             is_experimental=True,
             inputs=[
-                io.Model.Input("model", tooltip="未接其他补丁的原生 MiniMax H3 MODEL。"),
-                io.Clip.Input("clip", tooltip="原生 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Model.Input("model", tooltip="Native MiniMax H3 MODEL without other patches connected."),
+                io.Clip.Input("clip", tooltip="Native MiniMax H3 Qwen3-VL CLIP."),
                 io.Vae.Input("video_vae"),
                 io.Vae.Input("audio_vae"),
                 LongVideoContextIO.Input("context"),
                 PromptRelayPlanIO.Input(
                     "prompt_relay_plan",
-                    tooltip="必须来自同段 Long Video Window 节点。",
+                    tooltip="Must come from the same-segment Long Video Window node.",
                 ),
                 io.Int.Input("segment_index", default=0, min=0, max=99999, force_input=True),
                 io.Int.Input("context_frames", default=0, min=0, max=39, force_input=True),
@@ -168,7 +168,7 @@ class MiniMaxH3PromptRelayLongVideoConditioningT8Advanced(io.ComfyNode):
                     "execution_mode",
                     options=["report_only", "apply_exp"],
                     default="report_only",
-                    tooltip="先 report_only；确认报告后再显式切到 apply_exp。",
+                    tooltip="Use report_only first; switch to apply_exp explicitly after confirming the report.",
                 ),
                 io.Int.Input(
                     "query_chunk_rows",

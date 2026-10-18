@@ -34,7 +34,7 @@ class MiniMaxH3RealBasicVSRRestoreT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3RealBasicVSRRestoreT8Advanced",
-            display_name="MiniMax H3 RealBasicVSR Temporal Restore / 时序修复 (Advanced)",
+            display_name="MiniMax H3 RealBasicVSR Temporal Restore (Advanced)",
             description=(
                 "Optional post-process based on the official OpenMMLab RealBasicVSR x4 "
                 "architecture. It restores temporal/detail consistency in small serial chunks, "

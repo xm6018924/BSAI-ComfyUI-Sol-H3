@@ -16,7 +16,7 @@ class MiniMaxH3SkinFinishSpecularFrequencyT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishSpecularFrequencyT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Specular-Aware Split / 高光感知纹理解耦 "
+                "MiniMax H3 Skin Finish Specular-Aware Split"
                 "(Advanced EXP)"
             ),
             description=(

@@ -27,7 +27,7 @@ class MiniMaxH3NFEResumeSamplerT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NFEResumeSamplerT8Advanced",
             display_name=(
                 "MiniMax H3 Dual-Clock NFE Checkpoint + Resume / "
-                "双时钟步边界断点恢复 (Advanced EXP/T8)"
+                "Dual-Clock Step-Boundary Resume (Advanced EXP/T8)"
             ),
             description=(
                 "Append-only experimental sampler setup for exact completed-step checkpoints "

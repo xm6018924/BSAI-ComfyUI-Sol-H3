@@ -27,7 +27,7 @@ class MiniMaxH3LearnedLatentUpscaleT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LearnedLatentUpscaleT8Advanced",
             display_name=(
-                "MiniMax H3 Learned Latent Upscale / H3学习型潜空间放大 (Advanced)"
+                "MiniMax H3 Learned Latent Upscale (Advanced)"
             ),
             description=(
                 "Runs the verified 24-channel learned 3D H3 latent-resizer checkpoint on "
@@ -100,7 +100,7 @@ class MiniMaxH3TwoPassLatentReconcileT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3TwoPassLatentReconcileT8Advanced",
             display_name=(
-                "MiniMax H3 Two-Pass Latent Reconcile / H3二采潜空间协调 (Advanced)"
+                "MiniMax H3 Two-Pass Latent Reconcile (Advanced)"
             ),
             description=(
                 "Combines learned-upscaled first-pass values with a newly rebuilt high-"
@@ -166,7 +166,7 @@ class MiniMaxH3TwoPassAudioAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3TwoPassAudioAuditT8Advanced",
             display_name=(
-                "MiniMax H3 Two-Pass Audio Audit / H3二采音频硬校验 (Advanced)"
+                "MiniMax H3 Two-Pass Audio Audit (Advanced)"
             ),
             description=(
                 "Compares the audio latent immediately before and after pass 2. In the "
@@ -230,7 +230,7 @@ class MiniMaxH3TwoPassSigmaPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TwoPassSigmaPlanT8Advanced",
-            display_name="MiniMax H3 Two-Pass Sigma Plan / H3二采Sigma计划 (Advanced)",
+            display_name="MiniMax H3 Two-Pass Sigma Plan (Advanced)",
             description=(
                 "Splits one native H3 rectified-flow trajectory in base-flow time, then "
                 "maps both halves with the actual video/audio shifts carried by MODEL. "
@@ -270,7 +270,7 @@ class MiniMaxH3LearnedTwoPassParityPlanT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LearnedTwoPassParityPlanT8Advanced",
             display_name=(
-                "MiniMax H3 Learned Two-Pass Parity Plan / H3学习放大原版二采计划 "
+                "MiniMax H3 Learned Two-Pass Parity Plan"
                 "(Advanced)"
             ),
             description=(

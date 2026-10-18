@@ -21,10 +21,10 @@ DEFAULT_BASE_FOLDER = "Qwen3-VL-8B-Instruct"
 DEFAULT_ADAPTER_FOLDER = "MiniMax-H3-Prompt-Rewriter-LoRA-8B"
 
 TASK_LABELS = {
-    "T2VA — 文生音视频": "t2av",
-    "I2VA — 首帧生音视频": "i2av",
-    "L2VA — 尾帧生音视频": "l2av",
-    "FL2VA — 首尾帧生音视频": "fl2av",
+    "T2VA — text-to-AV": "t2av",
+    "I2VA — first-frame-to-AV": "i2av",
+    "L2VA — last-frame-to-AV": "l2av",
+    "FL2VA — first+last-frame-to-AV": "fl2av",
 }
 TASK_ALIASES = {
     "t2v": "t2av",
@@ -115,7 +115,7 @@ _MODEL_CACHE: dict[str, object] = {}
 
 
 def normalize_task(task: str | None) -> str:
-    raw = str(task or "T2VA — 文生音视频").strip()
+    raw = str(task or "T2VA — text-to-AV").strip()
     if raw in TASK_LABELS:
         return TASK_LABELS[raw]
     normalized = TASK_ALIASES.get(raw.lower())

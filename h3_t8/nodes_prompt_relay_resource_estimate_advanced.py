@@ -17,7 +17,7 @@ class MiniMaxH3PromptRelayResourceEstimateT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayResourceEstimateT8Advanced",
-            display_name="MiniMax H3 Prompt Relay Resource Estimate / 资源预估 (Advanced)",
+            display_name="MiniMax H3 Prompt Relay Resource Estimate (Advanced)",
             description=(
                 "Model-free estimate of native H3 packed rows and Prompt Relay's bounded "
                 "explicit chunk-bias allocation. It does not estimate total VRAM and is "

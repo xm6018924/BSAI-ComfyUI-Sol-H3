@@ -20,7 +20,7 @@ class MiniMaxH3SkinFinishMultiPersonProfileSemanticMaskT8Advanced(io.ComfyNode):
             ),
             display_name=(
                 "MiniMax H3 Skin Finish Multi-Person Profile Semantic Mask / "
-                "多人侧脸语义皮肤遮罩 (Advanced EXP)"
+                "Multi-Person Side-Face Semantic Skin Mask (Advanced EXP)"
             ),
             description=(
                 "Keeps the existing strict YuNet five-point FFHQ alignment first. Only when "

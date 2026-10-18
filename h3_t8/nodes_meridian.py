@@ -36,46 +36,46 @@ class MiniMaxH3MeridianConfigEXPT8(io.ComfyNode):
     def define_schema(cls):
         return schema(
             cls,
-            "Meridian 1 · 模型与资源（INT8/T8）",
+            "Meridian 1 · Models & Resources (INT8/T8)",
             [
                 io.String.Input(
                     "model_path",
                     default="",
-                    tooltip="留空自动寻找models/meridian/meridian_dmd_int8_convrot_comfy.safetensors；支持MERIDIAN_MODEL环境变量。下载：https://huggingface.co/t8star/Meridian-Comfy；DMD已合并，不重复加载",
+                    tooltip="Leave empty to auto-find models",
                 ),
                 io.String.Input(
                     "vae_path",
                     default="",
-                    tooltip="默认models/vae/minimax_h3_video_vae_fp16.safetensors；可改用标准video_vae插口",
+                    tooltip="Default models/vae/minimax_h3_video_vae_fp16.safetensors; can be replaced with a standard video_vae input",
                 ),
                 io.String.Input(
                     "source_directory",
                     default="",
-                    tooltip="默认models/meridian/source；固定2083d059源码与assets，支持MERIDIAN_SOURCE_DIR",
+                    tooltip="Default models/meridian/source; pins the 2083d059 source and assets; MERIDIAN_SOURCE_DIR is supported",
                 ),
                 io.String.Input(
                     "omega_source_directory",
                     default="",
-                    tooltip="授权vggt-omega源码，默认models/meridian/vggt-omega；VGGT_OMEGA_DIR",
+                    tooltip="meridian/vggt-omega；VGGT_OMEGA_DIR",
                 ),
                 io.String.Input(
                     "omega_checkpoint",
                     default="",
-                    tooltip="正确Omega1B512原始PT，不是普通VGGT或INT8。默认models/meridian/vggt-omega/checkpoints/vggt_omega_1b_512.pt；VGGT_OMEGA_CKPT。下载：https://huggingface.co/t8star/Meridian-Comfy；单独遵守FAIR非商用研究许可",
+                    tooltip="Correct Omega1B512 original PT, not generic VGGT or INT8. Default models",
                 ),
                 io.Float.Input(
                     "cache_gib",
                     default=20.0,
                     min=0.0,
                     step=1.0,
-                    tooltip="自有磁盘缓存预算，不是显存准入；0关闭磁盘缓存",
+                    tooltip="Dedicated disk cache budget; this is not a VRAM gate. 0 disables disk cache",
                 ),
                 io.String.Input("cache_directory", default=""),
                 io.Model.Input("model", optional=True),
                 io.Vae.Input("video_vae", optional=True),
             ],
             [RuntimeIO.Output("runtime"), io.String.Output("report_json")],
-            description="独立Meridian merged-DMD原生ConvRot INT8。懒加载，不更改旧双采或用户全局优化。外部MODEL/VAE补丁保留并提示未验证，关闭其不可靠的磁盘缓存。模型及Omega下载：https://huggingface.co/t8star/Meridian-Comfy；两者许可分别适用，源码/assets及H3 VAE另备。",
+            description="Standalone Meridian merged-DMD native ConvRot INT8. Lazy loading; does not alter existing two-pass or user global optimizations. External MODEL",
         )
 
     @classmethod
@@ -119,7 +119,7 @@ class MiniMaxH3MeridianMaterialEXPT8(io.ComfyNode):
     def define_schema(cls):
         return schema(
             cls,
-            "Meridian 2 · 素材窗口与几何（T8）",
+            "Meridian 2 · Media Window & Geometry (T8)",
             [
                 RuntimeIO.Input("runtime"),
                 io.Int.Input("start_frame", default=0, min=0, max=None),
@@ -128,7 +128,7 @@ class MiniMaxH3MeridianMaterialEXPT8(io.ComfyNode):
                     default=73,
                     min=1,
                     max=None,
-                    tooltip="源窗口，按24fps归一；IMAGE只重建一次，不复制成73张再重建",
+                    tooltip="Source window, normalized to 24fps; IMAGE is reconstructed once, not duplicated into 73 frames and reconstructed",
                 ),
                 io.Image.Input("image", optional=True),
                 io.Video.Input("video", optional=True),
@@ -138,7 +138,7 @@ class MiniMaxH3MeridianMaterialEXPT8(io.ComfyNode):
                 io.Image.Output("source_preview"),
                 io.String.Output("report_json"),
             ],
-            description="只接IMAGE或VIDEO之一。保留VIDEO活动trim/crop/画面比例，按真实PTS取所选窗口。Omega联合几何一次；1280letterbox后使用训练ROI，不拉伸。大窗口可能OOM，不自动缩小或重复运行。",
+            description="Connect only IMAGE or VIDEO. Preserves VIDEO trim/crop/aspect; the selected window is taken by real PTS. Omega joint geometry runs once; after 1280 letterbox the training ROI is used without stretching. Large windows may OOM; no auto-shrink or re-run.",
         )
 
     @classmethod
@@ -170,7 +170,7 @@ class MiniMaxH3MeridianCameraEXPT8(io.ComfyNode):
     def define_schema(cls):
         return schema(
             cls,
-            "Meridian 3 · 运镜／时间编辑器（T8）",
+            "Meridian 3 · Camera / Timeline Editor (T8)",
             [
                 MaterialIO.Input("material"),
                 io.Int.Input("frames", default=73, min=22, max=None),
@@ -179,13 +179,13 @@ class MiniMaxH3MeridianCameraEXPT8(io.ComfyNode):
                     "strength",
                     default=0.08,
                     step=0.01,
-                    tooltip="相对固定枢轴深度的位移；orbit为strength×100度。大位移补洞更多，非性能/画质保证",
+                    tooltip="Displacement relative to the fixed pivot depth; orbit is strength x 100 degrees. Larger displacement requires more hole-filling; not a performance/quality guarantee",
                 ),
                 io.String.Input(
                     "camera_plan",
                     default="",
                     multiline=True,
-                    tooltip="高级编辑器自动写入规范JSON；留空使用预设。空间轨与源时间轨独立。",
+                    tooltip="The advanced editor writes canonical JSON automatically; leave empty to use presets. Spatial track and source time track are independent.",
                 ),
             ],
             [
@@ -194,7 +194,7 @@ class MiniMaxH3MeridianCameraEXPT8(io.ComfyNode):
                 io.Image.Output("warp_preview"),
                 io.String.Output("report_json"),
             ],
-            description="先运行预设获得真实几何预览，再打开大编辑器。固定首源相机坐标、深度单位、roll=0；无反向源时间或自动角色跟踪。改素材/窗口后显式重置旧路径。预览是灰洞点云warp，不是生成视频。",
+            description="Run a preset first to get a real geometry preview, then open the full editor. Pins the first-source camera coordinates, depth units, roll=0; no reverse source time or automatic character tracking. Explicitly reset old paths after changing source/window. The preview is a gray-hole point-cloud warp, not a generated video.",
         )
 
     @classmethod
@@ -242,7 +242,7 @@ class MiniMaxH3MeridianGenerateEXPT8(io.ComfyNode):
     def define_schema(cls):
         return schema(
             cls,
-            "Meridian 4 · 原生3前向生成（T8）",
+            "Meridian 4 · Native 3-Pass Generation (T8)",
             [
                 PlanIO.Input("prepared"),
                 io.Int.Input("seed", default=1234, min=0, max=2**64 - 1),
@@ -250,7 +250,7 @@ class MiniMaxH3MeridianGenerateEXPT8(io.ComfyNode):
                     "audio_mode",
                     options=["silent", "source_1to1"],
                     default="silent",
-                    tooltip="冻结/变速选silent；source_1to1只交付原声，不认证新生成口型",
+                    tooltip="Choose silent for freeze/speed-change; source_1to1 delivers only the original audio and does not certify newly generated lip-sync",
                 ),
                 io.String.Input("output_directory", default=""),
             ],
@@ -260,7 +260,7 @@ class MiniMaxH3MeridianGenerateEXPT8(io.ComfyNode):
                 io.String.Output("report_json"),
             ],
             is_output_node=True,
-            description="原生INT8 merged-DMD＋两路480级视频token参考＋768级训练桶。CFG1、euler、shift3/3、三次前向，原生joint AV。自动完整解码核验H264 MP4后交付。取消遵循Core普通任务中断；不改旧节点或全局队列。",
+            description="Native INT8 merged-DMD + two 480-level video token references + 768-level training bucket. CFG1, euler, shift3",
         )
 
     @classmethod

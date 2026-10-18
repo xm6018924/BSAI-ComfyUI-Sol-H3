@@ -43,17 +43,17 @@ class MiniMaxH3SemanticBridgeConfigT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SemanticBridgeConfigT8",
-            display_name="H3 Semantic Bridge / 模型与设置 (T8 EXP)",
+            display_name="H3 Semantic Bridge (T8 EXP)",
             category=CATEGORY, is_experimental=True,
-            description="原版通用语义 / BUNNY动作语义。默认0.10；参考音频/唱歌可能退化。模型下载：https://huggingface.co/t8star/Semantic-Bridge-Comfy 。放入 models/semantic_bridge；不会自动下载或加载教师模型。",
+            description="Original general semantics",
             inputs=[
                 io.Combo.Input("model_name", options=list(model_paths()) or ["No Semantic Bridge models installed"],
-                    tooltip="原版FP16封装／BUNNY FP32封装： https://huggingface.co/t8star/Semantic-Bridge-Comfy 。保留 models/semantic_bridge/t8_compat 子目录；不是LoRA或H3主模型。"),
+                    tooltip="Original FP16 wrapper"),
                 io.Boolean.Input("enabled", default=True),
                 io.Float.Input("alpha", default=0.10, min=0.0, max=1.0, step=0.01),
                 io.Combo.Input("magnitude_match", options=["per_token", "global", "none"], default="per_token"),
                 io.Combo.Input("token_scope", options=["all_tokens", "text_only_preserve_reference"], default="all_tokens",
-                               tooltip="all_tokens复现原作者；text_only仅修改原生tag=1行，仍不能保证歌声。"),
+                               tooltip="all_tokens reproduces the original author; text_only modifies only the native tag=1 row and still does not guarantee singing."),
                 io.Combo.Input("device", options=["auto", "cpu", "cuda"], default="auto", advanced=True),
                 io.Int.Input("chunk_tokens", default=256, min=1, max=65536, advanced=True),
             ], outputs=[BridgeIO.Output("semantic_bridge"), io.String.Output("report_json")],
@@ -103,9 +103,9 @@ class MiniMaxH3SemanticBridgeApplyT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SemanticBridgeApplyT8",
-            display_name="H3 Semantic Bridge / 应用条件 (T8 EXP)",
+            display_name="H3 Semantic Bridge (T8 EXP)",
             category=CATEGORY, is_experimental=True,
-            description="接在原生条件编码之后、采样之前。Relay请使用内部Bridge入口；不要重复增强。",
+            description="Connect after native conditioning encoding and before sampling. For Relay use the internal Bridge entry; do not apply enhancement twice.",
             inputs=[io.Conditioning.Input("conditioning"), BridgeIO.Input("semantic_bridge")],
             outputs=[io.Conditioning.Output("conditioning"), io.String.Output("report_json")],
         )

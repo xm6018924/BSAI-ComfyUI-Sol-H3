@@ -41,7 +41,7 @@ class MiniMaxH3LongVideoInNodeLoopEffectsT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3LongVideoInNodeLoopEffectsT8Advanced",
             display_name=(
-                "MiniMax H3 In-Node Long Video + Relay/EAV / 内循环长视频增强 "
+                "MiniMax H3 In-Node Long Video + Relay"
                 "(Advanced EXP/T8)"
             ),
             description=(

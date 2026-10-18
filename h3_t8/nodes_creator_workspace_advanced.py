@@ -21,7 +21,7 @@ class MiniMaxH3CreatorShotOverrideT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3CreatorShotOverrideT8Advanced",
-            display_name="MiniMax H3 Creator Shot Override / 可编辑镜头卡 (Advanced/T8)",
+            display_name="MiniMax H3 Creator Shot Override (Advanced/T8)",
             description=(
                 "Adds one non-destructive overlay to an existing Studio Timeline shot: prompt, "
                 "seed variants, media roles, retention and hold metadata. Chain one node per shot."
@@ -73,7 +73,7 @@ class MiniMaxH3CreatorWorkspaceT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3CreatorWorkspaceT8Advanced",
-            display_name="MiniMax H3 Creator Workspace / 创作运行窗口 (Advanced/T8)",
+            display_name="MiniMax H3 Creator Workspace (Advanced/T8)",
             description=(
                 "Compiles run-from/run-to selection, variants, retention and hold-map sidecar. "
                 "It never queues, loads a model, deletes media or changes sampler math."
@@ -107,7 +107,7 @@ class MiniMaxH3CreatorWorkspaceShotSelectT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3CreatorWorkspaceShotSelectT8Advanced",
-            display_name="MiniMax H3 Creator Workspace Shot Select / 工作区镜头选择 (Advanced/T8)",
+            display_name="MiniMax H3 Creator Workspace Shot Select (Advanced/T8)",
             description=(
                 "Selects one run position and one deterministic variant seed for existing H3 "
                 "Conditioning/Sampler nodes. No hidden queue execution is performed."
@@ -143,7 +143,7 @@ class MiniMaxH3CreatorSynchronizedCompareT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3CreatorSynchronizedCompareT8Advanced",
-            display_name="MiniMax H3 Creator Synchronized A/B / 同步候选对比 (Advanced/T8)",
+            display_name="MiniMax H3 Creator Synchronized A/B (Advanced/T8)",
             description=(
                 "Creates a labelled side-by-side IMAGE batch on CPU, preserving aspect ratio by "
                 "center padding and trimming only to the shorter frame count. Audio is not compared."

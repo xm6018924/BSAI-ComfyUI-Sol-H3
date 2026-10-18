@@ -37,7 +37,7 @@ class MiniMaxH3SPEEDModalityStableNoiseT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SPEEDModalityStableNoiseT8Advanced",
-            display_name="MiniMax H3 Modality-Stable AV Noise / AV独立随机噪声 (Advanced)",
+            display_name="MiniMax H3 Modality-Stable AV Noise (Advanced)",
             description=(
                 "Generates deterministic video and audio noise from separate derived seeds. "
                 "Changing only the video canvas therefore cannot silently change the audio "
@@ -67,7 +67,7 @@ class MiniMaxH3SPEEDSpectrumHarvesterT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SPEEDSpectrumHarvesterT8Advanced",
-            display_name="MiniMax H3 SPEED Spectrum Harvester / 空间频谱标定 (Advanced)",
+            display_name="MiniMax H3 SPEED Spectrum Harvester (Advanced)",
             description=(
                 "Fits P(omega)=A|omega|^-beta from H3 VIDEO LATENT samples. It never "
                 "substitutes WAN/FLUX constants. A single clip remains a research probe; "
@@ -150,7 +150,7 @@ class MiniMaxH3SPEEDSpectrumDatasetAccumulateT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SPEEDSpectrumDatasetAccumulateT8Advanced",
             display_name=(
                 "MiniMax H3 SPEED Spectrum Dataset Accumulate / "
-                "频谱数据集累积 (Advanced)"
+                "Spectrum Dataset Accumulate (Advanced)"
             ),
             description=(
                 "Accumulates exact per-clip H3 spatial power statistics across ComfyUI "
@@ -226,7 +226,7 @@ class MiniMaxH3SPEEDSpectrumDatasetFinalizeT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SPEEDSpectrumDatasetFinalizeT8Advanced",
             display_name=(
                 "MiniMax H3 SPEED Spectrum Dataset Finalize / "
-                "频谱数据集定稿 (Advanced)"
+                "Spectrum Dataset Finalize (Advanced)"
             ),
             description=(
                 "Fits one task/model/VAE-bound H3 SPEED profile from accumulated sufficient "
@@ -267,7 +267,7 @@ class MiniMaxH3SPEEDSpectrumDatasetFileT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SPEEDSpectrumDatasetFileT8Advanced",
             display_name=(
                 "MiniMax H3 SPEED Spectrum Dataset File / "
-                "频谱数据集文件 (Advanced)"
+                "Spectrum Dataset File (Advanced)"
             ),
             description=(
                 "Loads or explicitly saves one accumulated spectrum dataset under the "
@@ -338,7 +338,7 @@ class MiniMaxH3SPEEDModelVAEFingerprintT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SPEEDModelVAEFingerprintT8Advanced",
             display_name=(
                 "MiniMax H3 SPEED Model + VAE Fingerprint / "
-                "模型与VAE指纹 (Advanced)"
+                "Model & VAE Fingerprint (Advanced)"
             ),
             description=(
                 "Streams the complete selected diffusion checkpoint and video VAE files to "
@@ -398,7 +398,7 @@ class MiniMaxH3SPEEDCalibrationWindowT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SPEEDCalibrationWindowT8Advanced",
             display_name=(
                 "MiniMax H3 SPEED Calibration Window / "
-                "画幅安全标定窗口 (Advanced)"
+                "Aspect-Safe Calibration Window (Advanced)"
             ),
             description=(
                 "Resamples one strict H3 24fps/17n+5 calibration window and uses "
@@ -439,7 +439,7 @@ class MiniMaxH3SPEEDPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SPEEDPlanT8Advanced",
-            display_name="MiniMax H3 SPEED Plan / 渐进分辨率计划 (Advanced)",
+            display_name="MiniMax H3 SPEED Plan (Advanced)",
             description=(
                 "Builds a multiple-of-32 H3 spatial progression with the official SPEED "
                 "kappa and sigma-alignment equations. Manual sigmas are the safe default "
@@ -496,7 +496,7 @@ class MiniMaxH3SPEEDSourceT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SPEEDSourceT8Advanced",
-            display_name="MiniMax H3 SPEED Stage Source / 分阶段条件源 (Advanced)",
+            display_name="MiniMax H3 SPEED Stage Source (Advanced)",
             description=(
                 "Retains raw H3 text/media inputs so every SPEED stage can resize and "
                 "re-encode keyframes/references for its own canvas. It does not load a "
@@ -617,7 +617,7 @@ class MiniMaxH3SPEEDSamplerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SPEEDSamplerT8Advanced",
-            display_name="MiniMax H3 SPEED Whole-Chain Sampler / 整链采样 (Advanced)",
+            display_name="MiniMax H3 SPEED Whole-Chain Sampler (Advanced)",
             description=(
                 "Runs native H3 Euler sampling over spatial stages, rebuilding AV layout and "
                 "conditioning at every canvas. Video receives official DCT expansion. Audio "

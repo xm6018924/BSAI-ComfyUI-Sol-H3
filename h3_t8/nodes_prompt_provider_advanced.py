@@ -14,7 +14,7 @@ class MiniMaxH3PromptProviderRouterT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptProviderRouterT8Advanced",
-            display_name="MiniMax H3 Prompt Provider Router / 提示词服务路由 (Advanced/T8)",
+            display_name="MiniMax H3 Prompt Provider Router (Advanced/T8)",
             description=(
                 "Uses the pinned H3 three-field rewriting contract with local passthrough, an "
                 "OpenAI-compatible server (OpenAI/LM Studio/llama.cpp), or Ollama. Network use "
@@ -32,7 +32,7 @@ class MiniMaxH3PromptProviderRouterT8Advanced(io.ComfyNode):
                 io.Combo.Input(
                     "task",
                     options=list(TASK_LABELS),
-                    default="T2VA — 文生音视频",
+                    default="T2VA — text-to-AV",
                 ),
                 io.Combo.Input(
                     "resolution",

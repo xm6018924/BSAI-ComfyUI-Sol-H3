@@ -28,7 +28,7 @@ class MiniMaxH3FaceRefinePlanT8Advanced(io.ComfyNode):
         detector_options = local_face_detector_options()
         return io.Schema(
             node_id="MiniMaxH3FaceRefinePlanT8Advanced",
-            display_name="MiniMax H3 Face Refine Plan / 远景脸修复规划 (Advanced)",
+            display_name="MiniMax H3 Face Refine Plan (Advanced)",
             description=(
                 "Builds a shot-aware, source-bound crop plan for a second H3 pass. "
                 "It never downloads models or accepts a candidate automatically. The default "
@@ -164,7 +164,7 @@ class MiniMaxH3FaceRefineConditioningT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineConditioningT8Advanced",
-            display_name="MiniMax H3 Face Refine Latent / 脸部二次生成条件 (Advanced)",
+            display_name="MiniMax H3 Face Refine Latent (Advanced)",
             description=(
                 "Strictly replaces only the video stream of an existing H3 AV latent with "
                 "the VAE-encoded crop sequence. Audio latent and noise-mask objects are preserved; "
@@ -228,7 +228,7 @@ class MiniMaxH3FaceRefineStitchAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineStitchAuditT8Advanced",
-            display_name="MiniMax H3 Face Refine Stitch Audit / 脸部回贴审计 (Advanced)",
+            display_name="MiniMax H3 Face Refine Stitch Audit (Advanced)",
             description=(
                 "Creates a review candidate with source-bound geometry, local color matching, "
                 "per-frame fallback and a bit-exact outside-mask audit. It never overwrites or "
@@ -315,7 +315,7 @@ class MiniMaxH3FaceRefineSamplerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineSamplerT8Advanced",
-            display_name="MiniMax H3 Face Refine Sampler / 低去噪双时钟采样 (Advanced)",
+            display_name="MiniMax H3 Face Refine Sampler (Advanced)",
             description=(
                 "Builds an isolated low-denoise dual-clock schedule for the face-refine second "
                 "pass. It reuses the stable T8 sampler implementation without changing its source "

@@ -14,7 +14,7 @@ class MiniMaxH3ExternalBlockSwapBridgeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ExternalBlockSwapBridgeT8Advanced",
-            display_name="MiniMax H3 External BlockSwap Bridge / 流式驻留桥接 (Advanced)",
+            display_name="MiniMax H3 External BlockSwap Bridge (Advanced)",
             description=(
                 "Builds a compatible BlockSwap payload for the optional external streaming "
                 "MiniMaxH3KSampler. It never patches or replaces ComfyUI's official MODEL path."
@@ -26,7 +26,7 @@ class MiniMaxH3ExternalBlockSwapBridgeT8Advanced(io.ComfyNode):
                     "profile",
                     options=["upstream_default_auto", "manual"],
                     default="upstream_default_auto",
-                    tooltip="默认档严格复现上游当前默认值；manual才读取下方数值。",
+                    tooltip="The default profile exactly reproduces the upstream current defaults; manual reads the sliders below.",
                 ),
                 io.Int.Input("block_to_swap", default=47, min=0, max=50, step=1),
                 io.Int.Input("hot_blocks", default=0, min=0, max=50, step=1),
@@ -37,7 +37,7 @@ class MiniMaxH3ExternalBlockSwapBridgeT8Advanced(io.ComfyNode):
                 io.Boolean.Input(
                     "auto_vram",
                     default=True,
-                    tooltip="让上游运行时根据当前序列与可用显存缩小驻留窗口。",
+                    tooltip="Lets the upstream runtime shrink the resident window based on the current sequence and available VRAM.",
                 ),
                 io.Float.Input(
                     "vram_reserve_mb",
@@ -56,7 +56,7 @@ class MiniMaxH3ExternalBlockSwapBridgeT8Advanced(io.ComfyNode):
                 io.Boolean.Input(
                     "require_external_runtime",
                     default=True,
-                    tooltip="上游流式加载器未安装时提前报错。",
+                    tooltip="Raises an error early when the upstream streaming loader is not installed.",
                 ),
             ],
             outputs=[

@@ -49,7 +49,7 @@ def build_default():
                 "fused_modulation": True,
                 "chunk_ff": True,
                 "chunk_size": 2,
-                "fast_h3_steps": "4步 FastH3 极速",
+                "fast_h3_steps": "4-step FastH3 Turbo",
                 "sampler": "euler",
                 "cfg": 4.0,
                 "shift": 8.0,

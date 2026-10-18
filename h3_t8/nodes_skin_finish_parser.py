@@ -15,7 +15,7 @@ class MiniMaxH3SkinFinishSemanticMaskT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishSemanticMaskT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Semantic Mask / 语义皮肤遮罩 (Advanced EXP)"
+                "MiniMax H3 Skin Finish Semantic Mask (Advanced EXP)"
             ),
             description=(
                 "Builds a source-bound semantic skin mask with the pinned local FaceXLib "

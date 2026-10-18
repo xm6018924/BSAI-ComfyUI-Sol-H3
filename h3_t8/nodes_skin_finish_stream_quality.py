@@ -15,7 +15,7 @@ class MiniMaxH3SkinFinishQualityVideoStreamT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishQualityVideoStreamT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Quality Stream / 语义低内存肤质收尾 "
+                "MiniMax H3 Skin Finish Quality Stream"
                 "(Advanced EXP)"
             ),
             description=(

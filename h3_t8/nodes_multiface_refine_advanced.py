@@ -26,7 +26,7 @@ class MiniMaxH3FaceCharacterProfileT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceCharacterProfileT8Advanced",
-            display_name="MiniMax H3 Face Character Profile / 多人角色参考 (Advanced)",
+            display_name="MiniMax H3 Face Character Profile (Advanced)",
             description=(
                 "Builds one in-memory character profile from one or more single-person reference "
                 "images. OpenCV Zoo YuNet+SFace run on CPU. The embedding is a matching aid, "
@@ -61,7 +61,7 @@ class MiniMaxH3FaceCastMergeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceCastMergeT8Advanced",
-            display_name="MiniMax H3 Face Cast Merge / 2-3人角色表 (Advanced)",
+            display_name="MiniMax H3 Face Cast Merge (Advanced)",
             description=(
                 "Chains two or three unique character profiles into one in-memory cast. "
                 "It refuses duplicate IDs and never saves biometric embeddings to disk."
@@ -89,7 +89,7 @@ class MiniMaxH3SAM31MultiPersonTrackT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SAM31MultiPersonTrackT8Advanced",
-            display_name="MiniMax H3 SAM3.1 Multi-Person Track / 多人分色追踪 (Advanced)",
+            display_name="MiniMax H3 SAM3.1 Multi-Person Track (Advanced)",
             description=(
                 "Runs current ComfyUI native SAM3.1 multiplex tracking per detected shot, caps "
                 "the result at 2-3 people and emits color-coded shot-local track IDs. Default "
@@ -148,7 +148,7 @@ class MiniMaxH3FaceTrackAssignT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceTrackAssignT8Advanced",
-            display_name="MiniMax H3 Face Track Assign / 轨迹绑定角色 (Advanced)",
+            display_name="MiniMax H3 Face Track Assign (Advanced)",
             description=(
                 "Binds every shot-local SAM track to a reviewed character profile. CPU SFace "
                 "suggestions are one-to-one within each shot and fail closed below similarity "
@@ -199,7 +199,7 @@ class MiniMaxH3MultiFaceRepairJobT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MultiFaceRepairJobT8Advanced",
-            display_name="MiniMax H3 Multi-Face Repair Job / 单角色修复任务 (Advanced)",
+            display_name="MiniMax H3 Multi-Face Repair Job (Advanced)",
             description=(
                 "Selects one character in one shot and creates a 17n+5 Face Refine Parity job. "
                 "YuNet localizes the face inside that person's SAM mask; SFace rejects identity-"
@@ -292,7 +292,7 @@ class MiniMaxH3MultiFaceCompositeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MultiFaceCompositeT8Advanced",
-            display_name="MiniMax H3 Multi-Face Composite / 多人候选合成 (Advanced)",
+            display_name="MiniMax H3 Multi-Face Composite (Advanced)",
             description=(
                 "Applies one shot-local Face Refine candidate to the original full video and "
                 "chains up to three people. Candidates are accepted by default so the example "

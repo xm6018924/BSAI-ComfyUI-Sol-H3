@@ -21,7 +21,7 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRewriter8BT8Advanced",
-            display_name="MiniMax H3 Prompt Rewriter 8B / 多模态提示词改写 (Advanced)",
+            display_name="MiniMax H3 Prompt Rewriter 8B (Advanced)",
             description=(
                 "Runs the pinned LightX2V Qwen3-VL-8B LoRA for T2VA/I2VA/L2VA/FL2VA. "
                 "It is separate from the H3 32B CLIP because their parameter shapes are "
@@ -34,12 +34,12 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                     "prompt",
                     multiline=True,
                     dynamic_prompts=True,
-                    tooltip="原始短提示词；对白、歌词和画面文字会要求保持原文。",
+                    tooltip="Original short prompt; dialogue, lyrics, and on-screen text are requested to be kept verbatim.",
                 ),
                 io.Combo.Input(
                     "task",
                     options=list(TASK_LABELS),
-                    default="T2VA — 文生音视频",
+                    default="T2VA — text-to-AV",
                 ),
                 io.Combo.Input(
                     "resolution",
@@ -51,7 +51,7 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                     "base_model_path",
                     default=DEFAULT_BASE_FOLDER,
                     tooltip=(
-                        "相对路径从 ComfyUI/models/text_encoders 解析，也可填绝对目录。"
+                        "Relative paths resolve from ComfyUI/models/text_encoders; an absolute directory may also be entered."
                         f"精确基座为 {BASE_REPOSITORY}。"
                     ),
                 ),
@@ -59,7 +59,7 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                     "adapter_path",
                     default=DEFAULT_ADAPTER_FOLDER,
                     tooltip=(
-                        "相对路径从 ComfyUI/models/loras 解析，也可填绝对目录。"
+                        "Relative paths resolve from ComfyUI/models/loras; an absolute directory may also be entered."
                         f"精确LoRA为 {UPSTREAM_REPOSITORY}。"
                     ),
                 ),
@@ -67,7 +67,7 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                     "load_policy",
                     options=["auto_cpu_offload", "gpu_only", "cpu_only"],
                     default="auto_cpu_offload",
-                    tooltip="16GB显卡建议自动CPU分片；gpu_only需要足够显存。",
+                    tooltip="Auto CPU offload is recommended for 16GB GPUs; gpu_only requires sufficient VRAM.",
                 ),
                 io.Combo.Input("dtype", options=["bfloat16", "float16"], default="bfloat16"),
                 io.Combo.Input("decoding", options=["greedy", "sample"], default="greedy"),
@@ -79,8 +79,8 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                     max=8192,
                     step=128,
                     tooltip=(
-                        "默认1024兼顾完整度与16GB分片速度；过低可能截断三段结构，"
-                        "过高只提高上限而不会强迫模型生成到上限。"
+                        "Default 1024 balances completeness with 16GB offload speed; too low may truncate the three-part structure, "
+                        "too high only raises the ceiling without forcing the model to generate up to it."
                     ),
                 ),
                 io.Float.Input("temperature", default=0.7, min=0.01, max=2.0, step=0.01, advanced=True),
@@ -104,18 +104,18 @@ class MiniMaxH3PromptRewriter8BT8Advanced(io.ComfyNode):
                 io.Boolean.Input(
                     "unload_after_generate",
                     default=True,
-                    tooltip="生成、报错或OOM后都尝试只释放本节点的模型和缓存。",
+                    tooltip="After generation, errors, or OOM, attempts to release only this node's model and cache.",
                 ),
                 io.Boolean.Input(
                     "free_comfy_models_before_load",
                     default=True,
-                    tooltip="加载8B前释放ComfyUI当前模型，为16GB显卡留空间；不会在生成后全局卸载。",
+                    tooltip="Releases ComfyUI's current model before loading the 8B to free space for 16GB GPUs; does not globally unload after generation.",
                 ),
                 io.Boolean.Input(
                     "allow_hub_download",
                     default=False,
                     advanced=True,
-                    tooltip="默认只允许本地模型，避免运行时意外下载大文件。",
+                    tooltip="Defaults to local models only, avoiding accidental runtime downloads of large files.",
                 ),
                 io.Image.Input("first_frame", optional=True),
                 io.Image.Input("last_frame", optional=True),
@@ -139,7 +139,7 @@ class MiniMaxH3PromptRewriterUnloadT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRewriterUnloadT8Advanced",
-            display_name="MiniMax H3 Prompt Rewriter Unload / 手动卸载 (Advanced)",
+            display_name="MiniMax H3 Prompt Rewriter Unload (Advanced)",
             description="Releases only the optional Prompt Rewriter 8B cache retained by this node pack.",
             category=CATEGORY,
             is_experimental=True,

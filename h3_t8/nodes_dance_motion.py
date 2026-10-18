@@ -16,7 +16,7 @@ class MiniMaxH3DanceMotionSourceEXPT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DanceMotionSourceEXPT8",
-            display_name="MiniMax H3 舞蹈动作参考 / Dance Motion Source (EXP/T8)",
+            display_name="MiniMax H3 Dance Motion Source (EXP/T8)",
             category="T8/MiniMax H3/Long Video/Experimental", is_experimental=True,
             description="Connect source dance frames in original CFR order. Each long-video segment reads its own "
                 "source interval including overlap; generated continuity stays separate. Connect the target character "

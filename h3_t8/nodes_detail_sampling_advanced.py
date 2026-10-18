@@ -28,7 +28,7 @@ class MiniMaxH3AVTailDetailScheduleT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AVTailDetailScheduleT8Advanced",
-            display_name="MiniMax H3 AV Tail Detail Schedule / 音画尾段细化 (Advanced)",
+            display_name="MiniMax H3 AV Tail Detail Schedule (Advanced)",
             description=(
                 "Subdivides only the final H3 dual-clock interval. The default adds one "
                 "joint AV model call; three adds a gradual 75/50/25% descent to zero. "
@@ -89,7 +89,7 @@ class MiniMaxH3ModelTimeBiasSamplerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ModelTimeBiasSamplerT8Advanced",
-            display_name="MiniMax H3 Smooth Model-Time Bias / 平滑模型时间偏置 (Advanced)",
+            display_name="MiniMax H3 Smooth Model-Time Bias (Advanced)",
             description=(
                 "A scientifically explicit Navyblue/Detail-Daemon-style experiment for "
                 "H3. It biases only the sigma visible to the shared AV Transformer under "
@@ -138,7 +138,7 @@ class MiniMaxH3RectifiedFlowRestartSamplerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3RectifiedFlowRestartSamplerT8Advanced",
-            display_name="MiniMax H3 Joint AV RF Restart / 联合音画流重启 (Advanced)",
+            display_name="MiniMax H3 Joint AV RF Restart (Advanced)",
             description=(
                 "Runs the normal dual-clock trajectory, re-noises the clean endpoint with "
                 "the rectified-flow interpolation, then performs a second joint AV descent. "
@@ -186,7 +186,7 @@ class MiniMaxH3SpatioTemporalGuidanceT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpatioTemporalGuidanceT8Advanced",
-            display_name="MiniMax H3 Spatio-Temporal Guidance / 时空引导 (Advanced)",
+            display_name="MiniMax H3 Spatio-Temporal Guidance (Advanced)",
             description=(
                 "H3-specific skip-layer spatio-temporal guidance. It adds one perturbed "
                 "joint AV forward at every active step and refuses block-replacement conflicts."
@@ -233,7 +233,7 @@ class MiniMaxH3TemporalDetailEnhanceT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TemporalDetailEnhanceT8Advanced",
-            display_name="MiniMax H3 Temporal Detail Enhance / 时序保护细节增强 (Advanced)",
+            display_name="MiniMax H3 Temporal Detail Enhance (Advanced)",
             description=(
                 "Motion-gated luma detail enhancement with optional multiple-of-32 bicubic "
                 "upscaling. It reduces sharpening in moving regions to limit flicker, does "
@@ -289,7 +289,7 @@ class MiniMaxH3DetailMixerSamplerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DetailMixerSamplerT8Advanced",
-            display_name="MiniMax H3 Detail Mixer Sampler / 混合细节采样 (Advanced)",
+            display_name="MiniMax H3 Detail Mixer Sampler (Advanced)",
             description=(
                 "Composes Tail subdivision, smooth Model-Time Bias, H3 STG and joint AV "
                 "RF Restart in one fail-closed sampler setup. All effects default off. "
@@ -368,7 +368,7 @@ class MiniMaxH3TwoPassDetailMixerT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3TwoPassDetailMixerT8Advanced",
             display_name=(
-                "MiniMax H3 Two-Pass Detail Mixer / 二采混合细节设置 (Advanced)"
+                "MiniMax H3 Two-Pass Detail Mixer (Advanced)"
             ),
             description=(
                 "Applies Tail subdivision, Model-Time Bias, H3 STG and joint AV RF "

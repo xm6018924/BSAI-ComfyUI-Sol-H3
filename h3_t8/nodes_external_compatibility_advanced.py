@@ -18,7 +18,7 @@ class MiniMaxH3ClipProjCompatibilityAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ClipProjCompatibilityAuditT8Advanced",
-            display_name="MiniMax H3 ClipProj Compatibility Audit / 小编码器投影审计 (Advanced/T8)",
+            display_name="MiniMax H3 ClipProj Compatibility Audit (Advanced/T8)",
             description=(
                 "Passes the connected CLIP through unchanged while auditing a separately installed "
                 "ComfyUI-ClipProj wrapper, version, projection dimensions, Qwen3-VL declaration, "
@@ -95,7 +95,7 @@ class MiniMaxH3SolAttnCompatibilityAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SolAttnCompatibilityAuditT8Advanced",
-            display_name="MiniMax H3 Sol-Attn Compatibility Audit / 外部补丁所有权审计 (Advanced/T8)",
+            display_name="MiniMax H3 Sol-Attn Compatibility Audit (Advanced/T8)",
             description=(
                 "Passes MODEL through unchanged while checking a separately installed Sol-Attn "
                 "version, CUDA/BF16 architecture, complete H3 attention ownership, shadowing and "

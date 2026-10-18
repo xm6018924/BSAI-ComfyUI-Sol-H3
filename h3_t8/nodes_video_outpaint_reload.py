@@ -10,8 +10,8 @@ class MiniMaxH3VideoOutpaintLoadPreparedT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintLoadPreparedT8",
-            display_name="H3 Video Outpaint · 读取已准备缓存 (EXP)", category=CATEGORY, is_experimental=True,
-            description="用相同原片、Plan参数和run_name读取已完成的源视频/音频/提示词缓存。不加载CLIP/VAE，不重新编码提示词；缺失或损坏会报错。",
+            display_name="H3 Video Outpaint · Read Prepared Cache (EXP)", category=CATEGORY, is_experimental=True,
+            description="Reads completed source video/audio/prompt cache using the same source, Plan parameters, and run_name. Does not load CLIP/VAE or re-encode prompts; missing or corrupt data raises an error.",
             inputs=[PlanIO.Input("plan"), io.String.Input("run_name", default="outpaint_01")],
             outputs=[PreparedIO.Output(display_name="prepared"), io.String.Output(display_name="reload_report")])
 

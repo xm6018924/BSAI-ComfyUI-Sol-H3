@@ -15,7 +15,7 @@ class MiniMaxH3FaceRefineSamplerMaskPatchV11T8Advanced(io.ComfyNode):
             node_id="MiniMaxH3FaceRefineSamplerMaskPatchV11T8Advanced",
             display_name=(
                 "MiniMax H3 Face Refine Sampler-Mask Fix V1.1 / "
-                "采样遮罩修正 (Advanced)"
+                "Sampling Mask Correction (Advanced)"
             ),
             description=(
                 "Optional, disabled by default: the reviewed fixture favored the original route. "

@@ -18,7 +18,7 @@ class MiniMaxH3SkinFinishMultiPersonSemanticMaskT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SkinFinishMultiPersonSemanticMaskT8Advanced",
             display_name=(
                 "MiniMax H3 Skin Finish Multi-Person Semantic Mask / "
-                "多人语义皮肤遮罩 (Advanced EXP)"
+                "Multi-Person Semantic Skin Mask (Advanced EXP)"
             ),
             description=(
                 "Matches one pinned-YuNet five-point face to each shot-local SAM3.1 person "

@@ -144,7 +144,7 @@ def ensure_h3_vae_full(vae):
     video = is_h3_video_vae(vae)
     if not (audio or video):
         return
-    kind = "音频" if audio else "视频"
+    kind = "audio" if audio else "video"
     light = "LightVAE-Lite" if (video and is_light_vae(vae)) else ""
     try:
         if not getattr(vae, "disable_offload", False):
@@ -152,7 +152,7 @@ def ensure_h3_vae_full(vae):
         if rebuild_patcher_if_dynamic(vae, kind):
             tag = f"[BSAI-H3VAE] {kind}解码兜底生效" + (f"({light}): " if light else ": ")
             print(f"{tag}H3 VAE disable_offload=True"
-                  f"(动态 patcher 已重建为传统全量加载)", flush=True)
+                  f"(dynamic patcher rebuilt to traditional full-load)", flush=True)
         elif light:
             print(f"[BSAI-H3VAE] {kind}({light}) 已全量加载(disable_offload=True)", flush=True)
     except Exception:
@@ -185,17 +185,17 @@ def apply_global_patch(owner="BSAI"):
             if is_h3_audio_vae(self):
                 if not getattr(self, "disable_offload", False):
                     self.disable_offload = True
-                    print("[BSAI-H3VAE] 音频解码修复生效: H3 AudioVAE 已切换全量加载"
-                          "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
-                rebuild_patcher_if_dynamic(self, "音频")
+                    print("[BSAI-H3VAE] Audio decode fix active: H3 AudioVAE switched to full load"
+                          "(disable_offload=True), eliminates DynamicVRAM jitter", flush=True)
+                rebuild_patcher_if_dynamic(self, "audio")
             elif is_h3_video_vae(self):
                 if not getattr(self, "disable_offload", False):
                     self.disable_offload = True
                     _lt = "LightVAE-Lite" if is_light_vae(self) else ""
-                    print("[BSAI-H3VAE] 视频解码修复生效: H3 VideoVAE%s 已切换全量加载"
-                          "(disable_offload=True), 消除 DynamicVRAM 抖动"
+                    print("[BSAI-H3VAE] Video decode fix active: H3 VideoVAE%s switched to full load"
+                          "(disable_offload=True), eliminates DynamicVRAM jitter"
                           % (f"({_lt})" if _lt else ""), flush=True)
-                rebuild_patcher_if_dynamic(self, "视频")
+                rebuild_patcher_if_dynamic(self, "video")
         except Exception:
             pass
 

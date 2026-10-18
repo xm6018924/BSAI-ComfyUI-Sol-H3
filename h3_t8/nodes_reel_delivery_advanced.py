@@ -20,7 +20,7 @@ class MiniMaxH3ReelDeliveryPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ReelDeliveryPlanT8Advanced",
-            display_name="MiniMax H3 Reel Delivery Plan / 成片交付计划 (Advanced)",
+            display_name="MiniMax H3 Reel Delivery Plan (Advanced)",
             description=(
                 "Validates exact 24fps file clips, trims, bounded visual crossfades and "
                 "dialogue/music/ambience/SFX lanes. Planning is read-only and fingerprints every "
@@ -103,7 +103,7 @@ class MiniMaxH3ReelDeliveryComposeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ReelDeliveryComposeT8Advanced",
-            display_name="MiniMax H3 Reel Delivery Compose / 成片合成 (Advanced)",
+            display_name="MiniMax H3 Reel Delivery Compose (Advanced)",
             description=(
                 "Streams a validated file-level reel into an atomic MP4. It requires explicit "
                 "confirmation, supports hash-verified phase resume, and never materializes the "

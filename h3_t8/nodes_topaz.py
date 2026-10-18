@@ -15,18 +15,18 @@ TOPAZ_REGULAR_MODEL_IDS = [
     'thf-4', 'thd-3', 'ghq-5', 'gcg-5', 'ganim-1', 'nxf-1', 'nxl-1',
 ]
 TOPAZ_MODEL_GUIDE = (
-    'iris-3 Iris：真人脸、低清人像；prob-4 Proteus：通用且参数最全；'
-    'rhea-1 Rhea：中等质量细节恢复；nyx-3/nxf-1/nxl-1 Nyx：强降噪；'
-    'ahq-12/amq-13/alq-13 Artemis：分别用于高/中/低质量素材；'
-    'thf-4 Theia Fidelity：偏忠实；thd-3 Theia Detail：偏细节；'
-    'ghq-5 Gaia HQ：高质量实拍/CG；gcg-5 Gaia CG：CG、锯齿和摩尔纹；'
-    'ganim-1 Gaia Animation：动画。当前正式定义中Gaia Animation通常仅2x、Nyx Fast/XL仅1x、'
-    'Nyx通常为1x/2x；其他常用模型通常有1x/2x/4x。不同安装版本以环境报告为准，'
-    '不存在的倍率不是漏下载。')
+    'iris-3 Iris: real faces, low-res portraits; prob-4 Proteus: general-purpose with the most parameters;'
+    'rhea-1 Rhea: medium-quality detail recovery; nyx-3/nxf-1/nxl-1 Nyx: strong denoise;'
+    'ahq-12/amq-13/alq-13 Artemis: for high/medium/low-quality footage respectively;'
+    'thf-4 Theia Fidelity: fidelity-leaning; thd-3 Theia Detail: detail-leaning;'
+    'ghq-5 Gaia HQ: high-quality live-action/CG; gcg-5 Gaia CG: CG, aliasing, and moiré;'
+    'ganim-1 Gaia Animation: animation. In the current official definition, Gaia Animation is usually 2x only, Nyx Fast/XL 1x only,'
+    'Nyx is usually 1x/2x; other common models usually have 1x/2x/4x. Per-install versions follow the environment report,'
+    'A missing scale factor is not a failed download.')
 TOPAZ_FI_MODEL_IDS = ['apo-8', 'apf-2', 'chr-2', 'chf-3', 'aion-1']
-TOPAZ_FI_GUIDE = ('apo-8 Apollo：高质量通用，适合非线性运动；apf-2 Apollo Fast：速度优先；'
-    'chr-2 Chronos：通用高质量变帧率；chf-3 Chronos Fast：速度优先；'
-    'aion-1 Aion：新版通用插帧。请先在正式Topaz软件内下载对应模型。')
+TOPAZ_FI_GUIDE = ('apo-8 Apollo: high-quality general, suited to nonlinear motion; apf-2 Apollo Fast: speed-first;'
+    'chr-2 Chronos: general high-quality variable frame rate; chf-3 Chronos Fast: speed-first;'
+    'aion-1 Aion: new general interpolation. Download the corresponding model in the official Topaz app first.')
 
 
 def _parameter_overrides(mode, auto_estimate_frames, preblur, noise, details, halo,
@@ -36,9 +36,9 @@ def _parameter_overrides(mode, auto_estimate_frames, preblur, noise, details, ha
     try:
         custom = json.loads(parameters_json)
     except json.JSONDecodeError as error:
-        raise ValueError('高级参数JSON格式无效；普通使用请保持 {}') from error
+        raise ValueError('Advanced parameters JSON is invalid; for normal use keep it as {}') from error
     if not isinstance(custom, dict):
-        raise ValueError('高级参数JSON必须是对象，例如 {}')
+        raise ValueError('Advanced parameters JSON must be an object, e.g. {}')
     if mode == 'model_defaults':
         values = {}
     elif mode == 'auto_estimate':
@@ -52,7 +52,7 @@ def _parameter_overrides(mode, auto_estimate_frames, preblur, noise, details, ha
             if name in supported}, 'prenoise': add_noise, 'grain': grain,
             'gsize': grain_size, 'kcolor': int(keep_color), 'blend': input_blend}
     else:
-        raise ValueError('未知 Topaz 参数模式')
+        raise ValueError('unknown Topaz Parameter mode')
     values.update(custom)
     return values
 
@@ -61,12 +61,12 @@ class MiniMaxH3TopazEnvironmentEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id='MiniMaxH3TopazEnvironmentEXPT8',
-            display_name='Official Topaz · 环境检查 (T8 EXP)', category=CATEGORY,
+            display_name='Official Topaz · Environment Check (T8 EXP)', category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description='检查正式安装、签名、滤镜，并在报告中列出模型ID、各倍率候选权重与可用参数。文件存在不代表能运行。不会安装、下载或运行增强；星光需独立官方 Neuroserver 与有效权限。',
-            inputs=[io.String.Input('install_directory', default='', tooltip='正式 Topaz Video 程序目录，不是模型目录。'),
-                io.String.Input('model_definitions_directory', default='', tooltip='正式安装对应的 models JSON 定义目录。'),
-                io.String.Input('model_data_directory', default='', tooltip='正式 Topaz 配置的模型数据目录，可能与定义目录不同。')],
+            description='Checks the official installation, signature, and filters; lists model IDs, per-scale candidate weights, and available parameters in the report. Files present does not mean they run. Does not install, download, or run enhancement; Starlight requires a separate official Neuroserver and valid license.',
+            inputs=[io.String.Input('install_directory', default='', tooltip='Official Topaz Video program directory, not a model directory.'),
+                io.String.Input('model_definitions_directory', default='', tooltip='The models JSON definitions directory for the official install.'),
+                io.String.Input('model_data_directory', default='', tooltip='The model data directory configured by official Topaz; it may differ from the definitions directory.')],
             outputs=[TopazRuntime.Output('topaz_runtime'), io.String.Output('report_json')])
 
     @classmethod
@@ -75,7 +75,7 @@ class MiniMaxH3TopazEnvironmentEXPT8(io.ComfyNode):
         from .topaz_runtime import audit_installation
         if not all(isinstance(p, str) and p.strip() for p in
                 (install_directory, model_definitions_directory, model_data_directory)):
-            raise ValueError('请填写正式 Topaz 程序、模型定义和模型数据目录。没有安装 Topaz 不影响其他 T8 节点。')
+            raise ValueError('Please fill in the official Topaz program, model definitions, and model data directories. Not installing Topaz does not affect other T8 nodes.')
         runtime = OfficialTopaz(install_directory, model_definitions_directory, model_data_directory)
         report = audit_installation(runtime)
         handle = {'schema': 't8_official_topaz_paths_v1', 'install': str(runtime.install),
@@ -91,66 +91,66 @@ class MiniMaxH3TopazVideoEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id='MiniMaxH3TopazVideoEXPT8',
-            display_name='Official Topaz · 视频高清增强 (T8 EXP)', category=CATEGORY,
+            display_name='Official Topaz · Video Upscale (T8 EXP)', category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description='正式tvai_up高清增强；默认自动接收常见8/10/16-bit SDR并统一输出高质量8-bit H.264 MP4。兼容音轨直接保留，其他音轨自动转AAC；无需用户选择格式或再接“保存视频”。不插帧、不自动下载；Topaz软件无需保持打开。',
+            description='Official tvai_up upscale; by default accepts common 8',
             inputs=[TopazRuntime.Input('topaz_runtime'), io.Video.Input('source_video'),
                 io.Combo.Input('model_id', options=TOPAZ_REGULAR_MODEL_IDS, default='iris-3',
-                    display_name='高清模型（用途见提示）', tooltip=TOPAZ_MODEL_GUIDE),
-                io.Combo.Input('scale', options=['1x', '2x', '4x'], default='2x', tooltip='不改变帧率；需在正式 Topaz 中准备对应倍率的权重。'),
+                    display_name='Upscale model (see tooltip for use)', tooltip=TOPAZ_MODEL_GUIDE),
+                io.Combo.Input('scale', options=['1x', '2x', '4x'], default='2x', tooltip='Does not change frame rate; prepare the corresponding scale weights in official Topaz.'),
                 io.Float.Input('vram_fraction', default=.8, min=.1, max=1., step=.05, advanced=True,
-                    tooltip='Topaz可使用的显存比例，不是启动门槛。默认0.80；显存紧张可试0.60。'),
+                    tooltip='Fraction of VRAM Topaz may use; this is not a startup threshold. Default 0.80; try 0.60 under VRAM pressure.'),
                 io.String.Input('parameters_json', default='{}', multiline=True, advanced=True,
-                    display_name='高级参数JSON（通常保持{}）',
-                    tooltip='仅供精确覆盖独立控件或未来参数；普通用户不要填写。'),
+                    display_name='Advanced parameters JSON (usually keep {})',
+                    tooltip='For precise override of standalone controls or future parameters only; normal users should leave it empty.'),
                 io.Combo.Input('size_mode', options=['scale', 'target_dimensions'], default='scale',
-                    optional=True, advanced=True, tooltip='scale 使用上方倍率。target_dimensions 使用下方宽高，忽略倍率；需保持原比例、1至4倍，不裁剪或拉伸。'),
+                    optional=True, advanced=True, tooltip='scale uses the ratio above. target_dimensions uses the width/height below and ignores ratio; keep the original aspect, 1x to 4x, no crop or stretch.'),
                 io.Int.Input('target_width', default=0, min=0, max=8192, step=2, optional=True, advanced=True,
-                    tooltip='仅自定义尺寸模式生效；填写32至8192之间的偶数。'),
+                    tooltip='Active only in custom-size mode; enter an even number between 32 and 8192.'),
                 io.Int.Input('target_height', default=0, min=0, max=8192, step=2, optional=True, advanced=True,
-                    tooltip='仅自定义尺寸模式生效；宽高须同时填写并保持原视频比例。'),
+                    tooltip='Active only in custom-size mode; width and height must both be entered and preserve the source video aspect.'),
                 io.String.Input('output_directory', default='', optional=True, advanced=True,
-                    tooltip='可选母版输出目录。留空写入ComfyUI/output/MiniMaxH3-Topaz；磁盘不足时可填写另一个本地目录。'),
+                    tooltip='Optional master output directory. Leave empty to write to ComfyUI/output/MiniMaxH3-Topaz; under disk pressure, enter another local directory.'),
                 io.String.Input('custom_model_id', default='', optional=True, advanced=True,
-                    tooltip='仅用于列表中尚未收录的新正式模型ID；填写后覆盖model_id。'),
+                    tooltip='For new official model IDs not yet in the list only; if entered, overrides model_id.'),
                 io.Combo.Input('output_profile', options=['delivery_h264', 'delivery_hevc_main10', 'lossless_master'],
                     default='delivery_h264', optional=True, advanced=True,
-                    display_name='高级输出策略（普通用户保持默认）',
-                    tooltip='默认delivery_h264自动接收常见8/10/16-bit SDR并统一输出8-bit H.264，无需按原片位深选择。Main10和lossless_master只供明确需要保留位深或审计的高级用户。HDR仍需先转为SDR。节点已直接保存，不要再接SaveVideo。'),
+                    display_name='Advanced output policy (normal users keep default)',
+                    tooltip='Default delivery_h264 accepts common 8'),
                 io.Combo.Input('parameter_mode', options=['model_defaults', 'auto_estimate', 'manual'],
-                    default='model_defaults', optional=True, display_name='参数模式',
-                    tooltip='model_defaults使用模型默认；auto_estimate让Topaz抽帧估计；manual使用下方独立参数。'),
+                    default='model_defaults', optional=True, display_name='Parameter mode',
+                    tooltip='model_defaults uses model defaults; auto_estimate lets Topaz sample frames to estimate; manual uses the standalone parameters below.'),
                 io.Int.Input('auto_estimate_frames', default=8, min=1, max=100, optional=True,
-                    advanced=True, display_name='自动分析帧数', tooltip='仅auto_estimate生效；默认8较稳定，复杂长片可试12至20，越多启动越慢。'),
+                    advanced=True, display_name='Auto-analyze frames', tooltip='Active only in auto_estimate; default 8 is stable, complex long films can try 12-20; more means slower startup.'),
                 io.Float.Input('preblur', default=0., min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='抗锯齿(-) / 去模糊(+)',
-                    tooltip='负值偏抗锯齿/摩尔纹，正值偏去模糊；例如-0.20或+0.20。仅manual生效。'),
+                    advanced=True, display_name='De-alias (-) / De-blur (+)',
+                    tooltip='Negative leans de-alias/moiré, positive leans de-blur; e.g. -0.20 or +0.20. Active only in manual.'),
                 io.Float.Input('noise', default=.5, min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='降噪', tooltip='例如0.20轻度、0.45中度；过高会蜡化皮肤。仅manual生效。'),
+                    advanced=True, display_name='Denoise', tooltip='e.g. 0.20 light, 0.45 medium; too high waxes skin. Active only in manual.'),
                 io.Float.Input('details', default=.5, min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='恢复细节', tooltip='例如0.25自然、0.50较强；过高可能生成假纹理。仅manual生效。'),
+                    advanced=True, display_name='Recover detail', tooltip='e.g. 0.25 natural, 0.50 stronger; too high may invent fake texture. Active only in manual.'),
                 io.Float.Input('halo', default=.5, min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='去光晕', tooltip='例如0.20轻度、0.50用于明显边缘光晕；过高会损失边缘。仅manual生效。'),
+                    advanced=True, display_name='De-halo', tooltip='e.g. 0.20 light, 0.50 for obvious edge halos; too high loses edges. Active only in manual.'),
                 io.Float.Input('sharpen', default=.5, min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='锐化', tooltip='内部映射Topaz blur参数；例如0.15轻锐、0.35较锐。仅manual生效。'),
+                    advanced=True, display_name='Sharpen', tooltip='Internally maps to the Topaz blur parameter; e.g. 0.15 light, 0.35 sharper. Active only in manual.'),
                 io.Float.Input('compression', default=.5, min=-1., max=1., step=.05, optional=True,
-                    advanced=True, display_name='去压缩伪影', tooltip='例如0.25轻度网压、0.55明显块效应。仅manual生效。'),
+                    advanced=True, display_name='De-block', tooltip='e.g. 0.25 mild web compression, 0.55 obvious blocking. Active only in manual.'),
                 io.Float.Input('add_noise', default=0., min=0., max=.1, step=.005, optional=True,
-                    advanced=True, display_name='输入预加噪', tooltip='默认0；例如0.01可帮助过度平滑素材保留纹理。仅manual生效。'),
+                    advanced=True, display_name='Input pre-noise', tooltip='Default 0; e.g. 0.01 helps retain texture on over-smoothed footage. Active only in manual.'),
                 io.Float.Input('grain', default=0., min=0., max=1., step=.05, optional=True,
-                    advanced=True, display_name='输出颗粒', tooltip='默认0；例如0.10轻颗粒、0.20明显胶片感。仅manual生效。'),
+                    advanced=True, display_name='Output grain', tooltip='Default 0; e.g. 0.10 light grain, 0.20 obvious film look. Active only in manual.'),
                 io.Float.Input('grain_size', default=0., min=0., max=5., step=.1, optional=True,
-                    advanced=True, display_name='颗粒尺寸', tooltip='仅输出颗粒大于0时有意义；1.0细颗粒，2.0较粗。'),
+                    advanced=True, display_name='Grain size', tooltip='Only meaningful when output grain > 0; 1.0 fine, 2.0 coarser.'),
                 io.Boolean.Input('keep_color', default=True, optional=True, advanced=True,
-                    display_name='模型色彩校正', tooltip='默认true；关闭只建议用于色彩对比测试。'),
+                    display_name='Model color correction', tooltip='Default true; turning off is recommended only for color comparison tests.'),
                 io.Float.Input('input_blend', default=0., min=0., max=1., step=.05, optional=True,
-                    advanced=True, display_name='混合原片', tooltip='0=完全增强，1=完全原片；0.10至0.20可减弱过度锐化或蜡感。'),
+                    advanced=True, display_name='Blend with original', tooltip='0 = fully enhanced, 1 = fully original; 0.10-0.20 can reduce over-sharpening or waxiness.'),
                 io.Int.Input('engine_instances', default=0, min=0, max=3, optional=True,
-                    advanced=True, display_name='额外推理实例',
-                    tooltip='0最稳。1在本机60帧仅由11.5秒降到10.5秒，收益小但占用更多显存；16GB卡不建议更高。'),
+                    advanced=True, display_name='Extra inference instances',
+                    tooltip='0 is safest. On this machine 1 instance took 60 frames from 11.5s to 10.5s; small gain but more VRAM; not recommended above 1 on 16GB cards.'),
                 io.Int.Input('gpu_device_index', default=0, min=0, max=15, optional=True,
-                    advanced=True, display_name='Topaz GPU序号',
-                    tooltip='单卡保持0；多卡时选择正式Topaz所使用的GPU序号。')],
+                    advanced=True, display_name='Topaz GPU index',
+                    tooltip='Keep 0 for a single card; on multi-GPU, choose the GPU index used by official Topaz.')],
             outputs=[io.Video.Output('enhanced_video'), io.Video.Output('source_video'),
                 io.String.Output('saved_path'), io.String.Output('report_json')])
 
@@ -226,30 +226,30 @@ class MiniMaxH3TopazFrameInterpolationEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id='MiniMaxH3TopazFrameInterpolationEXPT8',
-            display_name='Official Topaz · 视频插帧 (T8 EXP)', category=CATEGORY,
+            display_name='Official Topaz · Video Frame Interpolation (T8 EXP)', category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description='独立正式tvai_fi插帧：2x/4x提高帧率但保持时长和尺寸；默认自动接收常见SDR位深并保存高质量8-bit H.264 MP4，非兼容音轨自动转AAC。不是慢动作，不与高清模型混用，不需要保持Topaz软件开启。',
+            description='Standalone official tvai_fi interpolation: 2x/4x raises frame rate while keeping duration and size; by default accepts common SDR bit depths and saves high-quality 8-bit H.264 MP4, converting non-compatible audio to AAC. Not slow motion, not mixed with upscale models, and the Topaz app need not stay open.',
             inputs=[TopazRuntime.Input('topaz_runtime'), io.Video.Input('source_video'),
                 io.Combo.Input('model_id', options=TOPAZ_FI_MODEL_IDS, default='apo-8',
-                    display_name='插帧模型（用途见提示）', tooltip=TOPAZ_FI_GUIDE),
+                    display_name='Interpolation model (see tooltip for use)', tooltip=TOPAZ_FI_GUIDE),
                 io.Combo.Input('multiplier', options=['2x', '4x'], default='2x',
-                    display_name='帧率倍数', tooltip='2x：24→48、30→60；4x：24→96。时长不变。'),
+                    display_name='Frame rate multiplier', tooltip='2x: 24->48, 30->60; 4x: 24->96. Duration is unchanged.'),
                 io.Float.Input('duplicate_threshold', default=.01, min=-.01, max=.2, step=.005,
-                    advanced=True, display_name='重复帧检测阈值',
-                    tooltip='0或负值关闭重复帧检测；过高可能误删正常静止帧。一般保持0.01。'),
+                    advanced=True, display_name='Duplicate-frame detection threshold',
+                    tooltip='0 or negative disables duplicate-frame detection; too high may wrongly remove normal static frames. Usually keep 0.01.'),
                 io.Float.Input('vram_fraction', default=.8, min=.1, max=1., step=.05, advanced=True),
                 io.String.Input('output_directory', default='', optional=True, advanced=True,
-                    tooltip='留空写入ComfyUI/output/MiniMaxH3-Topaz；也可填写其他本地盘。'),
+                    tooltip='Leave empty to write to ComfyUI/output/MiniMaxH3-Topaz; another local drive is also allowed.'),
                 io.String.Input('custom_model_id', default='', optional=True, advanced=True,
-                    tooltip='仅用于列表未收录的正式插帧模型ID；填写后覆盖model_id。'),
+                    tooltip='For official interpolation model IDs not yet in the list only; if entered, overrides model_id.'),
                 io.Int.Input('engine_instances', default=0, min=0, max=3, optional=True,
-                    advanced=True, display_name='额外推理实例', tooltip='0最稳；增加会占更多显存。'),
+                    advanced=True, display_name='Extra inference instances', tooltip='0 is safest; more uses more VRAM.'),
                 io.Combo.Input('output_profile', options=['delivery_h264', 'delivery_hevc_main10'],
                     default='delivery_h264', optional=True, advanced=True,
-                    display_name='高级输出策略（普通用户保持默认）',
-                    tooltip='默认delivery_h264自动接收常见8/10/16-bit SDR并统一输出8-bit H.264，无需按原片位深选择。Main10仅供明确需要保持10-bit的高级用户。HDR仍需先转为SDR。'),
+                    display_name='Advanced output policy (normal users keep default)',
+                    tooltip='Default delivery_h264 accepts common 8/10/16-bit SDR and uniformly outputs 8-bit H.264, no bit-depth selection needed. Main10 is for advanced users who explicitly need retained 10-bit. HDR must still be converted to SDR first.'),
                 io.Int.Input('gpu_device_index', default=0, min=0, max=15, optional=True,
-                    advanced=True, display_name='Topaz GPU序号', tooltip='单卡保持0；多卡选择Topaz使用的GPU。')],
+                    advanced=True, display_name='Topaz GPU index', tooltip='Keep 0 for a single card; on multi-GPU choose the GPU Topaz uses.')],
             outputs=[io.Video.Output('interpolated_video'), io.Video.Output('source_video'),
                 io.String.Output('saved_path'), io.String.Output('report_json')])
 
@@ -263,17 +263,17 @@ class MiniMaxH3TopazFrameInterpolationEXPT8(io.ComfyNode):
         from .topaz_contract import OfficialTopaz
         from .topaz_runtime import run_interpolation
         if not isinstance(topaz_runtime, dict) or topaz_runtime.get('schema') != 't8_official_topaz_paths_v1':
-            raise ValueError('请连接 Official Topaz 环境检查节点')
+            raise ValueError('Please connect the Official Topaz Environment Check node')
         model_id = custom_model_id.strip() or model_id
         runtime = OfficialTopaz(topaz_runtime['install'], topaz_runtime['definitions'], topaz_runtime['data'])
         try:
             source = file_video_path(source_video, InputImpl.VideoFromFile)
         except ValueError as error:
-            raise ValueError('Topaz插帧需要未裁剪的本地文件VIDEO；帧批请先保存成视频。') from error
+            raise ValueError('Topaz interpolation requires an uncropped local-file VIDEO; save frame batches as a video first.') from error
         if output_directory.strip():
             root = Path(output_directory.strip())
             if not root.is_absolute() or root.parent == root:
-                raise ValueError('自定义Topaz输出目录必须是绝对的非磁盘根目录')
+                raise ValueError('The custom Topaz output directory must be an absolute non-drive-root path')
             root.mkdir(parents=True, exist_ok=True)
             root = root.resolve(strict=True)
         else:
@@ -281,7 +281,7 @@ class MiniMaxH3TopazFrameInterpolationEXPT8(io.ComfyNode):
             root.mkdir(exist_ok=True)
             root = root.resolve(strict=True)
         if not root.is_dir() or root.is_symlink():
-            raise ValueError('Topaz输出目录必须是真实本地目录')
+            raise ValueError('The Topaz output directory must be a real local directory')
         progress_bar = ProgressBar(100)
         path, report = run_interpolation(runtime, source, root / ('task-' + uuid.uuid4().hex),
             model_id=model_id, multiplier=int(multiplier[0]),

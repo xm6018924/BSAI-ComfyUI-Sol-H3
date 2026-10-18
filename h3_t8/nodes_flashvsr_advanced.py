@@ -45,7 +45,7 @@ class MiniMaxH3FlashVSRModelT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FlashVSRModelT8Advanced",
-            display_name="MiniMax H3 FlashVSR Model / 视频超分模型 (T8 Advanced EXP)",
+            display_name="MiniMax H3 FlashVSR Model (T8 Advanced EXP)",
             description=(
                 "Loads the official FlashVSR/FlashVSR-v1.1 checkpoint set from ComfyUI/models. "
                 "No hash, file-size or pixel limit is enforced; missing structural files remain actionable errors."
@@ -82,7 +82,7 @@ class MiniMaxH3FlashVSRExecutionPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FlashVSRExecutionPlanT8Advanced",
-            display_name="MiniMax H3 FlashVSR Plan / 质量与显存计划 (T8 Advanced EXP)",
+            display_name="MiniMax H3 FlashVSR Plan (T8 Advanced EXP)",
             description=(
                 "Plans fixed quality, opt-in motion-aware budgets, or memory-safe tiling. "
                 "quality_locked keeps the public 2.0/3.0/11 LCSA settings unchanged."
@@ -113,7 +113,7 @@ class MiniMaxH3FlashVSRRestoreT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FlashVSRRestoreT8Advanced",
-            display_name="MiniMax H3 FlashVSR Restore / 视频超分执行 (T8 Advanced EXP)",
+            display_name="MiniMax H3 FlashVSR Restore (T8 Advanced EXP)",
             description=(
                 "Runs the selected FlashVSR plan, trims repeated tail padding and returns the exact original "
                 "AUDIO object. No resolution ceiling is imposed; use memory_safe when resources are limited."

@@ -17,7 +17,7 @@ class MiniMaxH3GenericLoopCapabilityT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3GenericLoopCapabilityT8Advanced",
-            display_name="MiniMax H3 Generic Loop Capability / 通用循环能力探针 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Generic Loop Capability (Advanced EXP/T8)",
             description=(
                 "Read-only detection of the draft ComfyUI Generic Loops scheduler contract. "
                 "It never enables a draft backend or changes the released T8 long-video runtime."
@@ -47,7 +47,7 @@ class MiniMaxH3OfficialRiskDiagnosticT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3OfficialRiskDiagnosticT8Advanced",
-            display_name="MiniMax H3 Official Risk Diagnostic / 官方问题证据诊断 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Official Risk Diagnostic (Advanced EXP/T8)",
             description=(
                 "Read-only evidence classifier for VRAM/V-copy, reference load, Sage FP8, "
                 "audio integrity, multi-speaker cross-talk and periodic dark flashes. Unknown "
@@ -93,7 +93,7 @@ class MiniMaxH3TAEH3PreviewCapabilityT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TAEH3PreviewCapabilityT8Advanced",
-            display_name="MiniMax H3 TAEH3 Preview Capability / 快速预览能力 (Advanced EXP/T8)",
+            display_name="MiniMax H3 TAEH3 Preview Capability (Advanced EXP/T8)",
             description=(
                 "Read-only inspection of ComfyUI's native TAEH3 progress-preview path and the "
                 "installed models/vae_approx asset. It never changes preview settings or sampling."

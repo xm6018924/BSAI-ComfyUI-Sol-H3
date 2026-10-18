@@ -63,7 +63,7 @@ class MiniMaxH3DualModelLongVideoEXPT8(io.ComfyNode):
             elif item.id == "total_duration_seconds":
                 item.default = 24.
         return io.Schema(node_id="MiniMaxH3DualModelLongVideoEXPT8",
-            display_name="MiniMax H3 双MODEL潜空间放大长视频 / Dual Model Long Video (EXP/T8)",
+            display_name="MiniMax H3 Dual Model Latent Upscale Long Video (EXP/T8)",
             category=original.category, is_experimental=True, is_output_node=True,
             description="Serial low-resolution first MODEL → learned latent upscale → independent high-resolution second MODEL. "
                         "Each MODEL can have its own LoRA. Width/height are final resolution; low_width/low_height are first pass. "

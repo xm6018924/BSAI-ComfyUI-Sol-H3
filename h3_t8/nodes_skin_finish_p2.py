@@ -14,7 +14,7 @@ class MiniMaxH3SkinFinishTextureGuardT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishTextureGuardT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Texture Guard / 肤质纹理保护 (Advanced EXP)"
+                "MiniMax H3 Skin Finish Texture Guard (Advanced EXP)"
             ),
             description=(
                 "Append-only fail-closed guard for an existing Skin Finish candidate. Source "

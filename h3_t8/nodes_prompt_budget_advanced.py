@@ -13,7 +13,7 @@ class MiniMaxH3PromptBudgetCompilerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptBudgetCompilerT8Advanced",
-            display_name="MiniMax H3 Prompt Budget + Role Compiler / 提示词预算与角色编译 (Advanced/T8)",
+            display_name="MiniMax H3 Prompt Budget + Role Compiler (Advanced/T8)",
             description=(
                 "Never truncates. The default 7000-character audit ceiling matches the current "
                 "official H3 CLI submission rule without claiming a local tokenizer hard limit. "

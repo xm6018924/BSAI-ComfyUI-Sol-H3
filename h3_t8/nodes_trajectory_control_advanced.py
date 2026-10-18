@@ -20,7 +20,7 @@ class MiniMaxH3TrajectoryControlPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TrajectoryControlPlanT8Advanced",
-            display_name="MiniMax H3 Trajectory Control Plan / 轨迹控制规划 (Advanced)",
+            display_name="MiniMax H3 Trajectory Control Plan (Advanced)",
             description=(
                 "Builds normalized multi-object bbox trajectories from explicit keyframes. This is "
                 "TrailBlazer-inspired creator interaction for H3 control-video conditioning, not a "
@@ -66,7 +66,7 @@ class MiniMaxH3TrajectoryControlRenderT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TrajectoryControlRenderT8Advanced",
-            display_name="MiniMax H3 Trajectory Control Render / 轨迹控制视频 (Advanced)",
+            display_name="MiniMax H3 Trajectory Control Render (Advanced)",
             description=(
                 "Renders the plan as a soft region, box path or reference sprite IMAGE batch for "
                 "the existing H3 Fun Control Apply node. It creates no audio and owns no H3 attention."

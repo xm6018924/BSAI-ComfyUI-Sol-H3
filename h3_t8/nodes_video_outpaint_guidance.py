@@ -26,12 +26,12 @@ class MiniMaxH3VideoOutpaintGuidanceT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VideoOutpaintGuidanceT8",
-            display_name="H3 Video Outpaint · 区域提示/人物保护计划 (EXP)",
+            display_name="H3 Video Outpaint · Regional Prompt / Subject Protection Plan (EXP)",
             category=CATEGORY,
             is_experimental=True,
             description=(
-                "区域提示按H3原生32px空间token路由；人物框使用原片坐标，只审计已锁定原片中的人物及边界风险，"
-                "不声称扩出区域能绝对阻止人物幻觉。"
+                "Regional prompts are routed by native H3 32px spatial tokens; subject boxes use source coordinates and only audit subjects/boundary risks in the locked source, "
+                "it does not claim the outpainted region will absolutely prevent subject hallucination."
             ),
             inputs=[
                 PlanIO.Input("plan"),
@@ -69,10 +69,10 @@ class MiniMaxH3VideoOutpaintPrepareGuidedT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VideoOutpaintPrepareGuidedT8",
-            display_name="H3 Video Outpaint · 准备区域引导缓存 (EXP)",
+            display_name="H3 Video Outpaint · Prepare Regional Guidance Cache (EXP)",
             category=CATEGORY,
             is_experimental=True,
-            description="独立的区域引导准备路径；不会改变普通Prepare节点或已有工作流。请使用新的run_name。",
+            description="Standalone regional-guidance preparation path; does not alter the normal Prepare node or existing workflows. Use a new run_name.",
             inputs=[
                 PlanIO.Input("plan"), GuidanceIO.Input("guidance"), io.Clip.Input("clip"),
                 io.Vae.Input("video_vae"), io.String.Input("prompt", default="", multiline=True),
@@ -129,12 +129,12 @@ class MiniMaxH3VideoOutpaintRegionalModelT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VideoOutpaintRegionalModelT8",
-            display_name="H3 Video Outpaint · 区域引导模型 (EXP)",
+            display_name="H3 Video Outpaint · Regional Guidance Model (EXP)",
             category=CATEGORY,
             is_experimental=True,
             description=(
-                "把已准备的区域提示绑定到原生H3 MODEL；兼容已审计KJ低显存Attention/FFN，"
-                "拒绝LoRA、其他Attention所有者和未知wrapper静默叠加。"
+                "Binds prepared regional prompts to the native H3 MODEL; compatible with audited KJ low-VRAM Attention/FFN, "
+                "and silently stacking LoRA, other Attention owners, or unknown wrappers is refused."
             ),
             inputs=[io.Model.Input("model"), PreparedIO.Input("prepared"),
                     io.Int.Input("query_chunk_rows", default=256, min=32, max=2048)],
@@ -165,13 +165,13 @@ class MiniMaxH3VideoOutpaintCompatibilityAuditT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VideoOutpaintCompatibilityAuditT8",
-            display_name="H3 Video Outpaint · 模型组合审计 (EXP)",
+            display_name="H3 Video Outpaint · Model Combination Audit (EXP)",
             category=CATEGORY,
             is_experimental=True,
             is_output_node=True,
             description=(
-                "读取真实MODEL内容与patch/wrapper，不按文件名猜。Stock20与已锁定KJ低显存补丁可用；"
-                "Turbo/SPEED/SLA/VDN/Fast H3/Prompt Relay尚无扩画组合验收时明确标为不支持。"
+                "Reads the actual MODEL content and patch/wrapper rather than guessing by filename. Stock20 and locked KJ low-VRAM patches are supported; "
+                "Turbo/SPEED/SLA/VDN/Fast H3/Prompt Relay are explicitly marked unsupported until outpaint combination validation is complete."
             ),
             inputs=[io.Model.Input("model")],
             outputs=[io.Model.Output(display_name="model"), io.Boolean.Output(display_name="ready"),

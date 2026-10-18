@@ -20,7 +20,7 @@ class MiniMaxH3DialogueBoundaryAnalyzerT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DialogueBoundaryAnalyzerT8",
-            display_name="MiniMax H3 Dialogue Boundary Analyzer / 对白边界分析 (EXP/T8)",
+            display_name="MiniMax H3 Dialogue Boundary Analyzer (EXP/T8)",
             description=(
                 "Runs local CPU faster-whisper and reports a boundary only when exactly one "
                 "contiguous exact target-text sequence is found. It never edits audio and does "
@@ -103,7 +103,7 @@ class MiniMaxH3DialogueSafeMasterT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DialogueSafeMasterT8",
-            display_name="MiniMax H3 Dialogue Safe Master / 对白安全混音 (EXP/T8)",
+            display_name="MiniMax H3 Dialogue Safe Master (EXP/T8)",
             description=(
                 "Builds an exact-duration master from an already verified speech stem plus "
                 "independent music, ambience, and SFX stems. Speech is never silently trimmed, "
@@ -248,7 +248,7 @@ class MiniMaxH3TimedAudioBedLockT8(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3TimedAudioBedLockT8",
             display_name=(
-                "MiniMax H3 Timed Background Bed Lock / 分时背景底轨锁定 (EXP/T8)"
+                "MiniMax H3 Timed Background Bed Lock (EXP/T8)"
             ),
             description=(
                 "Two-pass H3 helper: encodes an independent full-duration music/ambience/SFX "

@@ -38,18 +38,18 @@ class MiniMaxH3VideoOutpaintCandidateT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintCandidateT8",
-            display_name="H3 Video Outpaint · 生成首帧候选 (EXP)", category=CATEGORY,
+            display_name="H3 Video Outpaint · Generate First-Frame Candidate (EXP)", category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description="只生成首个窗口并显示真实首帧。先单独运行本节点审图，再连接选择/接续。候选名或生成设置改变需使用新缓存。",
+            description="Generates only the first window and shows the real first frame. Run this node alone to review, then connect selection/continuation. Changing the candidate name or generation settings requires a new cache.",
             inputs=[io.Model.Input("model"), PreparedIO.Input("prepared"), io.Vae.Input("video_vae"),
                 io.String.Input("candidate_name", default="candidate_01"),
                 io.Int.Input("seed", default=20260808, min=0, max=2**64-1),
                 io.Int.Input("steps", default=20, min=1, max=100),
                 io.Boolean.Input("resume", default=False), io.Boolean.Input("color_match", default=True),
                 io.Boolean.Input("geometry_align", default=False, optional=True,
-                    tooltip="实验：只校正扩区接缝几何，原片像素不变；需OpenCV，关闭不加载。"),
+                    tooltip="Experimental: corrects only the outpaint seam geometry; source pixels are unchanged. Requires OpenCV; when off it is not loaded."),
                 io.Combo.Input("source_mode", options=["joint_decode", "preserve_source"], default="joint_decode", optional=True,
-                    tooltip="默认联合解码会重建原片像素，跳过接缝修色/几何；可选preserve_source保留原片。选择后保存沿用候选模式。")],
+                    tooltip="Default joint decode reconstructs source pixels and skips seam color/geometry; optional preserve_source keeps the source. Saved outputs follow the candidate mode.")],
             outputs=[CandidateIO.Output(display_name="candidate"), io.Image.Output(display_name="first_frame"),
                      io.String.Output(display_name="candidate_report"), io.String.Output(display_name="candidate_id")])
 
@@ -78,8 +78,8 @@ class MiniMaxH3VideoOutpaintSelectCandidateT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintSelectCandidateT8",
-            display_name="H3 Video Outpaint · 确认所连候选 (EXP)", category=CATEGORY, is_experimental=True,
-            description="将喜欢的候选接入。只有已看过首帧并开启确认，才允许接续；不会自动挑选候选。",
+            display_name="H3 Video Outpaint · Confirm Connected Candidate (EXP)", category=CATEGORY, is_experimental=True,
+            description="Connect the candidate you prefer. Continuation is allowed only after you have reviewed the first frame and enabled confirmation; candidates are not auto-picked.",
             inputs=[CandidateIO.Input("candidate"), io.Boolean.Input("confirm_selection", default=False)],
             outputs=[SelectedIO.Output(display_name="selected"), io.String.Output(display_name="selection_report"),
                      io.String.Output(display_name="selection_id")])
@@ -87,7 +87,7 @@ class MiniMaxH3VideoOutpaintSelectCandidateT8(io.ComfyNode):
     @classmethod
     def execute(cls, candidate, confirm_selection):
         if confirm_selection is not True:
-            raise ValueError("请先单独运行候选节点查看首帧，再开启 confirm_selection 确认所连接的候选。")
+            raise ValueError("Run the candidate node alone to view the first frame, then enable confirm_selection to confirm the connected candidate.")
         report = _preview_contract(candidate)
         selection = select_candidate(candidate["candidate"], candidate["windows"])
         selected = {**candidate, "candidate": deepcopy(candidate["candidate"]),
@@ -103,7 +103,7 @@ class MiniMaxH3VideoOutpaintContinueCandidateT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintContinueCandidateT8",
-            display_name="H3 Video Outpaint · 接续所选候选 (EXP)", category=CATEGORY, is_experimental=True,
+            display_name="H3 Video Outpaint · Continue Selected Candidate (EXP)", category=CATEGORY, is_experimental=True,
             inputs=[io.Model.Input("model"), SelectedIO.Input("selected")],
             outputs=[SelectedSampledIO.Output(display_name="sampled"), io.String.Output(display_name="sampling_report")])
 
@@ -122,9 +122,9 @@ class MiniMaxH3VideoOutpaintComposeCandidateT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintComposeCandidateT8",
-            display_name="H3 Video Outpaint · 保存所选扩画 (EXP)", category=CATEGORY,
+            display_name="H3 Video Outpaint · Save Selected Outpaint (EXP)", category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description="沿用候选的颜色设置，首帧RGB与所选预览不符时拒绝发布。原声音保留。",
+            description="Reuses the candidate color settings; if first-frame RGB does not match the selected preview, publication is refused. Original audio is preserved.",
             inputs=[SelectedSampledIO.Input("sampled"), io.Vae.Input("video_vae"),
                     io.String.Input("output_name", default="selected_outpaint")],
             outputs=[io.Video.Output(display_name="video"), io.String.Output(display_name="delivery_report")])
@@ -153,9 +153,9 @@ class MiniMaxH3VideoOutpaintLoadCandidateT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintLoadCandidateT8",
-            display_name="H3 Video Outpaint · 读取已存候选 (EXP)", category=CATEGORY,
+            display_name="H3 Video Outpaint · Read Saved Candidate (EXP)", category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description="按生成时返回的candidate_id读取原候选PNG，不采样、不解码VAE、不自动确认。",
+            description="Reads the original candidate PNG by the candidate_id returned at generation; no sampling, no VAE decode, no auto-confirm.",
             inputs=[PreparedIO.Input("prepared"), io.String.Input("candidate_name", default="candidate_01"),
                     io.String.Input("candidate_id", default="")],
             outputs=[CandidateIO.Output(display_name="candidate"), io.Image.Output(display_name="first_frame"),
@@ -172,9 +172,9 @@ class MiniMaxH3VideoOutpaintLoadSelectionT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintLoadSelectionT8",
-            display_name="H3 Video Outpaint · 恢复已确认候选 (EXP)", category=CATEGORY,
+            display_name="H3 Video Outpaint · Restore Confirmed Candidate (EXP)", category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description="明确输入之前确认时返回的selection_id。读取原候选和确认记录，可接Continue；不会自动生成或改选。",
+            description="Explicitly enter the selection_id returned by the earlier confirmation. Reads the original candidate and confirmation record; can connect Continue. It does not auto-generate or re-select.",
             inputs=[PreparedIO.Input("prepared"), io.String.Input("candidate_name", default="candidate_01"),
                     io.String.Input("selection_id", default="")],
             outputs=[SelectedIO.Output(display_name="selected"), io.Image.Output(display_name="first_frame"),
@@ -192,9 +192,9 @@ class MiniMaxH3VideoOutpaintLoadCompletedSelectionT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3VideoOutpaintLoadCompletedSelectionT8",
-            display_name="H3 Video Outpaint · 读取已完成选择 (EXP)", category=CATEGORY,
+            display_name="H3 Video Outpaint · Read Completed Selection (EXP)", category=CATEGORY,
             is_experimental=True, is_output_node=True,
-            description="读取已确认且全部窗口已完成的缓存，可直接接保存节点；不加载生成模型、不采样。未完成缓存会拒绝。",
+            description="Reads the confirmed cache with all windows completed; can connect directly to the save node. Does not load the generation model or sample. Incomplete caches are rejected.",
             inputs=[PreparedIO.Input("prepared"), io.String.Input("candidate_name", default="candidate_01"),
                     io.String.Input("selection_id", default="")],
             outputs=[SelectedSampledIO.Output(display_name="sampled"), io.Image.Output(display_name="first_frame"),
@@ -208,7 +208,7 @@ class MiniMaxH3VideoOutpaintLoadCompletedSelectionT8(io.ComfyNode):
         state = handle["windows"].snapshot()
         expected = sum(len(shot["windows"]) for shot in prepared["plan"]["shots"])
         if state["status"] != "sampled" or len(state["committed"]) != expected:
-            raise ValueError("所选候选尚未完成全部窗口；请先使用接续节点完成生成。")
+            raise ValueError("The selected candidate has not completed all windows; use the continuation node to finish generation first.")
         report = {"selection_id": selection_id, "candidate_id": handle["archive_id"],
                   "committed_windows": len(state["committed"]), "sampling_called": False,
                   "preview_sha256": preview["sha256"]}

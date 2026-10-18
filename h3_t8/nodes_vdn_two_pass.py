@@ -8,7 +8,7 @@ class MiniMaxH3VDNRefinePlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3VDNRefinePlanT8Advanced",
-            display_name="MiniMax H3 VDN Two-Pass Refine / VDN二采 (Advanced EXP/T8)",
+            display_name="MiniMax H3 VDN Two-Pass Refine (Advanced EXP/T8)",
             category="T8/MiniMax H3/Performance/Advanced",
             description="Restart VDN on its own stage sigma grid after a completed first pass and learned video latent upscale. Rebuild high-resolution Conditioning and reconcile audio first. Connect fresh RandomNoise; do not add another Turbo LoRA. Quality is experimental.",
             is_experimental=True,

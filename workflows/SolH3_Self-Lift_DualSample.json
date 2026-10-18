@@ -41,7 +41,7 @@
           "type": "STRING"
         }
       ],
-      "title": "BSAI Sol-H3 Loader (极速版)",
+      "title": "BSAI Sol-H3 Loader (Turbo)",
       "properties": {
         "Node name for S&R": "BSAI_SolH3_Loader"
       },
@@ -56,7 +56,7 @@
         true,
         true,
         2,
-        "4步 FastH3 极速",
+        "4-step FastH3 Turbo",
         "euler",
         4.0,
         8.0,
@@ -109,7 +109,7 @@
           ]
         }
       ],
-      "title": "LoraLoaderModelOnly (二采4步LoRA)",
+      "title": "LoraLoaderModelOnly (second-pass 4-step LoRA)",
       "properties": {
         "Node name for S&R": "LoraLoaderModelOnly"
       },
@@ -184,7 +184,7 @@
           ]
         }
       ],
-      "title": "CLIPTextEncode (正)",
+      "title": "CLIPTextEncode (positive)",
       "properties": {
         "Node name for S&R": "CLIPTextEncode"
       },
@@ -222,7 +222,7 @@
           ]
         }
       ],
-      "title": "CLIPTextEncode (负)",
+      "title": "CLIPTextEncode (negative)",
       "properties": {
         "Node name for S&R": "CLIPTextEncode"
       },
@@ -254,7 +254,7 @@
           ]
         }
       ],
-      "title": "EmptyHunyuanLatentVideo (一采低清)",
+      "title": "EmptyHunyuanLatentVideo (first-pass low-res)",
       "properties": {
         "Node name for S&R": "EmptyHunyuanLatentVideo"
       },
@@ -289,7 +289,7 @@
           ]
         }
       ],
-      "title": "VAELoader (视频VAE)",
+      "title": "VAELoader (video VAE)",
       "properties": {
         "Node name for S&R": "VAELoader"
       },
@@ -321,7 +321,7 @@
           ]
         }
       ],
-      "title": "VAELoader (音频VAE)",
+      "title": "VAELoader (audio VAE)",
       "properties": {
         "Node name for S&R": "VAELoader"
       },
@@ -374,7 +374,7 @@
           ]
         }
       ],
-      "title": "KSampler #1 (一采 8步)",
+      "title": "KSampler #1 (first-pass 8-step)",
       "properties": {
         "Node name for S&R": "KSampler"
       },
@@ -412,7 +412,7 @@
           ]
         }
       ],
-      "title": "RandomNoise (二采噪声)",
+      "title": "RandomNoise (second-pass noise)",
       "properties": {
         "Node name for S&R": "RandomNoise"
       },
@@ -451,7 +451,7 @@
           ]
         }
       ],
-      "title": "BasicScheduler (二采 4步 Beta)",
+      "title": "BasicScheduler (second-pass 4-step Beta)",
       "properties": {
         "Node name for S&R": "BasicScheduler"
       },
@@ -506,7 +506,7 @@
           ]
         }
       ],
-      "title": "BSAI Sol-H3 Latent 放大对齐 (双采)",
+      "title": "BSAI Sol-H3 Latent Upscale Align (Two-Pass)",
       "properties": {
         "Node name for S&R": "BSAI_SolH3_LatentUpscaleAlign"
       },
@@ -554,7 +554,7 @@
           ]
         }
       ],
-      "title": "BasicGuider (二采)",
+      "title": "BasicGuider (second-pass)",
       "properties": {
         "Node name for S&R": "BasicGuider"
       },
@@ -584,7 +584,7 @@
           ]
         }
       ],
-      "title": "KSamplerSelect (二采)",
+      "title": "KSamplerSelect (second-pass)",
       "properties": {
         "Node name for S&R": "KSamplerSelect"
       },
@@ -654,7 +654,7 @@
           "type": "SIGMAS"
         }
       ],
-      "title": "SamplerCustomAdvanced #2 (二采 4步)",
+      "title": "SamplerCustomAdvanced #2 (second-pass 4-step)",
       "properties": {
         "Node name for S&R": "SamplerCustomAdvanced"
       },
@@ -684,7 +684,7 @@
           ]
         }
       ],
-      "title": "DisableNoise (二采不重加噪)",
+      "title": "DisableNoise (second-pass no re-noise)",
       "properties": {
         "Node name for S&R": "DisableNoise"
       },
@@ -725,7 +725,7 @@
           ]
         }
       ],
-      "title": "VAE Decode (视频)",
+      "title": "VAE Decode (video)",
       "properties": {
         "Node name for S&R": "VAEDecode"
       },
@@ -758,7 +758,7 @@
         }
       ],
       "outputs": [],
-      "title": "VHS_VideoCombine (双采输出)",
+      "title": "VHS_VideoCombine (two-pass output)",
       "properties": {
         "Node name for S&R": "VHS_VideoCombine"
       },
@@ -778,7 +778,7 @@
     {
       "id": 19,
       "type": "VAEDecodeAudio",
-      "title": "VAE Decode Audio (音频)",
+      "title": "VAE Decode Audio",
       "pos": [
         2500,
         150

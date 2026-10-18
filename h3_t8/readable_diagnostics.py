@@ -41,13 +41,13 @@ def diagnose_node_source(node_id, node_classes):
         before, now = IMPORT_OBSERVATIONS.get(path), _digest(path)
         changed = before is not None and now != before
         if changed:
-            warnings.append("磁盘文件在诊断模块导入后变化；当前运行实例可能仍是旧实现，请自行重启后核验。")
+            warnings.append("Disk files changed after the diagnostics module was imported; the running instance may still be the old implementation. Please restart and verify.")
         rows.append(dict(node_id=node_id, class_name=cls.__name__, loaded_module=cls.__module__,
                          loaded_module_path=path, disk_sha256=now, import_observed_disk_sha256=before,
                          disk_changed_since_observation=changed,
                          memory_bytecode_matches_disk="not_proven_by_file_hash"))
     if not rows:
-        warnings.append("当前实例没有找到该节点；磁盘存在不表示实例已注册／加载。")
+        warnings.append("This node was not found in the current instance; presence on disk does not mean it is registered/loaded.")
     copies = []
     for name, module in list(sys.modules.items()):
         path = getattr(module, "__file__", None)
@@ -59,7 +59,7 @@ def diagnose_node_source(node_id, node_classes):
                 copies.append(dict(module=candidate.__module__, path=str(Path(provider_path).resolve()),
                                    imported_by=name))
     if len({item["path"] for item in copies}) > 1:
-        warnings.append("检测到同名节点由多个已加载路径提供；不自动删除或停用。")
+        warnings.append("The same node is provided by multiple loaded paths; none are auto-removed or disabled.")
     try:
         import tomllib
         version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf8"))["project"]["version"]
@@ -70,22 +70,22 @@ def diagnose_node_source(node_id, node_classes):
                   running_package_version="unknown_unless_runtime_declares_it",
                   nodes=rows, loaded_copies=copies, warnings=warnings,
                   mutation=False, restarted_service=False, blocks_sampling=False)
-    summary = "\n".join([f"节点：{node_id}", f"磁盘版本：{version or '未知'}（不等于实例已加载版本）",
+    summary = "\n".join([f"节点：{node_id}", f"磁盘版本：{version or 'unknown'}（不等于实例已加载版本）",
                          *[f"实际模块：{row['loaded_module_path']}" for row in rows], *warnings])
     return summary, json.dumps(report, ensure_ascii=False, indent=2)
 
 
 DELIVERY = {
-    "return_exact_first_pass_audio_tensor": "交付：保留一采音频 tensor；二采可能参与联合计算，但不交付其音频预测。",
-    "publish_refined_joint_audio": "交付：二采联合精修音频。",
-    "exact_input_tensor_passthrough": "当前步骤：输入音频 tensor 原样通过；不能据此判断最终交付使用哪条音轨。",
-    "completed_second_pass_output": "上下文：使用已完成二采音频；这不是粗采未完成音频锁定。",
+    "return_exact_first_pass_audio_tensor": "Delivery: keeps the first-pass audio tensor; the second pass may participate in joint computation but its audio prediction is not delivered.",
+    "publish_refined_joint_audio": "Delivery: second-pass joint refined audio.",
+    "exact_input_tensor_passthrough": "Current step: input audio tensor passes through unchanged; this does not indicate which track is finally delivered.",
+    "completed_second_pass_output": "Context: uses completed second-pass audio; this is not an unfinished first-pass audio lock.",
 }
 
 
 def explain_audio_report(report_json):
     if not report_json.strip():
-        return "尚无报告，音频来源和缓存状态未知。", json.dumps({"status": "unknown", "evidence": []}, ensure_ascii=False)
+        return "No report yet; audio source and cache state are unknown.", json.dumps({"status": "unknown", "evidence": []}, ensure_ascii=False)
     input_format = 'json'
     try:
         value = json.loads(report_json)
@@ -95,7 +95,7 @@ def explain_audio_report(report_json):
         fields = dict(line.split('=', 1) for line in report_json.splitlines()
                       if line.startswith(('task=', 'audio_mode=', 'source_audio_tag=', 'frames=', 'canvas=')))
         if 'audio_mode' not in fields:
-            raise ValueError("连接已有 report_json／Conditioning report；这个框不是提示词或音频设置。") from error
+            raise ValueError("Connect an existing report_json / Conditioning report; this box is not a prompt or audio setting.") from error
         value, input_format = fields, 'conditioning_text'
     if not isinstance(value, dict):
         raise ValueError("report_json must contain an object")
@@ -113,20 +113,20 @@ def explain_audio_report(report_json):
                 evidence.append(dict(path=location, value=val, explanation=text))
                 lines.append(text)
             elif key == "audio_mode" and isinstance(val, str):
-                text = {"lock_source": "条件：锁定源录音驱动画面，不是生成新台词的音色克隆。",
-                        "native": "条件：原生生成音频；参考录音（若连接）不是直接交付音轨。",
-                        "reference_only": "条件：源声音仅作参考；不直接保留该音轨。",
-                        "remix_source": "条件：源音频参与重混；不保证原音不变。"}.get(val, f"条件音频模式：{val}（未识别）")
+                text = {"lock_source": "Condition: lock source recording to drive the image; this is not voice cloning for new dialogue.",
+                        "native": "Condition: natively generate audio; the reference recording (if connected) is not the delivered track.",
+                        "reference_only": "Condition: source sound is reference only; that track is not directly retained.",
+                        "remix_source": "Condition: source audio participates in remix; the original audio is not guaranteed unchanged."}.get(val, f"Condition audio mode: {val} (unrecognized)")
                 evidence.append(dict(path=location, value=val, explanation=text))
                 lines.append(text)
             elif key in {"low_reused", "high_reused", "cache_hit", "reused"} and isinstance(val, bool):
-                text = f"{location}：{'复用已校验结果' if val else '未命中该项缓存'}。"
+                text = f"{location}：{'reusing validated result' if val else 'no cache hit for this item'}。"
                 evidence.append(dict(path=location, value=val, explanation=text))
                 lines.append(text)
             elif key == 'effective_source' and path.endswith('.audio_policy') and isinstance(val, str):
-                text = {'legacy_policy': '二采输入：原生联合续采；生成区粗采音频继续演化，已知上下文音频按模板锁定。',
-                        'first_pass': '二采输入：来自一采音频；是否锁定须同时看effective_strength，不能仅凭来源称完成。',
-                        'highres_template': '二采输入：高分辨率条件模板。'}.get(val, f'二采输入策略：{val}（未识别）。')
+                text = {'legacy_policy': 'Second-pass input: native joint continuation; first-pass audio in the generation region continues to evolve, known context audio is template-locked.',
+                        'first_pass': 'Second-pass input: from first-pass audio; whether it is locked also depends on effective_strength; do not claim completion by source alone.',
+                        'highres_template': 'Second-pass input: high-resolution conditioning template.'}.get(val, f'Second-pass input policy: {val} (unrecognized).')
                 evidence.append(dict(path=location, value=val, explanation=text))
                 lines.append(text)
             elif key in {'migration', 'context_handoff', 'first_pass_complete_trajectory', 'effective_strength'} and path.endswith('.audio_policy'):
@@ -140,8 +140,8 @@ def explain_audio_report(report_json):
                     visit(item, f"{location}[{index}]")
     visit(value)
     if not evidence:
-        lines.append("报告未提供可识别的音频／缓存证据，保持未知；不重新采样或改缓存。")
-    lines.append("说明节点只读：不改变音频、MODEL或缓存身份；未知字段不等于功能失败。")
+        lines.append("The report provides no recognizable audio/cache evidence; state remains unknown; no resampling or cache change.")
+    lines.append("The notes node is read-only: it does not alter audio, MODEL, or cache identity; unknown fields do not mean a feature failed.")
     report = dict(schema="t8.audio.readable_report.v1", status="evidence_found" if evidence else "unknown",
                   evidence=evidence, numerical_mutation=False, sampling_started=False,
                   input_format=input_format,

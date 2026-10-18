@@ -16,7 +16,7 @@ class MiniMaxH3SkinFinishSafetyAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishSafetyAuditT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Safety Audit / 肤质候选安全审计 (Advanced EXP)"
+                "MiniMax H3 Skin Finish Safety Audit (Advanced EXP)"
             ),
             description=(
                 "Final fail-closed audit for a Skin Finish IMAGE candidate. It can reject "

@@ -70,7 +70,7 @@ def register_director_routes():
                 )
             except FileNotFoundError:
                 return web.json_response(
-                    {"error": "项目或素材不存在，请重连；当前草稿不会被覆盖"},
+                    {"error": "Project or asset does not exist; please reconnect; the current draft will not be overwritten"},
                     status=404,
                 )
             except (ValueError, KeyError, TypeError) as error:
@@ -108,7 +108,7 @@ def register_director_routes():
     async def save(request):
         body = await request.json()
         if identity(request.match_info["project_id"]) != body["project"]["id"]:
-            raise ValueError("项目路径与内容身份不一致")
+            raise ValueError("Project path does not match content identity")
         result = await asyncio.to_thread(
             get_store().save, body["project"], body["expected_revision"]
         )
@@ -135,7 +135,7 @@ def register_director_routes():
         if not result["ready"]:
             return web.json_response(
                 {
-                    "error": "预检未通过，保留项目但不能导出可执行预检图",
+                    "error": "Preflight failed; the project is retained but an executable preflight graph cannot be exported",
                     "report": result,
                 },
                 status=422,
@@ -200,7 +200,7 @@ def register_director_routes():
                     for node_id, node in built["prompt"].items()
                 },
                 "report": built["report"],
-                "warning": "只编译图，不排队、不加载模型、不代表 GPU 或感知质量通过。",
+                "warning": "Only compiles the graph; does not queue, load models, or imply GPU or perceptual quality approval.",
             }
         )
 
@@ -225,7 +225,7 @@ def register_director_routes():
         reader = await request.multipart()
         part = await reader.next()
         if part is None or part.name != "file" or not part.filename:
-            raise ValueError("上传必须包含 file")
+            raise ValueError("Upload must include a file")
         asset_id = str(uuid.uuid4())
         suffix = Path(part.filename).suffix.lower()
         if suffix not in {
@@ -246,7 +246,7 @@ def register_director_routes():
             ".m4a",
             ".aac",
         }:
-            raise ValueError("请选择标准图片、视频或音频文件")
+            raise ValueError("Please choose a standard image, video, or audio file")
         path = contained(store.input_root, f"t8_director/{asset_id}/source{suffix}")
         path.parent.mkdir(parents=True, exist_ok=False)
         size = 0
@@ -256,7 +256,7 @@ def register_director_routes():
                     size += len(chunk)
                     if size > 1024 * 1024 * 1024:
                         raise ValueError(
-                            "单素材上传上限1GiB，请分段或压缩后重试；未截断保存"
+                            "Per-asset upload limit is 1 GiB; split or compress and retry; saved without truncation"
                         )
                     await asyncio.to_thread(stream.write, chunk)
             asset = await asyncio.to_thread(
@@ -378,13 +378,13 @@ def export_preflight_workflow(project, shot_id):
 
     project = validate_project(project)
     if shot_id not in {s["id"] for s in project["doc"]["shots"]}:
-        raise ValueError("镜头身份不存在")
+        raise ValueError("Shot identity does not exist")
     values = [canonical(project), shot_id]
     api = {
         "1": {
             "class_type": "MiniMaxH3DirectorProjectT8",
             "inputs": {"project_json": values[0], "shot_id": shot_id},
-            "_meta": {"title": "曜石导演台 · D1 CPU预检（不生成）"},
+            "_meta": {"title": "Obsidian Director · D1 CPU Preflight (no generation)"},
         }
     }
     workflow = {

@@ -13,7 +13,7 @@ class MiniMaxH3FreeNoiseLongVideoT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FreeNoiseLongVideoT8Advanced",
-            display_name="MiniMax H3 FreeNoise Long Video / 长视频噪声重排 (Advanced EXP)",
+            display_name="MiniMax H3 FreeNoise Long Video (Advanced EXP)",
             description=(
                 "Adds deterministic FreeNoise-style video-noise rescheduling to either T8 "
                 "in-node long-video runner. It composes with Prompt Relay and Enhance-A-Video "

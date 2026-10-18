@@ -21,7 +21,7 @@ class MiniMaxH3ContextIRProviderT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ContextIRProviderT8Advanced",
-            display_name="T8 Context IR Provider / 参考语义理解 (Advanced)",
+            display_name="T8 Context IR Provider (Advanced)",
             description=(
                 "Validates a local Context IR by default. External OpenAI-compatible visual "
                 "analysis is opt-in, requires explicit upload confirmation and reads its API key "
@@ -116,7 +116,7 @@ class MiniMaxH3ContextIRPromptCompilerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ContextIRPromptCompilerT8Advanced",
-            display_name="T8 Context IR Prompt Compiler / IR提示词编译 (Advanced)",
+            display_name="T8 Context IR Prompt Compiler (Advanced)",
             description=(
                 "Deterministically compiles one reviewed Context IR through the existing T8 "
                 "Prompt Packet contract. The provider cannot alter local paths or sampling."

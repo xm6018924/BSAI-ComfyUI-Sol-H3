@@ -15,7 +15,7 @@ class MiniMaxH3NFERunContractT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3NFERunContractT8Advanced",
             display_name=(
                 "MiniMax H3 NFE Run Contract / "
-                "断点运行合约编译器 (Advanced EXP/T8)"
+                "Resume Run Contract Compiler (Advanced EXP/T8)"
             ),
             description=(
                 "Compiles the exact final prompt, media map, conditioning report and real "

@@ -30,7 +30,7 @@ class MiniMaxH3RAFTMotionAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3RAFTMotionAuditT8Advanced",
-            display_name="MiniMax H3 RAFT Motion Audit / 光流运动审计 (Advanced)",
+            display_name="MiniMax H3 RAFT Motion Audit (Advanced)",
             description=(
                 "Read-only RAFT optical-flow audit for real motion, sudden cuts and temporal "
                 "collapse. It does not repair faces, sharpen frames or modify H3 sampling. "
@@ -83,7 +83,7 @@ class MiniMaxH3RAFTMaskPropagationT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3RAFTMaskPropagationT8Advanced",
-            display_name="MiniMax H3 RAFT Mask Propagation / 光流遮罩传播 (Advanced)",
+            display_name="MiniMax H3 RAFT Mask Propagation (Advanced)",
             description=(
                 "Propagates one reviewed person/object mask through a shot with bidirectional RAFT "
                 "and forward-backward confidence. Run once per identity. It stops at detected cuts "

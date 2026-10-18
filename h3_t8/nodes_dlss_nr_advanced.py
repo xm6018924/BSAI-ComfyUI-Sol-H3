@@ -62,15 +62,15 @@ class MiniMaxH3DLSSNRRuntimeAuditT8Advanced(io.ComfyNode):
                     "probe_mode",
                     options=list(PROBE_MODES),
                     default="feature_probe_1_frame",
-                    tooltip="feature_probe_1_frame：实际运行一帧自检，通过后可接超分。static_only：仅检查文件和环境，不输出可运行句柄。",
+                    tooltip="feature_probe_1_frame: actually runs one frame as a self-check; after passing you can connect super-resolution. static_only: checks files and environment only, no runnable handle.",
                 ),
                 io.Int.Input(
                     "dxgi_adapter_index", default=0, min=0, max=31, advanced=True,
-                    tooltip="外部程序使用的 Windows 显卡编号，不是显存大小。单显卡一般用 0；必须与 CUDA 选择对应同一张卡。"
+                    tooltip="Windows GPU index used by the external program; this is not VRAM size. Single GPU is usually 0; it must match the CUDA device selection."
                 ),
                 io.Int.Input(
                     "cuda_device_index", default=0, min=0, max=31, advanced=True,
-                    tooltip="ComfyUI/PyTorch 使用的 CUDA 设备编号。单显卡一般用 0；不是 Windows DXGI 编号的同义词。"
+                    tooltip="CUDA device index used by ComfyUI/PyTorch. Single GPU is usually 0; this is not the same as the Windows DXGI index."
                 ),
             ],
             outputs=[
@@ -198,19 +198,19 @@ def _quality_inputs():
         io.Boolean.Input("nr_auto_mask", default=False, advanced=True),
     ]
     tooltips = {
-        "quality_profile": "画质方案。命名预设覆盖下方所有 nr_* 手动值；仅 custom 使用手动值。 Named profiles override NR sliders; choose custom to edit.",
-        "sr_preset": "SR 超分网络预设，default 由运行时选择；字母不是质量等级。 SR model preset, not a quality ranking.",
-        "nr_style": "NR 风格：0 默认、1 自然、2 电影感。仅 custom 生效。",
-        "nr_preset": "NR 内部预设编号，不是放大倍数或步数；通常保留 0。仅 custom 生效。",
-        "nr_intensity": "神经渲染增强强度，越大不一定越自然。仅 custom 生效。",
-        "nr_detail": "NR 合成占比：0 不混入 NR，1 完整采用 NR。sr_only 固定为 0。仅 custom 生效。",
-        "nr_color": "采用 NR 色彩变化的程度；偏色时可降低。仅 custom 生效。",
-        "nr_skin": "皮肤结构控制，-1 使用运行时默认值。仅 custom 生效。",
-        "nr_local_structure": "局部结构和细纹理的调整强度。仅 custom 生效。",
-        "nr_local_tone": "局部光影和对比的调整强度。仅 custom 生效。",
-        "nr_global_tone": "整体色调控制，-1 使用运行时默认值。仅 custom 生效。",
-        "nr_ui_correction": "UI/界面元素修正选项，不是 ComfyUI 界面开关。仅 custom 生效。",
-        "nr_auto_mask": "自动遮罩，针对文字/UI 等区域；不保证所有字幕都不变。仅 custom 生效。",
+        "quality_profile": "Quality profile. Named presets override all nr_* sliders below; only custom uses manual values.",
+        "sr_preset": "SR super-resolution network preset; default is chosen at runtime. The letter is not a quality grade.",
+        "nr_style": "NR style: 0 default, 1 natural, 2 cinematic. Only active in custom.",
+        "nr_preset": "NR internal preset index; this is not a scale factor or step count. Usually keep 0. Only active in custom.",
+        "nr_intensity": "Neural rendering enhancement strength; larger is not necessarily more natural. Only active in custom.",
+        "nr_detail": "NR blend ratio: 0 = no NR, 1 = fully use NR. sr_only is fixed at 0. Only active in custom.",
+        "nr_color": "Amount of NR color shift; lower it if colors look off. Only active in custom.",
+        "nr_skin": "Skin structure control; -1 uses the runtime default. Only active in custom.",
+        "nr_local_structure": "Local structure and fine-texture adjustment strength. Only active in custom.",
+        "nr_local_tone": "Local lighting and contrast adjustment strength. Only active in custom.",
+        "nr_global_tone": "Overall tone control; -1 uses the runtime default. Only active in custom.",
+        "nr_ui_correction": "UI/interface element correction option; this is not a ComfyUI UI toggle. Only active in custom.",
+        "nr_auto_mask": "Auto-mask for text/UI regions; it does not guarantee all subtitles are preserved. Only active in custom.",
     }
     for item in inputs:
         item.tooltip = tooltips[item.id]
@@ -250,7 +250,7 @@ class MiniMaxH3DLSSNRImageSuperResolutionT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DLSSNRImageSuperResolutionT8Advanced",
-            display_name="MiniMax H3 DLSS-NR Image / 图片超分 (T8 Advanced)",
+            display_name="MiniMax H3 DLSS-NR Image (T8 Advanced)",
             description=(
                 "Runs each SDR IMAGE independently through the audited external runtime. "
                 "Supports 1x NR-only or 1.5x/2x/3x SR-only and SR+NR. RGB uses an explicit "
@@ -338,7 +338,7 @@ class MiniMaxH3DLSSNRVideoFramesT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DLSSNRVideoFramesT8Advanced",
-            display_name="MiniMax H3 DLSS-NR Video Frames / 帧序列超分 (T8 Advanced)",
+            display_name="MiniMax H3 DLSS-NR Video Frames (T8 Advanced)",
             description=(
                 "Streams an ordered IMAGE batch through one persistent external process so "
                 "temporal NR state is retained. It does not interpolate or reorder frames and "
@@ -447,7 +447,7 @@ class MiniMaxH3DLSSNRVideoFileT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DLSSNRVideoFileT8Advanced",
-            display_name="MiniMax H3 DLSS-NR Video File / 文件视频超分 (T8 Advanced)",
+            display_name="MiniMax H3 DLSS-NR Video File (T8 Advanced)",
             description=(
                 "Streams an untrimmed SDR 8-bit Rec.709 CFR file-backed VIDEO without building "
                 "a full IMAGE batch. Candidate video is encoded separately, source audio packets "

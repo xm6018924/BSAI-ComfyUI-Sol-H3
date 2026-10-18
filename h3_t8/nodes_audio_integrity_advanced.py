@@ -19,7 +19,7 @@ class MiniMaxH3AudioIntegrityAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AudioIntegrityAuditT8Advanced",
-            display_name="MiniMax H3 Audio Integrity Audit / 音频完整性审计 (Advanced/T8)",
+            display_name="MiniMax H3 Audio Integrity Audit (Advanced/T8)",
             description=(
                 "CPU-only, report-only audit for opening discontinuities, tail/head similarity, "
                 "DC jumps, clipping, exact samples and optional video-boundary mismatch. It "
@@ -81,7 +81,7 @@ class MiniMaxH3SpeakerRoutingAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SpeakerRoutingAuditT8Advanced",
-            display_name="MiniMax H3 Speaker Routing Audit / 多人对白路由预检 (Advanced/T8)",
+            display_name="MiniMax H3 Speaker Routing Audit (Advanced/T8)",
             description=(
                 "Compiles dialogue speakers to deterministic <Audio N> ordinals and abstains "
                 "on missing/duplicate references, unstructured vocalizations or ambiguous "
@@ -128,7 +128,7 @@ class MiniMaxH3AudioPerceptualDriftAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3AudioPerceptualDriftAuditT8Advanced",
             display_name=(
-                "MiniMax H3 Audio Perceptual Drift Audit / 音色远近漂移审计 "
+                "MiniMax H3 Audio Perceptual Drift Audit"
                 "(Advanced/T8)"
             ),
             description=(

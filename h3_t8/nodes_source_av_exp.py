@@ -22,7 +22,7 @@ class MiniMaxH3SourceMediaWindowT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SourceMediaWindowT8",
-            display_name="MiniMax H3 Source Media Window / 来源视频窗口 (EXP/T8)",
+            display_name="MiniMax H3 Source Media Window (EXP/T8)",
             description=(
                 "Selects a 24fps, 17n+5 source window, resizes it to an H3 canvas, and creates "
                 "an exactly timed 32kHz stereo audio window for the standard video/audio VAE "
@@ -55,13 +55,13 @@ class MiniMaxH3SourceMediaWindowT8(io.ComfyNode):
                     "short_video_policy",
                     options=list(SHORT_VIDEO_POLICIES),
                     default="strict",
-                    display_name="short video / 视频不足",
+                    display_name="short video",
                 ),
                 io.Combo.Input(
                     "short_audio_policy",
                     options=list(SHORT_AUDIO_POLICIES),
                     default="pad_silence",
-                    display_name="short audio / 音频不足",
+                    display_name="short audio",
                 ),
                 io.Audio.Input(
                     "source_audio",
@@ -111,7 +111,7 @@ class MiniMaxH3SourceAVPrepareT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SourceAVPrepareT8",
-            display_name="MiniMax H3 Source AV Prepare / 来源音画重绘准备 (EXP/T8)",
+            display_name="MiniMax H3 Source AV Prepare (EXP/T8)",
             description=(
                 "Strictly assembles H3 video/audio latents, preserves metadata and masks, "
                 "aligns the audio clock only under an explicit policy, and creates separate "
@@ -133,7 +133,7 @@ class MiniMaxH3SourceAVPrepareT8(io.ComfyNode):
                     "video_mode",
                     options=list(STREAM_MODES),
                     default="remix",
-                    display_name="video mode / 画面模式",
+                    display_name="video mode",
                     tooltip="lock=mask 0; remix=use strength; regenerate=mask 1.",
                 ),
                 io.Float.Input(
@@ -142,14 +142,14 @@ class MiniMaxH3SourceAVPrepareT8(io.ComfyNode):
                     min=0.0,
                     max=1.0,
                     step=0.01,
-                    display_name="video denoise / 画面重绘强度",
+                    display_name="video denoise",
                     tooltip="Used only by remix. No linear visual-strength claim is made before real A/B calibration.",
                 ),
                 io.Combo.Input(
                     "audio_mode",
                     options=list(STREAM_MODES),
                     default="lock",
-                    display_name="audio mode / 音频模式",
+                    display_name="audio mode",
                     tooltip="lock=preserve source latent; remix=use strength; regenerate=mask 1.",
                 ),
                 io.Float.Input(
@@ -158,14 +158,14 @@ class MiniMaxH3SourceAVPrepareT8(io.ComfyNode):
                     min=0.0,
                     max=1.0,
                     step=0.01,
-                    display_name="audio denoise / 音频重绘强度",
+                    display_name="audio denoise",
                     tooltip="Used only by remix; regenerated or padded audio still requires perceptual validation.",
                 ),
                 io.Combo.Input(
                     "audio_fit_policy",
                     options=list(AUDIO_FIT_POLICIES),
                     default="fit_to_video_generate_tail",
-                    display_name="audio fit / 音频时钟对齐",
+                    display_name="audio fit",
                     tooltip=(
                         "strict never adjusts. trim/pad policies are explicit; a padded tail is zero latent "
                         "with mask 1 so H3 may generate it. Every adjustment is reported."
@@ -175,7 +175,7 @@ class MiniMaxH3SourceAVPrepareT8(io.ComfyNode):
                     "dtype_device_policy",
                     options=list(DTYPE_DEVICE_POLICIES),
                     default="match_video",
-                    display_name="dtype/device / 精度与设备",
+                    display_name="dtype/device",
                     advanced=True,
                     tooltip="match_video converts only the smaller audio stream; strict refuses a mismatch.",
                 ),
@@ -219,7 +219,7 @@ class MiniMaxH3AVLatentSeparateT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AVLatentSeparateT8",
-            display_name="MiniMax H3 AV Latent Separate / 联合潜空间拆分 (EXP/T8)",
+            display_name="MiniMax H3 AV Latent Separate (EXP/T8)",
             description=(
                 "Validates and separates a joint H3 AV latent without invoking either VAE. "
                 "It preserves metadata and per-stream noise masks, so it is cheaper than decoding "

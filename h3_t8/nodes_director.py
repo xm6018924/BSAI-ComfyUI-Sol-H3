@@ -11,7 +11,7 @@ class MiniMaxH3DirectorProjectT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3DirectorProjectT8",
-            display_name="曜石导演台 / Obsidian Director D1 (T8)",
+            display_name="Obsidian Director D1 (T8)",
             category="T8/MiniMax H3/Studio",
             is_experimental=True,
             is_output_node=True,
@@ -36,11 +36,11 @@ class MiniMaxH3DirectorProjectT8(io.ComfyNode):
         report = compile_project(project, get_store())
         if not report["ready"]:
             raise ValueError(
-                "导演台预检未通过：" + json.dumps(report["errors"], ensure_ascii=False)
+                "Director preflight failed: " + json.dumps(report["errors"], ensure_ascii=False)
             )
         shot = next((s for s in report["shots"] if s["id"] == shot_id), None)
         if shot is None:
-            raise ValueError("请选择项目内有效的镜头 UUID")
+            raise ValueError("Please select a valid shot UUID in the project")
         return io.NodeOutput(
             shot["prompt"],
             shot["canvas"]["width"],

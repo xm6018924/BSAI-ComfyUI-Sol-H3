@@ -43,7 +43,7 @@
           "links": null
         }
       ],
-      "title": "BSAI Sol-H3 Loader (Stage1 草稿)",
+      "title": "BSAI Sol-H3 Loader (Stage1 draft)",
       "properties": {
         "aux_id": "xm6018924/BSAI-ComfyUI-Sol-H3",
         "ver": "1f616716cbb0fbff60f0eee3d402bc36d919ecca",
@@ -60,7 +60,7 @@
         true,
         true,
         2,
-        "4步 FastH3 极速",
+        "4-step FastH3 Turbo",
         "euler",
         4,
         8,
@@ -91,7 +91,7 @@
         "fused_modulation": true,
         "chunk_ff": true,
         "chunk_size": 2,
-        "fast_h3_steps": "4步 FastH3 极速",
+        "fast_h3_steps": "4-step FastH3 Turbo",
         "sampler": "euler",
         "cfg": 4,
         "shift": 8,
@@ -186,7 +186,7 @@
           ]
         }
       ],
-      "title": "H3 正面提示词",
+      "title": "H3 Positive Prompt",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -229,7 +229,7 @@
           ]
         }
       ],
-      "title": "H3 负面提示词",
+      "title": "H3 Negative Prompt",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -266,7 +266,7 @@
           ]
         }
       ],
-      "title": "草稿 Latent 672x384 (121帧=8n+1)",
+      "title": "Draft Latent 672x384 (121 frames = 8n+1)",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -309,7 +309,7 @@
           ]
         }
       ],
-      "title": "H3 视频 VAE",
+      "title": "H3 Video VAE",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -347,7 +347,7 @@
           ]
         }
       ],
-      "title": "H3 音频 VAE",
+      "title": "H3 Audio VAE",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -407,7 +407,7 @@
           ]
         }
       ],
-      "title": "KSampler Stage1 (4步草稿)",
+      "title": "KSampler Stage1 (4-step draft)",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.37.0",
@@ -566,7 +566,7 @@
           "links": null
         }
       ],
-      "title": "BSAI SolEngine 两级精修 (LTX-2.5) [旁支]",
+      "title": "BSAI SolEngine Two-Stage Refine (LTX-2.5) [side branch]",
       "properties": {
         "aux_id": "xm6018924/BSAI-ComfyUI-Sol-H3",
         "ver": "1f616716cbb0fbff60f0eee3d402bc36d919ecca",
@@ -809,7 +809,7 @@
   "groups": [
     {
       "id": 1,
-      "title": "Stage 1: H3 草稿 (672x384, 4步 FastH3) — 原有节点",
+      "title": "Stage 1: H3 draft (672x384, 4-step FastH3) - original nodes",
       "bounding": [
         30,
         20,
@@ -821,7 +821,7 @@
     },
     {
       "id": 2,
-      "title": "Stage 2: LTX-2.5 精修 (1344x768, 20步 fallback, 无 distilled LoRA)",
+      "title": "Stage 2: LTX-2.5 refine (1344x768, 20-step fallback, no distilled LoRA)",
       "bounding": [
         1560,
         20,

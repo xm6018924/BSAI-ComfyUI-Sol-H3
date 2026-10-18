@@ -17,12 +17,12 @@ class MiniMaxH3LowVRAMAttentionT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LowVRAMAttentionT8Advanced",
-            display_name="MiniMax H3 Low VRAM Attention / 低显存注意力 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Low VRAM Attention (Advanced EXP/T8)",
             description=(
-                "独立 T8 低显存注意力节点：提前释放 H3 归一化输入，并按头分组调用当前 Core "
-                "attention。默认 4 组；数值公式不变，但不同内核形状可能产生浮点舍入差异。"
-                "已有 KJ/Sage/Sol 或其他 callable 补丁不硬拦截；保留外部 block/attention "
-                "forward 的层可能不安装本节点头分组。报告实际安装/保留层数，组合效果由用户承担。"
+                "Standalone T8 low-VRAM attention node: releases H3 normalization inputs early and calls the current Core "
+                "attention in head groups. Default 4 groups; the math is unchanged, but different kernel shapes may produce floating-point rounding differences."
+                "Existing KJ/Sage/Sol or other callable patches are not hard-blocked; external block/attention "
+                "forward layers may not get this node's head grouping. The installed/retained layer count is reported; combined effects are the user's responsibility."
             ),
             category=CATEGORY,
             inputs=[
@@ -34,8 +34,8 @@ class MiniMaxH3LowVRAMAttentionT8Advanced(io.ComfyNode):
                     max=56,
                     step=1,
                     tooltip=(
-                        "注意力头分组数。更大通常降低单次 attention 临时显存，但增加调用开销；"
-                        "1 仍启用提前释放，只是不分组。"
+                        "Number of attention head groups. Larger groups usually reduce per-attention temporary VRAM but increase call overhead; "
+                        "1 still enables early release, just without grouping."
                     ),
                 ),
             ],
@@ -54,12 +54,12 @@ class MiniMaxH3ChunkFeedForwardT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ChunkFeedForwardT8Advanced",
-            display_name="MiniMax H3 Chunk FeedForward / 分块前馈 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Chunk FeedForward (Advanced EXP/T8)",
             description=(
-                "独立 T8 H3 SwiGLU 分块节点：仅在 packed token 数超过阈值时按 token 轴分块，"
-                "降低 FFN 激活峰值。chunks=1 是完全不改 MODEL 的旁路。"
-                "已有 KJ/Sage/Sol、block 或 MLP 补丁不作兼容性硬拦截，仅警告并保留/委托调用；"
-                "组合风险由使用者承担，不保证兼容或实际省显存。"
+                "Standalone T8 H3 SwiGLU chunking node: chunks along the token axis only when packed token count exceeds the threshold, "
+                "lowering FFN activation peak. chunks=1 is a passthrough that does not modify the MODEL."
+                "Existing KJ/Sage/Sol, block, or MLP patches are not hard-blocked; a warning is emitted and the call is retained/delegated; "
+                "combined-use risk is the user's responsibility; compatibility or actual VRAM savings are not guaranteed."
             ),
             category=CATEGORY,
             inputs=[
@@ -71,7 +71,7 @@ class MiniMaxH3ChunkFeedForwardT8Advanced(io.ComfyNode):
                     max=64,
                     step=1,
                     tooltip=(
-                        "FFN 分块数。更大可能降低激活峰值，但会增加 GEMM 调用开销；1 返回原 MODEL。"
+                        "FFN chunk count. Larger may reduce activation peak but increases GEMM call overhead; 1 returns the original MODEL."
                     ),
                 ),
                 io.Int.Input(
@@ -81,7 +81,7 @@ class MiniMaxH3ChunkFeedForwardT8Advanced(io.ComfyNode):
                     max=262144,
                     step=256,
                     tooltip=(
-                        "只有 packed token 数严格大于该值才分块；等于或低于阈值时保持单次原生 FFN。"
+                        "Chunking only applies when packed token count is strictly greater than this; at or below the threshold, native single-pass FFN is used."
                     ),
                 ),
             ],

@@ -87,7 +87,7 @@ class MiniMaxH3ScheduledDriveAudioInjectionT8Advanced(io.ComfyNode):
                     options=SCHEDULER_OPTIONS,
                     default=DEFAULT_SCHEDULER_NAME,
                     optional=True,
-                    display_name="scheduler / 调度器",
+                    display_name="scheduler",
                 ),
                 io.Boolean.Input(
                     "allow_unverified_patch_stack",

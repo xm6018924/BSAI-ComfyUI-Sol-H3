@@ -40,7 +40,7 @@
           "type": "STRING"
         }
       ],
-      "title": "BSAI Sol-H3 Loader (极速版)",
+      "title": "BSAI Sol-H3 Loader (Turbo)",
       "properties": {
         "Node name for S&R": "BSAI_SolH3_Loader"
       },
@@ -55,7 +55,7 @@
         true,
         true,
         2,
-        "4步 FastH3 极速",
+        "4-step FastH3 Turbo",
         "euler",
         4.0,
         8.0,
@@ -101,7 +101,7 @@
           ]
         }
       ],
-      "title": "CLIP 文本编码器",
+      "title": "CLIP Text Encoder",
       "properties": {
         "Node name for S&R": "CLIPLoader",
         "cnr_id": "comfy-core"
@@ -142,7 +142,7 @@
           ]
         }
       ],
-      "title": "正面提示词",
+      "title": "Positive Prompt",
       "properties": {
         "Node name for S&R": "CLIPTextEncode",
         "cnr_id": "comfy-core"
@@ -181,7 +181,7 @@
           ]
         }
       ],
-      "title": "负面提示词",
+      "title": "Negative Prompt",
       "properties": {
         "Node name for S&R": "CLIPTextEncode",
         "cnr_id": "comfy-core"
@@ -214,7 +214,7 @@
           ]
         }
       ],
-      "title": "空Latent (1344x768 24帧)",
+      "title": "Empty Latent (1344x768, 24 frames)",
       "properties": {
         "Node name for S&R": "EmptyHunyuanLatentVideo",
         "cnr_id": "comfy-core"
@@ -250,7 +250,7 @@
           ]
         }
       ],
-      "title": "视频VAE (fp16)",
+      "title": "Video VAE (fp16)",
       "properties": {
         "Node name for S&R": "VAELoader",
         "cnr_id": "comfy-core"
@@ -283,7 +283,7 @@
           ]
         }
       ],
-      "title": "音频VAE (fp32)",
+      "title": "Audio VAE (fp32)",
       "properties": {
         "Node name for S&R": "VAELoader",
         "cnr_id": "comfy-core"
@@ -337,7 +337,7 @@
           ]
         }
       ],
-      "title": "KSampler (4步 FastH3)",
+      "title": "KSampler (4-step FastH3)",
       "properties": {
         "Node name for S&R": "KSampler",
         "cnr_id": "comfy-core"
@@ -387,7 +387,7 @@
           ]
         }
       ],
-      "title": "VAE Decode (视频)",
+      "title": "VAE Decode (video)",
       "properties": {
         "Node name for S&R": "VAEDecode"
       },
@@ -421,7 +421,7 @@
         }
       ],
       "outputs": [],
-      "title": "视频合成 (H.264 MP4)",
+      "title": "Video Combine (H.264 MP4)",
       "properties": {
         "Node name for S&R": "VHS_VideoCombine",
         "cnr_id": "comfyui-videohelpersuite"
@@ -442,7 +442,7 @@
     {
       "id": 11,
       "type": "VAEDecodeAudio",
-      "title": "VAE Decode Audio (音频)",
+      "title": "VAE Decode Audio",
       "pos": [
         1660,
         50
@@ -574,7 +574,7 @@
   "groups": [
     {
       "id": 1,
-      "title": "BSAI Sol-H3 极速版 v2.3 (FastH3 4步 + Sol-Attn + 音视频 + audio_shift修复)",
+      "title": "BSAI Sol-H3 Turbo v2.3 (FastH3 4-step + Sol-Attn + AV + audio_shift fix)",
       "bounding": [
         30,
         20,

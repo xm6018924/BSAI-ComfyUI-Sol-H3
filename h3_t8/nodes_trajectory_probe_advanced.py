@@ -21,7 +21,7 @@ class MiniMaxH3TrajectoryProbeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TrajectoryProbeT8Advanced",
-            display_name="MiniMax H3 Trajectory Probe / 采样轨迹探针 (Advanced)",
+            display_name="MiniMax H3 Trajectory Probe (Advanced)",
             description=(
                 "Splits only the stateless T8 dual_clock_euler sigma schedule and binds the "
                 "checkpoint contract to the exact same-session MODEL/SAMPLER identity. It does "
@@ -88,7 +88,7 @@ class MiniMaxH3TrajectoryCheckpointSaveT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TrajectoryCheckpointSaveT8Advanced",
-            display_name="MiniMax H3 Trajectory Checkpoint Save / 轨迹保存 (Advanced)",
+            display_name="MiniMax H3 Trajectory Checkpoint Save (Advanced)",
             description=(
                 "Atomically saves the first-stage sampled AV latent only after explicit "
                 "confirmation. The checkpoint stays inside the ComfyUI output directory."
@@ -124,7 +124,7 @@ class MiniMaxH3TrajectoryCheckpointLoadT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3TrajectoryCheckpointLoadT8Advanced",
-            display_name="MiniMax H3 Trajectory Checkpoint Load / 轨迹续跑 (Advanced)",
+            display_name="MiniMax H3 Trajectory Checkpoint Load (Advanced)",
             description=(
                 "Loads an internal-x_sigma checkpoint produced through Trajectory Probe trajectory_model. "
                 "Connect checkpoint_latent, remaining_sigmas, resume_noise, and the same "

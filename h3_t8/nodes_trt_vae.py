@@ -13,25 +13,25 @@ def loader_inputs(full):
     decoder = bundle_options(folder_paths.models_dir,'decoder')
     inputs = [io.Combo.Input('native_video_vae',options=native or ['minimax_h3_video_vae_fp16.safetensors'],
                             default='minimax_h3_video_vae_fp16.safetensors' if 'minimax_h3_video_vae_fp16.safetensors' in native else None,
-                            tooltip='原版H3视频VAE；不选择音频VAE。编码保持原生时仍需这份权重。'),
-              io.Combo.Input('decoder_engine',options=decoder,tooltip='本机编译的解码引擎；单帧或小尺寸需要flex引擎。'),
-              io.String.Input('runtime_directory',default='',tooltip='TensorRT独立site-packages绝对路径；留空使用models/vae/h3_trt/runtime/site-packages。'),
+                            tooltip='Original H3 video VAE; do not select an audio VAE. This weight is still needed even when encoding stays native.'),
+              io.Combo.Input('decoder_engine',options=decoder,tooltip='Locally compiled decode engine; single-frame or small sizes require the flex engine.'),
+              io.String.Input('runtime_directory',default='',tooltip='Absolute path to the standalone TensorRT site-packages; leave empty to use models/vae/h3_trt/runtime/site-packages.'),
               io.Int.Input('cpu_output_budget_mib',default=1024,min=64,max=8192,advanced=True,
-                           tooltip='解码后的CPU像素缓冲上限，不是显存上限。')]
+                           tooltip='Post-decode CPU pixel buffer cap; this is not a VRAM limit.')]
     if full:
         encoders = bundle_options(folder_paths.models_dir,'encoder')
-        inputs += [io.Combo.Input('image_encoder_engine',options=encoders,tooltip='选择T1单帧编码引擎，不把单图补成17帧。'),
-                   io.Combo.Input('video_encoder_engine',options=encoders,tooltip='选择T17视频编码引擎；内部自动分块。')]
+        inputs += [io.Combo.Input('image_encoder_engine',options=encoders,tooltip='Select the T1 single-frame encode engine; does not pad a single image to 17 frames.'),
+                   io.Combo.Input('video_encoder_engine',options=encoders,tooltip='Select the T17 video encode engine; chunks internally.')]
     return inputs
 
 
 class MiniMaxH3TRTVAECheckEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
-        return io.Schema(node_id='MiniMaxH3TRTVAECheckEXPT8',display_name='MiniMax H3 TRT VAE 安装检查 (T8 EXP)',
+        return io.Schema(node_id='MiniMaxH3TRTVAECheckEXPT8',display_name='MiniMax H3 TRT VAE Install Check (T8 EXP)',
             category=CATEGORY,is_experimental=True,is_output_node=True,
-            description='只检查独立运行文件是否齐全，不编译、不加载GPU，也不安装依赖。文件齐全不代表实际推理已验收。',
-            inputs=[io.String.Input('runtime_directory',default='',tooltip='留空使用models/vae/h3_trt/runtime/site-packages。')],
+            description='Only checks that standalone runtime files are present; does not compile, load the GPU, or install dependencies. Present files do not mean inference is validated.',
+            inputs=[io.String.Input('runtime_directory',default='',tooltip='vae/h3_trt/runtime/site-packages。')],
             outputs=[io.Boolean.Output('files_present'),io.String.Output('status'),io.String.Output('report_json')])
 
     @classmethod
@@ -49,9 +49,9 @@ class MiniMaxH3TRTVAECheckEXPT8(io.ComfyNode):
 class MiniMaxH3TRTVAEDecoderEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
-        return io.Schema(node_id='MiniMaxH3TRTVAEDecoderEXPT8',display_name='MiniMax H3 TRT VAE 解码加速 (T8 EXP)',
+        return io.Schema(node_id='MiniMaxH3TRTVAEDecoderEXPT8',display_name='MiniMax H3 TRT VAE Decode Acceleration (T8 EXP)',
             category=CATEGORY,is_experimental=True,
-            description='推荐先用此模式：只替换视频解码，图片/参考视频编码保持原生。连接到原来video_vae的位置，音频VAE不变。',
+            description='Recommended first mode: replaces only video decode; image/reference-video encoding stays native. Connect where the original video_vae was; the audio VAE is unchanged.',
             inputs=loader_inputs(False),outputs=[io.Vae.Output('video_vae'),io.String.Output('report_json')])
 
     @classmethod
@@ -62,9 +62,9 @@ class MiniMaxH3TRTVAEDecoderEXPT8(io.ComfyNode):
 class MiniMaxH3TRTVAEFullEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
-        return io.Schema(node_id='MiniMaxH3TRTVAEFullEXPT8',display_name='MiniMax H3 TRT VAE 编码＋解码 (T8 EXP)',
+        return io.Schema(node_id='MiniMaxH3TRTVAEFullEXPT8',display_name='MiniMax H3 TRT VAE Encode + Decode (T8 EXP)',
             category=CATEGORY,is_experimental=True,
-            description='可选完整模式：参考图/视频编码也用TRT，编码差异可能影响后续采样。单图未体现提速，默认建议只加速解码。',
+            description='Optional full mode: reference image/video encoding also uses TRT; encode differences may affect later sampling. Single images show no speedup; decoding-only acceleration is recommended by default.',
             inputs=loader_inputs(True),outputs=[io.Vae.Output('video_vae'),io.String.Output('report_json')])
 
     @classmethod
@@ -88,14 +88,14 @@ def execute_loader(native_name,decoder_name,site,budget,encoders=None):
 class MiniMaxH3TRTVAECompileEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
-        return io.Schema(node_id='MiniMaxH3TRTVAECompileEXPT8',display_name='MiniMax H3 TRT VAE 本机编译 (T8 EXP)',
+        return io.Schema(node_id='MiniMaxH3TRTVAECompileEXPT8',display_name='MiniMax H3 TRT VAE Local Compile (T8 EXP)',
             category=CATEGORY,is_experimental=True,is_output_node=True,
-            description='只在准备引擎时运行。独立子进程串行编译，不改已有引擎，不下载或安装依赖；取消只结束本次子进程。',
+            description='Run only when preparing an engine. Serial compilation in a standalone subprocess; does not alter existing engines, download, or install dependencies; cancel only ends this subprocess.',
             inputs=[io.Combo.Input('kind',options=['decoder-flex','decoder','encoder-t1','encoder','decoder-w4a16'],
-                                   default='decoder-flex',tooltip='推荐flex解码；W4A16已审短片整体可接受，但量化差异更大，不承诺省显存或更快。'),
-                    io.String.Input('runtime_directory',default='',tooltip='留空使用models/vae/h3_trt/runtime/site-packages。'),
+                                   default='decoder-flex',tooltip='flex decode is recommended; W4A16 passed short-film review overall, but quantization differences are larger; no VRAM savings or speedup is promised.'),
+                    io.String.Input('runtime_directory',default='',tooltip='vae/h3_trt/runtime/site-packages。'),
                     io.Int.Input('timeout_seconds',default=1800,min=1,max=3600,advanced=True,
-                                 tooltip='单次编译时间上限。编译需要至少12000MiB空闲显存和24GiB空闲内存。')],
+                                 tooltip='Per-compile time limit. Compilation requires at least 12000 MiB free VRAM and 24 GiB free RAM.')],
             outputs=[io.String.Output('engine_directory'),io.String.Output('report_json')])
 
     @classmethod
@@ -115,9 +115,9 @@ class MiniMaxH3TRTVAECompileEXPT8(io.ComfyNode):
                  'encoder-t1':'minimax_h3_vae_encoder_t1.onnx','encoder':'minimax_h3_vae_encoder.onnx',
                  'decoder-w4a16':'minimax_h3_vae_decoder_w4a16_awq.onnx'}
         if os.name != 'nt':
-            raise ValueError('当前TRT VAE编译器仅验证Windows；不影响其他原生H3节点。')
+            raise ValueError('The TRT VAE compiler is validated on Windows only; it does not affect other native H3 nodes.')
         if kind not in names or type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 3600:
-            raise ValueError('编译类型或超时时间无效')
+            raise ValueError('Invalid compile type or timeout')
         site = resolve_runtime(runtime_directory,folder_paths.models_dir)
         report = inspect_runtime(site)
         if report['missing']:
@@ -125,7 +125,7 @@ class MiniMaxH3TRTVAECompileEXPT8(io.ComfyNode):
         root = Path(folder_paths.models_dir)/'vae/h3_trt'
         model = root/names[kind]
         if not model.is_file():
-            raise ValueError(f'缺少编译源文件：{model}。请先按TRT VAE说明准备模型；节点不自动下载。')
+            raise ValueError(f'缺少编译源文件：{model}。请先按TRT VAENotes准备模型；节点不自动下载。')
         log = Path(folder_paths.get_output_directory())/'MiniMaxH3/TRT-VAE/builds'/uuid.uuid4().hex
         result = compile_engine(['--runtime-site',str(site),'--onnx',str(model),
             '--run-dir',str(log.resolve()),'--kind',kind,'--timeout',str(timeout_seconds),'--execute'],

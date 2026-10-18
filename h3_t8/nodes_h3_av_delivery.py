@@ -11,7 +11,7 @@ class MiniMaxH3SafeAVSaveT8Advanced(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id="MiniMaxH3SafeAVSaveT8Advanced",
-                         display_name="MiniMax H3 Safe AV Save / 安全音视频保存 (Advanced EXP/T8)",
+                         display_name="MiniMax H3 Safe AV Save (Advanced EXP/T8)",
                          description="Encode raw even-size IMAGE and AUDIO at 24fps through isolated single-thread H264/AAC. Strict decode before publication, no overwrite. Requires FFmpeg on PATH. Returns reusable VIDEO without a second SaveVideo.",
                          category="T8/MiniMax H3/Output/Advanced", is_experimental=True, is_output_node=True,
                          inputs=[io.Image.Input("images"), io.Audio.Input("audio"),

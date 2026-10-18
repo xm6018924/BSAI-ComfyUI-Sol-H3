@@ -78,7 +78,7 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayPlanT8Advanced",
-            display_name="MiniMax H3 Prompt Relay Plan / 分段提示词时间线 (Advanced)",
+            display_name="MiniMax H3 Prompt Relay Plan (Advanced)",
             description=(
                 "Compiles one global prompt plus line-separated local events into an "
                 "auditable H3 timeline. paper_v1 uses the published epsilon/window/sigma "
@@ -95,7 +95,7 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
                         "Cinematic continuous shot, coherent subject identity, natural "
                         "motion, stable lighting and synchronized ambience."
                     ),
-                    tooltip="始终可见的全局场景、人物、风格与声音约束。",
+                    tooltip="Global scene, character, style, and audio constraints that are always visible.",
                 ),
                 io.String.Input(
                     "local_prompts",
@@ -107,8 +107,8 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
                         "The camera pulls back while she becomes small in the distance."
                     ),
                     tooltip=(
-                        "每行一个局部事件；也兼容使用 | 分隔。清空文本和time_ranges时"
-                        "生成只含global_prompt的无补丁直通Plan。"
+                        "One local event per line; | separator is also accepted. When text and time_ranges are empty, "
+                        "generates a passthrough Plan containing only global_prompt with no patch."
                     ),
                 ),
                 io.Int.Input(
@@ -117,22 +117,22 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
                     min=5,
                     max=None,
                     step=17,
-                    tooltip="24fps；会向上对齐到 MiniMax H3 的 17n+5 帧网格。",
+                    tooltip="24fps; rounds up to the MiniMax H3 17n+5 frame grid.",
                 ),
                 io.Combo.Input(
                     "timing_mode",
                     options=["auto_equal", "frames", "seconds", "percent"],
                     default="auto_equal",
-                    tooltip="auto_equal 自动均分；其他模式读取 time_ranges。",
+                    tooltip="auto_equal distributes evenly; other modes read time_ranges.",
                 ),
                 io.String.Input(
                     "time_ranges",
                     multiline=True,
                     default="0-40\n41-81\n82-123",
                     tooltip=(
-                        "每行一个范围，并按开始时间从早到晚排列。frames 只接受整数帧且"
-                        "结束帧包含在范围内；seconds/percent 的结束值作为边界；percent "
-                        "使用 0..100。"
+                        "One range per line, sorted by start time. frames accepts integer frames only and "
+                        "the end frame is inclusive; seconds/percent end values are boundaries; percent "
+                        "uses 0..100."
                     ),
                 ),
                 io.Combo.Input(
@@ -140,8 +140,8 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
                     options=["paper_v1", "legacy_repo_compat"],
                     default="paper_v1",
                     tooltip=(
-                        "paper_v1 是论文公式；legacy_repo_compat 只用于复现社区旧参数，"
-                        "不代表论文实现。"
+                        "paper_v1 is the paper formula; legacy_repo_compat reproduces legacy community parameters only, "
+                        "and is not the paper implementation."
                     ),
                 ),
                 io.Float.Input(
@@ -151,25 +151,25 @@ class MiniMaxH3PromptRelayPlanT8Advanced(io.ComfyNode):
                     max=0.999999,
                     step=0.01,
                     advanced=True,
-                    tooltip="论文默认 0.1；paper_v1 会让事件边界权重回到 epsilon。",
+                    tooltip="Paper default is 0.1; paper_v1 drives event boundary weights back to epsilon.",
                 ),
                 io.Boolean.Input(
                     "allow_gaps",
                     default=False,
                     advanced=True,
-                    tooltip="关闭时，各局部事件必须覆盖完整目标时间线。",
+                    tooltip="When off, each local event must cover the full target timeline.",
                 ),
                 io.Boolean.Input(
                     "allow_overlaps",
                     default=False,
                     advanced=True,
-                    tooltip="关闭时，局部事件时间范围不能重叠。",
+                    tooltip="When off, local event time ranges must not overlap.",
                 ),
                 PromptRelayEventsIO.Input(
                     "prompt_relay_events",
                     optional=True,
                     tooltip=(
-                        "可选：连接链式 Event 节点后以它为权威事件源；未连接时继续读取"
+                        "Optional: connect a chained Event node as the authoritative event source; when unconnected, reads "
                         "local_prompts/time_ranges。"
                     ),
                 ),
@@ -194,7 +194,7 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
         from .nodes_semantic_bridge import BridgeIO
         return io.Schema(
             node_id="MiniMaxH3PromptRelayConditioningT8Advanced",
-            display_name="MiniMax H3 Prompt Relay Conditioning / 分段提示词条件 (Advanced)",
+            display_name="MiniMax H3 Prompt Relay Conditioning (Advanced)",
             description=(
                 "Authoritatively encodes the Plan prompt through the native H3 Qwen chain, "
                 "binds exact local token spans, and optionally patches a cloned H3 MODEL "
@@ -203,13 +203,13 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
             category=CATEGORY,
             is_experimental=True,
             inputs=[
-                io.Model.Input("model", tooltip="原生 MiniMax H3 MODEL；输出为局部克隆。"),
-                io.Clip.Input("clip", tooltip="原生 MiniMax H3 Qwen3-VL CLIP。"),
+                io.Model.Input("model", tooltip="Native MiniMax H3 MODEL; the output is a local clone."),
+                io.Clip.Input("clip", tooltip="Native MiniMax H3 Qwen3-VL CLIP."),
                 io.Vae.Input("video_vae", tooltip="MiniMax H3 video VAE。"),
                 io.Vae.Input("audio_vae", tooltip="MiniMax H3 audio VAE。"),
                 PromptRelayPlanIO.Input(
                     "prompt_relay_plan",
-                    tooltip="必须直接来自同一版本 Prompt Relay Plan 节点。",
+                    tooltip="Must come directly from the same-version Prompt Relay Plan node.",
                 ),
                 io.Int.Input("width", default=1056, min=32, max=MAX_RESOLUTION, step=32),
                 io.Int.Input("height", default=608, min=32, max=MAX_RESOLUTION, step=32),
@@ -218,8 +218,8 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
                     options=["T2VA", "auto", "I2VA", "FL2VA", "L2VA", "Ref2VA", "Hybrid"],
                     default="T2VA",
                     tooltip=(
-                        "支持 T2VA/I2VA/FL2VA/L2VA/Ref2VA/Hybrid 的目标视频时间路由；"
-                        "显式接入 Query Route 后可实验性扩展到目标音频。"
+                        "Supports target video time routing for T2VA/I2VA/FL2VA/L2VA/Ref2VA/Hybrid; "
+                        "experimental extension to target audio is possible by explicitly connecting a Query Route."
                     ),
                 ),
                 io.Combo.Input(
@@ -227,8 +227,8 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
                     options=["native", "lock_source", "remix_source", "reference_only"],
                     default="native",
                     tooltip=(
-                        "支持原生生成、锁定源音频、重混源音频和仅参考音频。默认Plan只路由目标"
-                        "视频；joint_av_exp会直接路由目标音频，不能与lock_source组合。"
+                        "Supports native generation, locked source audio, remixed source audio, and reference-only audio. The default Plan routes target "
+                        "video only; joint_av_exp routes target audio directly and cannot be combined with lock_source."
                     ),
                 ),
                 io.Float.Input(
@@ -266,9 +266,9 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
                     options=["report_only", "apply_exp"],
                     default="report_only",
                     tooltip=(
-                        "先用 report_only 检查 token/layout/显存报告；确认后显式选择 "
-                        "apply_exp 才安装注意力路由。零个或一个局部事件时会自动原样直通，"
-                        "不安装补丁；单事件通常应合并进 global_prompt。"
+                        "Use report_only first to inspect the token/layout/VRAM report; after confirming, explicitly choose "
+                        "apply_exp to install attention routing. With zero or one local event, it passes through unchanged, "
+                        "and installs no patch; a single event should usually be merged into global_prompt."
                     ),
                 ),
                 io.Int.Input(
@@ -279,7 +279,7 @@ class MiniMaxH3PromptRelayConditioningT8Advanced(io.ComfyNode):
                     step=32,
                     advanced=True,
                     tooltip=(
-                        "目标视频/显式联合音频 query 分块。更小更省显存但更慢；不会创建完整 S×S mask。"
+                        "Target video / explicit joint-audio query chunk size. Smaller saves VRAM but is slower; no full S×S mask is created."
                     ),
                 ),
                 io.Audio.Input("drive_audio", optional=True),
@@ -350,7 +350,7 @@ class MiniMaxH3PromptRelayQueryRouteT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3PromptRelayQueryRouteT8Advanced",
             display_name=(
-                "MiniMax H3 Prompt Relay Query Route / 联合音画路由 (Advanced)"
+                "MiniMax H3 Prompt Relay Query Route (Advanced)"
             ),
             description=(
                 "Optionally extends a Prompt Relay Plan from the paper-faithful target-video "
@@ -362,15 +362,15 @@ class MiniMaxH3PromptRelayQueryRouteT8Advanced(io.ComfyNode):
             inputs=[
                 PromptRelayPlanIO.Input(
                     "prompt_relay_plan",
-                    tooltip="来自 Prompt Relay Plan 的原始、已校验时间线。",
+                    tooltip="The original validated timeline from the Prompt Relay Plan.",
                 ),
                 io.Combo.Input(
                     "query_route",
                     options=["video_only_paper", "joint_av_exp"],
                     default="video_only_paper",
                     tooltip=(
-                        "video_only_paper只路由目标视频并保持论文范围；joint_av_exp还会按"
-                        "H3原生音频时间轴路由目标音频，属于未被论文验证的实验扩展。"
+                        "video_only_paper routes target video only and stays within the paper scope; joint_av_exp also routes "
+                        "target audio along the native H3 audio timeline; this is an experimental extension not validated by the paper."
                     ),
                 ),
             ],

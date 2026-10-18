@@ -571,7 +571,7 @@ class MiniMaxH3DualClockSamplerT8(io.ComfyNode):
                     options=SAMPLER_OPTIONS,
                     default=DEFAULT_SAMPLER_NAME,
                     optional=True,
-                    display_name="sampler / 采样器",
+                    display_name="sampler",
                     tooltip=(
                         "dual_clock_euler preserves the original T8 explicit dual-clock path. "
                         "Other choices use ComfyUI's native MiniMax H3 FLOW_AV protocol."
@@ -582,7 +582,7 @@ class MiniMaxH3DualClockSamplerT8(io.ComfyNode):
                     options=SCHEDULER_OPTIONS,
                     default=DEFAULT_SCHEDULER_NAME,
                     optional=True,
-                    display_name="scheduler / 调度器",
+                    display_name="scheduler",
                     tooltip=(
                         "native_flow preserves the original shifted uniform H3 flow schedule. "
                         "beta57 uses ComfyUI's beta scheduler with alpha=0.5 and beta=0.7. "

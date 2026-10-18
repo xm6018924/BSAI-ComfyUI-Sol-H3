@@ -39,7 +39,7 @@ class MiniMaxH3AudioRefineAuditT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineAuditT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Audit / "
-                "音频精修前置审计 (T8 Advanced EXP)"
+                "Audio Refine Pre-Audit (T8 Advanced EXP)"
             ),
             description=(
                 "Read-only audit for an exact uncached MiniMax H3 joint-AV audio "
@@ -105,7 +105,7 @@ class MiniMaxH3AudioRefinePlanT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefinePlanT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Plan / "
-                "音频精修尾段计划 (T8 Advanced EXP)"
+                "Audio Refine Tail Schedule (T8 Advanced EXP)"
             ),
             description=(
                 "Builds a deterministic KSampler-equivalent partial-tail plan with "
@@ -172,7 +172,7 @@ class MiniMaxH3AudioRefineDualClockSetupT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineDualClockSetupT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Dual-Clock Setup / "
-                "音频精修双时钟装配 (T8 Advanced EXP)"
+                "Audio Refine Dual-Clock Assembly (T8 Advanced EXP)"
             ),
             description=(
                 "Revalidates the signed Plan and assembles deterministic NOISE, a "
@@ -228,7 +228,7 @@ class MiniMaxH3AudioRefineModelRouteT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineModelRouteT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Model Route / "
-                "音频精修双模型路由 (T8 Advanced EXP)"
+                "Audio Refine Dual-Model Routing (T8 Advanced EXP)"
             ),
             description=(
                 "Binds the audited first-pass MODEL to an explicit same-Turbo or "
@@ -280,7 +280,7 @@ class MiniMaxH3AudioRefinePhase2PlanT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefinePhase2PlanT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Phase 2 Plan / "
-                "音频精修二阶段计划 (T8 Advanced EXP)"
+                "Audio Refine Two-Stage Schedule (T8 Advanced EXP)"
             ),
             description=(
                 "Builds the signed four-NFE Phase 2 tail for a proven model route. "
@@ -332,7 +332,7 @@ class MiniMaxH3AudioRefineDualModelSetupT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineDualModelSetupT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Dual-Model Setup / "
-                "音频精修双模型装配 (T8 Advanced EXP)"
+                "Audio Refine Dual-Model Assembly (T8 Advanced EXP)"
             ),
             description=(
                 "Revalidates the signed Audit/Route/Plan, refine MODEL, conditioning, "
@@ -390,7 +390,7 @@ class MiniMaxH3AudioRefineCompatibilityRouteT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineCompatibilityRouteT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine 4/8-Step Compatibility Route / "
-                "音频精修4/8步兼容路由 (T8 Advanced EXP)"
+                "Audio Refine 4/8-Step Compat Routing (T8 Advanced EXP)"
             ),
             description=(
                 "Append-only route for final-latent Audio Refine after Turbo4/8, "
@@ -453,7 +453,7 @@ class MiniMaxH3AudioRefineCompatibilityPlanT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineCompatibilityPlanT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Compatibility Plan / "
-                "音频精修兼容计划 (T8 Advanced EXP)"
+                "Audio Refine Compat Schedule (T8 Advanced EXP)"
             ),
             description=(
                 "Builds the fixed four-NFE final audio tail for a signed compatibility "
@@ -506,7 +506,7 @@ class MiniMaxH3AudioRefineCompatibilitySetupT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineCompatibilitySetupT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Compatibility Setup / "
-                "音频精修兼容装配 (T8 Advanced EXP)"
+                "Audio Refine Compat Assembly (T8 Advanced EXP)"
             ),
             description=(
                 "Revalidates the compatibility route, Relay/Long Video ownership when "
@@ -564,7 +564,7 @@ class MiniMaxH3AudioRefineLongVideoDeliveryT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineLongVideoDeliveryT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Long Video Delivery Split / "
-                "长视频精修交付分流 (T8 Advanced EXP)"
+                "Long-Video Refine Delivery Split (T8 Advanced EXP)"
             ),
             description=(
                 "Keeps the exact original segment AV latent for continuation and emits a "
@@ -604,7 +604,7 @@ class MiniMaxH3AudioRefineQualityGateT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3AudioRefineQualityGateT8Advanced",
             display_name=(
                 "MiniMax H3 Audio Refine Quality Gate / "
-                "音频精修人工质量门 (T8 Advanced EXP)"
+                "Audio Refine Human Quality Gate (T8 Advanced EXP)"
             ),
             description=(
                 "Defaults to the original result. It audits decoded candidate audio, "

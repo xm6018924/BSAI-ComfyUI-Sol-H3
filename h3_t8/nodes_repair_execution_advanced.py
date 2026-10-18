@@ -22,7 +22,7 @@ class MiniMaxH3SelectiveRepairBindT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SelectiveRepairBindT8Advanced",
-            display_name="MiniMax H3 Selective Repair Bind / 修复绑定 (Advanced)",
+            display_name="MiniMax H3 Selective Repair Bind (Advanced)",
             description=(
                 "Binds one repair-plan item to an immutable accepted-manifest revision and "
                 "exposes the exact existing generation inputs. It does not load models, queue "
@@ -82,7 +82,7 @@ class MiniMaxH3SelectiveRepairStageT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SelectiveRepairStageT8Advanced",
-            display_name="MiniMax H3 Selective Repair Stage / 修复暂存 (Advanced)",
+            display_name="MiniMax H3 Selective Repair Stage (Advanced)",
             description=(
                 "Verifies a generated candidate against the bound frame/sample/timeline and "
                 "base-manifest contract. It remains preview-only and writes no repair overlay."
@@ -114,7 +114,7 @@ class MiniMaxH3SelectiveRepairAcceptT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SelectiveRepairAcceptT8Advanced",
-            display_name="MiniMax H3 Selective Repair Accept / 修复接受 (Advanced)",
+            display_name="MiniMax H3 Selective Repair Accept (Advanced)",
             description=(
                 "Explicitly accepts a reviewed candidate into an atomic repair overlay. "
                 "The original accepted manifest and every original segment stay unchanged."
@@ -157,7 +157,7 @@ class MiniMaxH3SelectiveRepairComposeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SelectiveRepairComposeT8Advanced",
-            display_name="MiniMax H3 Selective Repair Compose / 修复合成 (Advanced)",
+            display_name="MiniMax H3 Selective Repair Compose (Advanced)",
             description=(
                 "Streams the immutable base segments plus accepted repair overlays into one "
                 "bounded-memory MP4. base_rollback ignores the overlay without deleting anything."

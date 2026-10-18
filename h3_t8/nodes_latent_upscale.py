@@ -20,7 +20,7 @@ class MiniMaxH3LatentUpscaleBy32T8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LatentUpscaleBy32T8",
-            display_name="Latent Upscale by 32 / 32整除潜空间放大 (T8)",
+            display_name="Latent Upscale by 32 (T8)",
             description=(
                 "Upscales a plain latent or the video part of a MiniMax H3 joint AV latent. "
                 "The returned pixel width and height are always divisible by 32; best_aspect "

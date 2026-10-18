@@ -14,11 +14,11 @@ class MiniMaxH3ProgressiveSetupEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id='MiniMaxH3ProgressiveSetupEXPT8',
-            display_name='MiniMax H3 Progressive Dual Setup / 渐进双模型配置 (EXP/T8)',
+            display_name='MiniMax H3 Progressive Dual Setup (EXP/T8)',
             category='T8/MiniMax H3/Performance/Experimental', is_experimental=True,
-            description=('给LOW/HIGH配置同一完整原生Euler时间表，不执行采样。'
-                         '两路各接兼容LoRA和单一后端；TST应接在此节点输出之后。'
-                         '不接model_hires则复用LOW源配置，不改动输入MODEL。'),
+            description=('Configures the same full native Euler schedule for LOW/HIGH; does not run sampling.'
+                         'Each branch connects a compatible LoRA and a single backend; TST should connect after the output of this node.'
+                         'If model_hires is not connected, the LOW source config is reused and the input MODEL is unchanged.'),
             inputs=[io.Model.Input('model'), io.Int.Input('steps', default=8, min=2, max=1000),
                 io.Float.Input('shift_video', default=12., min=.01, max=100., step=.1),
                 io.Float.Input('shift_audio', default=3., min=.01, max=100., step=.1),
@@ -54,13 +54,13 @@ class MiniMaxH3ProgressiveLongVideoEXPT8(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(node_id='MiniMaxH3ProgressiveLongVideoEXPT8',
-            display_name='MiniMax H3 Progressive Long Video / 渐进双采长视频 (EXP/T8)',
+            display_name='MiniMax H3 Progressive Long Video (EXP/T8)',
             category='T8/MiniMax H3/Long Video/Experimental', is_experimental=True,
             is_output_node=True,
-            description=('独立渐进长视频实验：每段完整Euler表拆成LOW+HIGH，复用现有3D放大器。'
-                '使用内容绑定的接受画面续接、原生AV遮罩与磁盘恢复；不替换旧双MODEL节点。'
-                '完整权重成片验收尚未完成。只支持T2VA或单首帧I2VA；不宣称通用多参考支持。'
-                '关闭resume_existing会拒绝已有链，不删除旧文件；改配置使用新chain_id。'),
+            description=('Standalone progressive long-video experiment: each segment full Euler schedule is split into LOW+HIGH, reusing the existing 3D upscaler.'
+                'Uses content-bound accepted-frame continuation, native AV masking, and disk resume; does not replace existing dual-MODEL nodes.'
+                'Full-weight final-film validation is not complete. Only T2VA or single-first-frame I2VA is supported; general multi-reference support is not claimed.'
+                'Disabling resume_existing rejects existing chains without deleting old files; use a new chain_id when changing config.'),
             inputs=[io.Model.Input('model'), io.Clip.Input('clip'), io.Vae.Input('video_vae'),
                 io.Vae.Input('audio_vae'), io.Sampler.Input('sampler'), io.Sigmas.Input('sigmas'),
                 io.String.Input('chain_id', default='h3_progressive_long_video'),
@@ -69,7 +69,7 @@ class MiniMaxH3ProgressiveLongVideoEXPT8(io.ComfyNode):
                 io.Int.Input('height', default=448, min=64, max=8192, step=32),
                 io.Int.Input('render_window_frames', default=124, min=MIN_TRAINED_FRAMES,
                     max=None, step=17,
-                    tooltip='内部窗口至少124帧、17n+5网格，无固定帧数上限；短片按总时长裁出。窗口越大，显存和耗时通常越高。'),
+                    tooltip='Internal window is at least 124 frames on the 17n+5 grid; no fixed frame cap; short films are cropped from total duration. Larger windows usually use more VRAM and time.'),
                 io.Combo.Input('context_frames', options=[22, 39], default=22),
                 io.String.Input('global_prompt', default='', multiline=True),
                 io.String.Input('segment_prompts_json', default='', multiline=True, advanced=True),
@@ -77,7 +77,7 @@ class MiniMaxH3ProgressiveLongVideoEXPT8(io.ComfyNode):
                 io.Int.Input('base_seed', default=2609032101, min=0, max=2**64 - 1, control_after_generate=True),
                 io.Combo.Input('seed_policy', options=['increment', 'fixed'], default='increment'),
                 io.Int.Input('low_evaluations', default=4, min=1, max=999,
-                    tooltip='完整8步表中填4为4+4，填6为6+2；至少留1步HIGH。'),
+                    tooltip='On the full 8-step schedule, enter 4 for 4+4, 6 for 6+2; leave at least 1 step for HIGH.'),
                 io.Float.Input('low_scale', default=.5, min=.25, max=.99, step=.01),
                 io.Combo.Input('precision', options=['fp16', 'bf16', 'fp32'], default='fp16'),
                 io.Combo.Input('guide_resize', options=['legacy_bilinear', 'preserve_mean'], default='legacy_bilinear'),
@@ -85,7 +85,7 @@ class MiniMaxH3ProgressiveLongVideoEXPT8(io.ComfyNode):
                 io.Combo.Input('audio_mode', options=['native', 'lock_source', 'remix_source'], default='native'),
                 io.Float.Input('audio_denoise_strength', default=.35, min=0., max=1., step=.01),
                 io.Boolean.Input('resume_existing', default=True,
-                    tooltip='相同输入重新执行会核验后复用阶段/成片。关闭则拒绝已有数据链；不清理旧结果。'),
+                    tooltip='Re-running with the same input verifies and reuses stages/finals. Disabling rejects existing data chains; old results are not cleaned up.'),
                 io.String.Input('filename_prefix', default='H3_Progressive_UNREVIEWED'),
                 io.Combo.Input('audio_seam_policy', options=['none', 'cosine_bridge'], default='cosine_bridge'),
                 io.Float.Input('audio_bridge_ms', default=5., min=0., max=50., step=1.),

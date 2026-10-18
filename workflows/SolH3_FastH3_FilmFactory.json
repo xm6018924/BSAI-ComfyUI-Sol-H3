@@ -5638,7 +5638,7 @@
           "links": null
         }
       ],
-      "title": "BSAI Sol-H3 Loader (一采极速版)",
+      "title": "BSAI Sol-H3 Loader (First-Pass Turbo)",
       "properties": {
         "aux_id": "xm6018924/BSAI-ComfyUI-Sol-H3",
         "ver": "b88c96d51b8de871bf06b41b25ca8d26fab072af",
@@ -5655,7 +5655,7 @@
         true,
         true,
         2,
-        "4步 FastH3 极速",
+        "4-step FastH3 Turbo",
         "euler",
         4,
         8,
@@ -5686,7 +5686,7 @@
         "fused_modulation": true,
         "chunk_ff": true,
         "chunk_size": 2,
-        "fast_h3_steps": "4步 FastH3 极速",
+        "fast_h3_steps": "4-step FastH3 Turbo",
         "sampler": "euler",
         "cfg": 4,
         "shift": 8,
@@ -5863,7 +5863,7 @@
           ]
         }
       ],
-      "title": "CLIP 文本编码器 (qwen3vl 32B)",
+      "title": "CLIP Text Encoder (qwen3vl 32B)",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.34.0",

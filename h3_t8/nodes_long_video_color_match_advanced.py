@@ -15,7 +15,7 @@ class MiniMaxH3LongVideoColorMatchT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LongVideoColorMatchT8Advanced",
-            display_name="MiniMax H3 Long Video Color Match / 长视频接缝颜色统一 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Long Video Color Match (Advanced EXP/T8)",
             description=(
                 "Default-on optional seam color matching after Output Trim. Segment 0 stores its "
                 "actual tail statistics; later segments use bounded global Lab distribution "

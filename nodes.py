@@ -68,7 +68,7 @@ except Exception:
     folder_paths = None
 
 # ==== BSAI 插件协同 SDK：加载即自动注册（失败不拖垮插件） ====
-# 说明：本顶层文件为模型加载器/Info/Latent对齐节点；GPU 去噪循环在下游 ComfyUI
+# Notes：本顶层文件为模型加载器/Info/Latent对齐节点；GPU 去噪循环在下游 ComfyUI
 # SamplerCustomAdvanced 与各子模块，本文件无独立耗时推理循环，按最小安全原则仅 register。
 try:
     import sys as _bsai_sys, os as _bsai_os
@@ -119,7 +119,7 @@ def _get_diffusion_models():
 
 def _get_upscaler_models():
     """获取可用的3D upscaler模型列表; 不可用时返回仅bilinear选项。"""
-    opts = ["(bilinear插值, 无需模型)"]
+    opts = ["(bilinear, no model)"]
     if _UPSCALER_MOD is not None:
         try:
             names = _UPSCALER_MOD.scan_models()
@@ -314,8 +314,8 @@ class BSAI_SolH3_Loader:
                 "fused_modulation": ("BOOLEAN", {"default": True}),
                 "chunk_ff": ("BOOLEAN", {"default": True}),
                 "chunk_size": ("INT", {"default": 2, "min": 1, "max": 8}),
-                "fast_h3_steps": (["4步 FastH3 极速", "8步 FastH3 增强", "50步 原生高质量"],
-                                  {"default": "4步 FastH3 极速"}),
+                "fast_h3_steps": (["4-step FastH3 Turbo", "8-step FastH3 Enhanced", "50-step Native High Quality"],
+                                  {"default": "4-step FastH3 Turbo"}),
                 "sampler": (["euler", "dpmpp_2m", "euler_ancestral"],
                             {"default": "euler"}),
                 "cfg": ("FLOAT", {"default": 4.0, "min": 1.0, "max": 10.0, "step": 0.5}),
@@ -371,7 +371,7 @@ class BSAI_SolH3_Loader:
     RETURN_NAMES = ("model", "steps", "cfg", "sol_info")
     FUNCTION = "load"
     CATEGORY = "BSAI/Sol-H3"
-    DESCRIPTION = "BSAI Sol-H3: 一键加载H3+FastH3 LoRA+Sol-Attn(含双采双LoRA可配)"
+    DESCRIPTION = "BSAI Sol-H3: one-click H3 + FastH3 LoRA + Sol-Attn loader (configurable two-pass dual LoRA)"
 
     def load(self, model_name, precision, sol_attn, tau_start, tau_end,
              sink_conditioning, int8_qk, fused_modulation, chunk_ff, chunk_size,
@@ -387,10 +387,10 @@ class BSAI_SolH3_Loader:
         model_path = folder_paths.get_full_path("diffusion_models", model_name) if folder_paths else model_name
         model = load_diffusion_model(model_path)
 
-        # 步数解析
-        if "4步" in fast_h3_steps:
+        # steps resolution
+        if "4-step" in fast_h3_steps:
             steps = 4
-        elif "8步" in fast_h3_steps:
+        elif "8-step" in fast_h3_steps:
             steps = 8
         else:
             steps = 50
@@ -656,18 +656,18 @@ class BSAI_SolH3_LatentUpscaleAlign:
             "required": {
                 "samples": ("LATENT",),
                 "scale": ("FLOAT", {"default": 2.0, "min": 1.0, "max": 4.0, "step": 0.1,
-                                    "tooltip": "latent 放大倍率, 双采推荐 1.5-2.0(目标分辨率=一采x倍率)"}),
+                                    "tooltip": "latent upscale ratio; 1.5-2.0 recommended for two-pass (target resolution = first pass x ratio)"}),
                 "align_to": ("INT", {"default": 32, "min": 8, "max": 256, "step": 8,
-                                     "tooltip": "像素分辨率对齐步长(H3 官方为 32px), 避免边缘色条"}),
+                                     "tooltip": "pixel resolution alignment step (H3 official: 32px); avoids edge color bands"}),
                 "method": (["nearest-exact", "area", "bilinear", "bicubic", "bislerp"],
                            {"default": "bilinear"}),
                 "upscaler_model": (_get_upscaler_models(),
-                                   {"default": "(bilinear插值, 无需模型)",
-                                    "tooltip": "选择3D upscaler模型做神经网络语义放大(比bilinear插值细节更丰富); 选bilinear则用插值"}),
+                                   {"default": "(bilinear, no model)",
+                                    "tooltip": "choose a 3D upscaler model for neural semantic upscale (richer detail than bilinear); pick bilinear for plain interpolation"}),
                 "add_noise": ("BOOLEAN", {"default": True,
-                                          "tooltip": "True=CONST 重加噪到 sigmas[0] 供二采; False=仅放大对齐"}),
+                                          "tooltip": "True = CONST re-noise to sigmas[0] for second pass; False = upscale-align only"}),
                 "audio_denoise": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.05,
-                                            "tooltip": "0=二采锁定一采音频(默认); >=0.5=音频一起重噪重绘"}),
+                                            "tooltip": "0 = lock first-pass audio for second pass (default); >=0.5 = re-noise and redraw audio together"}),
             },
             "optional": {
                 "model": ("MODEL",),
@@ -680,7 +680,7 @@ class BSAI_SolH3_LatentUpscaleAlign:
     RETURN_NAMES = ("latent",)
     FUNCTION = "upscale_align"
     CATEGORY = "BSAI/Sol-H3"
-    DESCRIPTION = "双采 Self-Lift: latent 放大(不经过VAE) + 像素32倍数对齐 + CONST 重加噪, 输出接 SamplerCustomAdvanced+DisableNoise 二采"
+    DESCRIPTION = "Two-pass Self-Lift: latent upscale (no VAE) + pixel 32-align + CONST re-noise; output feeds SamplerCustomAdvanced + DisableNoise for second pass"
 
     def upscale_align(self, samples, scale, align_to, method, upscaler_model,
                       add_noise, audio_denoise,
@@ -691,7 +691,7 @@ class BSAI_SolH3_LatentUpscaleAlign:
         # 1) 解包 NestedTensor (H3: [0]=video [B,24,T,H,W], [1]=audio [B,32,2,Ta], ...)
         members, was_nested = _extract_members(latent_image)
         if not members:
-            raise ValueError("latent 为空")
+            raise ValueError("latent is empty")
         video = members[0]
         if video.ndim not in (4, 5):
             raise ValueError(f"视频latent维度异常: {tuple(video.shape)}")
@@ -781,9 +781,9 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "BSAI_SolH3_Loader": "BSAI Sol-H3 Loader (极速版)",
+    "BSAI_SolH3_Loader": "BSAI Sol-H3 Loader (Turbo)",
     "BSAI_SolH3_Info": "BSAI Sol-H3 Info",
-    "BSAI_SolH3_LatentUpscaleAlign": "BSAI Sol-H3 Latent 放大对齐 (双采)",
+    "BSAI_SolH3_LatentUpscaleAlign": "BSAI Sol-H3 Latent Upscale Align (Two-Pass)",
 }
 
 
@@ -839,7 +839,7 @@ def _patch_audio_vae_offload():
             return False
         return isinstance(fsm, MiniMaxH3AudioVAE) or type(fsm).__name__ == "MiniMaxH3AudioVAE"
 
-    def _rebuild_h3_vae_patcher(vae, label="音频"):
+    def _rebuild_h3_vae_patcher(vae, label="audio"):
         """若 H3 VAE 的 patcher 仍为 ModelPatcherDynamic，重建为传统 ModelPatcher 全量加载。
 
         修复关键: 0.39 + --enable-dynamic-vram 时, sd.py VAE.__init__ 内按
@@ -886,9 +886,9 @@ def _patch_audio_vae_offload():
         try:
             if not getattr(vae, "disable_offload", False):
                 vae.disable_offload = True
-            if _rebuild_h3_vae_patcher(vae, "音频"):
-                print("[BSAI-Sol-H3] 音频解码兜底生效: H3 AudioVAE disable_offload=True"
-                      "(动态 patcher 已重建为传统全量加载)", flush=True)
+            if _rebuild_h3_vae_patcher(vae, "audio"):
+                print("[BSAI-Sol-H3] Audio decode fallback active: H3 AudioVAE disable_offload=True"
+                      "(dynamic patcher rebuilt to traditional full-load)", flush=True)
         except Exception:
             pass
 
@@ -899,16 +899,16 @@ def _patch_audio_vae_offload():
             if _is_h3_audio(self):
                 if not getattr(self, "disable_offload", False):
                     self.disable_offload = True
-                    print("[BSAI-Sol-H3] 音频解码修复生效: H3 AudioVAE 已切换全量加载"
-                          "(disable_offload=True), 消除 DynamicVRAM 抖动", flush=True)
-                _rebuild_h3_vae_patcher(self, "音频")
+                    print("[BSAI-Sol-H3] Audio decode fix active: H3 AudioVAE switched to full load"
+                          "(disable_offload=True), eliminates DynamicVRAM jitter", flush=True)
+                _rebuild_h3_vae_patcher(self, "audio")
             elif isinstance(fsm, MiniMaxH3VideoVAE):
                 if not getattr(self, "disable_offload", False):
                     self.disable_offload = True
-                    print("[BSAI-Sol-H3] 视频解码修复生效: H3 VideoVAE 已切换全量加载"
-                          "(disable_offload=True), 消除 DynamicVRAM 抖动, 收尾解码提速",
+                    print("[BSAI-Sol-H3] Video decode fix active: H3 VideoVAE switched to full load"
+                          "(disable_offload=True), eliminates DynamicVRAM jitter, speeds up tail decode",
                           flush=True)
-                _rebuild_h3_vae_patcher(self, "视频")
+                _rebuild_h3_vae_patcher(self, "video")
         except Exception:
             pass
 
@@ -941,8 +941,8 @@ def _patch_audio_vae_offload():
         _sd.VAE.decode = _wrapped_decode
     if _orig_encode is not None:
         _sd.VAE.encode = _wrapped_encode
-    print("[BSAI-Sol-H3] 音频/视频解码修复已就绪(PR #15371 语义, 含解码/编码兜底): "
-          "H3 AudioVAE/VideoVAE 将全量加载, 不再走 DynamicVRAM 权重量流", flush=True)
+    print("[BSAI-Sol-H3] Audio/Video decode fix ready (PR #15371 semantics, incl. decode/encode fallback): "
+          "H3 AudioVAE/VideoVAE will fully load; no longer streams weights via DynamicVRAM", flush=True)
 
 
 _patch_audio_vae_offload()
@@ -987,8 +987,8 @@ def _patch_h3_clip_offload():
 
     _mm.MiniMaxH3ClipModel.__init__ = _wrapped_cm
 
-    print("[BSAI-Sol-H3] 编码器修复: MiniMaxH3TEModel/MiniMaxH3ClipModel "
-          "disable_offload=True (全量加载, H3 编码 5 分钟 -> 30~60 秒)", flush=True)
+    print("[BSAI-Sol-H3] Text encoder fix: MiniMaxH3TEModel/MiniMaxH3ClipModel "
+          "disable_offload=True (full load; H3 encoding 5 min -> 30~60 s)", flush=True)
 
 
 _patch_h3_clip_offload()

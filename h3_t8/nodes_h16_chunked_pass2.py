@@ -215,7 +215,7 @@ class DeciiaChunkedPass2Sampler(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="DeciiaChunkedPass2Sampler",
-            display_name="H16-3 分块 PASS2 · 音频精修（可选）",
+            display_name="H16-3 Chunked PASS2 · Audio Refine (optional)",
             category="T8/MiniMax H3/Audio/Experimental",
             description=(
                 "Official T8 v4 full-frame temporal PASS 2 wrapper. "

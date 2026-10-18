@@ -13,7 +13,7 @@ class MiniMaxH3LanPaintAVPrepareT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LanPaintAVPrepareT8Advanced",
-            display_name="MiniMax H3 LanPaint AV Prepare / 音画局部重绘准备 (Advanced)",
+            display_name="MiniMax H3 LanPaint AV Prepare (Advanced)",
             description=(
                 "Encodes source frames and audio once and attaches exact nested video/audio "
                 "noise masks for the upstream LanPaint KSampler Advanced. The external "
@@ -30,18 +30,18 @@ class MiniMaxH3LanPaintAVPrepareT8Advanced(io.ComfyNode):
                     "audio_intervals",
                     multiline=True,
                     default="[]",
-                    tooltip='JSON，例如 [{"start":1.2,"end":2.0}]；仅这些时段重绘音频。',
+                    tooltip='JSON, e.g. [{"start":1.2,"end":2.0}]; audio is redrawn only during these ranges.',
                 ),
                 io.Combo.Input(
                     "frame_policy",
                     options=["strict", "trim_down"],
                     default="strict",
-                    tooltip="strict要求17n+5；trim_down只裁掉尾部不足一个网格的帧。",
+                    tooltip="strict requires 17n+5; trim_down drops only trailing frames shorter than one grid.",
                 ),
                 io.Boolean.Input(
                     "require_lanpaint_sampler",
                     default=True,
-                    tooltip="未安装上游LanPaint时提前报错，避免误用普通采样器。",
+                    tooltip="Raises an error early when upstream LanPaint is not installed, preventing misuse of a normal sampler.",
                 ),
                 io.Mask.Input("video_mask", optional=True),
             ],
@@ -63,7 +63,7 @@ class MiniMaxH3LanPaintAVCompositeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3LanPaintAVCompositeT8Advanced",
-            display_name="MiniMax H3 LanPaint AV Composite / 原片音画回贴 (Advanced)",
+            display_name="MiniMax H3 LanPaint AV Composite (Advanced)",
             description=(
                 "Blends repaired pixels only inside the video mask and repaired audio only "
                 "inside declared intervals, preserving the original soundtrack elsewhere."

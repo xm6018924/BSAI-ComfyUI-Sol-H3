@@ -63,57 +63,57 @@ ROUTE_WORKFLOWS: Mapping[str, tuple[str, ...]] = {
 ROUTE_CONTRACTS: Mapping[str, Mapping[str, object]] = {
     "long_video": {
         "mode": "native_only",
-        "steps": ["打开连续长片工作流", "替换源视频／分段输入", "保留规划、接缝、取消与恢复节点"],
-        "requires": ["连续源视频", "分段或上下文配置", "可用 H3 模型"],
-        "boundary": "导演台不会把单镜头拼成连续长片；原生工作流负责上下文和二采状态。",
+        "steps": ["Open the continuous long-film workflow", "Replace source video / segment inputs", "Keep planning, seam, cancel, and resume nodes"],
+        "requires": ["Continuous source video", "Segment or context configuration", "Available H3 model"],
+        "boundary": "The director does not stitch single shots into a continuous long film; the native workflow owns context and second-pass state.",
     },
     "semantic_bridge": {
         "mode": "native_only",
-        "steps": ["选择 models/semantic_bridge 下的转换权重", "接入 Bridge 条件链", "沿原采样和音频链运行"],
-        "requires": ["MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors 或同等兼容权重"],
-        "boundary": "Bridge 只改条件链，不替换采样器、音频或接缝策略。",
+        "steps": ["Choose the transform weights under models/semantic_bridge", "Connect the Bridge conditioning chain", "Run along the existing sampling and audio chain"],
+        "requires": ["MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors or equivalent compatible weights"],
+        "boundary": "Bridge changes only the conditioning chain; it does not replace the sampler, audio, or seam policy.",
     },
     "prompt_relay": {
         "mode": "native_only",
-        "steps": ["填写 Relay Plan 时间段", "把 Plan 接到 Conditioning", "沿原生 H3 采样链运行"],
-        "requires": ["Prompt Relay Plan／Conditioning 节点", "与输入类型匹配的 H3 模型"],
-        "boundary": "空白片段和角色映射必须在原生 Plan 中确认，导演台不替用户猜测。",
+        "steps": ["Fill in the Relay Plan time ranges", "Connect the Plan to Conditioning", "Run along the native H3 sampling chain"],
+        "requires": ["Prompt Relay Plan / Conditioning node", "H3 model matching the input type"],
+        "boundary": "Blank segments and role mapping must be confirmed in the native Plan; the director does not guess for the user.",
     },
     "fast_h3_v2": {
         "mode": "native_only",
-        "steps": ["使用 FastH3 V2 专用模型", "按 V2 Setup 配置步数", "运行 Runtime Audit 后采样"],
-        "requires": ["fastvideo_fasth3_8step_v2_pruned_int8_convrot.safetensors", "FastH3 V2 入口节点"],
-        "boundary": "FastH3 启用时不要叠加普通 H3 Turbo LoRA；当前导演台已对真实编译路线执行此门禁。",
+        "steps": ["Use the FastH3 V2 dedicated model", "Configure steps per V2 Setup", "Sample after running Runtime Audit"],
+        "requires": ["fastvideo_fasth3_8step_v2_pruned_int8_convrot.safetensors", "FastH3 V2 entry node"],
+        "boundary": "Do not stack a normal H3 Turbo LoRA when FastH3 is enabled; the director already enforces this gate on the real compile path.",
     },
     "eav": {
         "mode": "native_only",
-        "steps": ["准备视频与音频输入", "选择 EAV／Relay 组合入口", "先做短段试听再扩展时长"],
-        "requires": ["EAV Composer 节点", "清晰的音频驱动或参考音频", "输入视频／首帧"],
-        "boundary": "EAV wrapper 有自己的音视频时序合同，不由单镜头生成器代替。",
+        "steps": ["Prepare video and audio inputs", "Choose the EAV/Relay combination entry", "Do a short segment test first before extending duration"],
+        "requires": ["EAV Composer node", "Clear driving audio or reference audio", "Input video / first frame"],
+        "boundary": "The EAV wrapper has its own AV timing contract; it is not replaced by the single-shot generator.",
     },
     "low_vram": {
         "mode": "native_only",
-        "steps": ["在 MODEL 链接入 LowVRAM", "需要时继续接 ChunkFFN", "保持顺序并记录显存策略"],
-        "requires": ["LowVRAM Attention 节点", "ChunkFFN 节点（可选）"],
-        "boundary": "显存优化是显式 MODEL patch，不会静默改变默认 H3 路线。",
+        "steps": ["Connect LowVRAM on the MODEL link", "Continue with ChunkFFN if needed", "Keep order and record the VRAM policy"],
+        "requires": ["LowVRAM Attention node", "ChunkFFN node (optional)"],
+        "boundary": "VRAM optimization is an explicit MODEL patch; it does not silently change the default H3 path.",
     },
     "taeh3_preview": {
         "mode": "native_only",
-        "steps": ["启用 TAEH3 预览入口", "采样中观察 x0 近似图", "取消后回到原生队列状态"],
-        "requires": ["TAEH3 Preview Capability／Sampling Preview 节点", "对应 TAEH3 资源"],
-        "boundary": "预览图是中间近似，不是最终 VAE 成片；不能用来替代交付验收。",
+        "steps": ["Enable the TAEH3 preview entry", "Observe the x0 approximation while sampling", "Return to native queue state after cancel"],
+        "requires": ["TAEH3 Preview Capability / Sampling Preview node", "Corresponding TAEH3 resources"],
+        "boundary": "The preview is an intermediate approximation, not the final VAE output; it cannot replace delivery acceptance.",
     },
     "topaz": {
         "mode": "native_only",
-        "steps": ["先运行环境检测", "把 H3 或普通下载视频接入高清放大", "确认取消和 H.264 交付"],
-        "requires": ["正式 Topaz Video AI 与 models 目录（可由环境节点自动发现）", "可读的视频输入"],
-        "boundary": "输入不限定为 H3 结果；环境、模型和取消能力由 Topaz 原生节点最终核验。",
+        "steps": ["Run environment check first", "Feed the H3 or regular downloaded video into upscale", "Confirm cancel and H.264 delivery"],
+        "requires": ["Official Topaz Video AI and models directory (auto-discoverable by the environment node)", "Readable video input"],
+        "boundary": "Input is not limited to H3 output; environment, model, and cancel capability are finally verified by the native Topaz node.",
     },
     "meridian": {
         "mode": "native_only",
-        "steps": ["准备图像／相机／材质输入", "选择 ConvRot INT8 权重", "按 P2/P3/P4 质量门禁验收"],
-        "requires": ["Meridian ConvRot INT8 ComfyUI 权重", "VGGT-Omega 几何权重（若路线需要）", "Meridian 原生入口节点"],
-        "boundary": "没有几何权重时只可做结构预检，不能声称 Meridian 成片已完成。",
+        "steps": ["Prepare image / camera / material inputs", "Choose ConvRot INT8 weights", "Accept per the P2/P3/P4 quality gates"],
+        "requires": ["Meridian ConvRot INT8 ComfyUI weights", "VGGT-Omega geometry weights (if the route requires)", "Meridian native entry node"],
+        "boundary": "Without geometry weights only structural preflight is possible; do not claim the Meridian output is complete.",
     },
 }
 
@@ -124,7 +124,7 @@ def _route_file(path: str) -> Path:
     root = Path(__file__).resolve().parents[1]
     candidate = (root / path).resolve()
     if not candidate.is_relative_to(root) or candidate == root:
-        raise ValueError("原生路线文件路径越界")
+        raise ValueError("Native route file path is out of bounds")
     return candidate
 
 
@@ -138,11 +138,11 @@ def handoff_d3_route(capability: str, file_path: str | None = None) -> dict[str,
     """
 
     if capability not in ROUTE_WORKFLOWS:
-        raise ValueError("未知 D3 原生路线")
+        raise ValueError("Unknown D3 native route")
     allowed = tuple(ROUTE_WORKFLOWS[capability])
     selected = file_path or allowed[0]
     if selected not in allowed:
-        raise ValueError("该文件不属于所选 D3 原生路线")
+        raise ValueError("This file does not belong to the selected D3 native route")
     rows: list[dict[str, object]] = []
     for relative in allowed:
         path = _route_file(relative)
@@ -168,7 +168,7 @@ def handoff_d3_route(capability: str, file_path: str | None = None) -> dict[str,
         "name": chosen_path.name,
         "kind": "workflow" if chosen_path.suffix.lower() == ".json" else "readme",
         "sha256": hashlib.sha256(raw).hexdigest(),
-        "warning": "这是仓库内核验过的原生工作流／说明副本，不会自动把当前导演台镜头映射进去，也不会排队。打开后请按该路线的输入和模型门禁操作。",
+        "warning": "This is a verified copy of a native workflow/guide from the repo; it does not auto-map the current director shot or queue. After opening, follow that route's input and model gates.",
     }
     if chosen_path.suffix.lower() == ".json":
         try:
@@ -199,7 +199,7 @@ def export_d3_package(
     """
 
     if capability not in ROUTE_WORKFLOWS:
-        raise ValueError("未知 D3 原生路线")
+        raise ValueError("Unknown D3 native route")
     checked = validate_project(project) if project is not None else None
     preflight = inspect_d3_routes(
         checked, shot_id, store, capability=capability
@@ -240,7 +240,7 @@ def export_d3_package(
         "assets": assets,
         "project": json.loads(canonical(checked)) if checked is not None else None,
         "selected_shot": shot_id,
-        "warning": "路线包只保存当前项目快照、稳定素材身份和原生工作流副本；不会上传媒体、改写工作流或自动排队。",
+        "warning": "The route package saves only the current project snapshot, stable asset identities, and native workflow copies; it does not upload media, rewrite workflows, or auto-queue.",
     }
     return package
 
@@ -284,13 +284,13 @@ def _dependency_rows(capability_id: str, inventory: Mapping[str, Iterable[str]])
 
     if capability_id == "semantic_bridge":
         matches = [name for name in inventory.get("semantic_bridge", ()) if name.lower().endswith(".safetensors")]
-        add("bridge_weights", bool(matches), "已发现 " + ", ".join(matches[:3]) if matches else "models/semantic_bridge 没有 .safetensors")
+        add("bridge_weights", bool(matches), "Found " + ", ".join(matches[:3]) if matches else "no .safetensors under models/semantic_bridge")
     elif capability_id == "fast_h3_v2":
         matches = [name for name in all_names if "fasth3" in name or "fast_h3" in name]
-        add("fasth3_assets", bool(matches), "已发现 FastH3 相关模型/LoRA" if matches else "未发现 FastH3 V2 模型或 LoRA；仍可打开配方但不能排队")
+        add("fasth3_assets", bool(matches), "Found FastH3-related model/LoRA" if matches else "No FastH3 V2 model or LoRA found; the recipe can be opened but not queued")
     elif capability_id == "meridian":
         matches = [name for name in inventory.get("meridian", ()) if "meridian" in name.lower()]
-        add("meridian_weights", bool(matches), "已发现 Meridian 资源" if matches else "未发现 models/meridian 下的权重；Omega/ConvRot 需单独授权与安装")
+        add("meridian_weights", bool(matches), "Found Meridian resources" if matches else "No weights under models/meridian; Omega/ConvRot require separate licensing and installation")
     elif capability_id == "topaz":
         matches = [name for name in all_names if "topaz" in name or "iris" in name or "apollo" in name]
         discovered = None
@@ -303,13 +303,13 @@ def _dependency_rows(capability_id: str, inventory: Mapping[str, Iterable[str]])
             discovered = None
         if discovered:
             add("topaz_runtime", True,
-                "已发现正式 Topaz 程序、models 定义和候选权重；环境节点仍需做签名／滤镜／实际加载核验")
+                "Found official Topaz program, models definitions, and candidate weights; the environment node still verifies signature/filter/actual load")
         else:
             add("topaz_runtime", bool(matches),
-                "节点负责运行时环境检查；模型/可执行文件由 Topaz 节点再次核验" if matches
-                else "未发现完整 Topaz 程序和 models 目录；可清空环境节点三项路径并启用自动发现，或手动填写")
+                "The node handles runtime environment checks; the Topaz node re-verifies models/executables" if matches
+                else "No complete Topaz program and models directory found; clear the three environment-node paths to enable auto-discover, or fill manually")
     else:
-        add("native_runtime", True, "入口节点执行时继续做其专属依赖、显存与输入检查")
+        add("native_runtime", True, "The entry node continues its own dependency, VRAM, and input checks at execution")
     return rows
 
 
@@ -343,7 +343,7 @@ def inspect_d3_routes(
             (shot for shot in checked["doc"]["shots"] if shot["id"] == shot_id), None
         )
         if shot_id and selected_shot is None:
-            raise ValueError("请选择项目内有效的镜头 UUID")
+            raise ValueError("Please select a valid shot UUID in the project")
 
     rows = []
     specs = [spec for spec in CAPABILITY_SPECS if capability in (None, spec["id"])]
@@ -374,7 +374,7 @@ def inspect_d3_routes(
                 "shot_name": selected_shot.get("name") if selected_shot else None,
                 "compile_ready": compile_ok,
                 "execution_boundary": "handoff_to_native_workflow; no implicit queue or quality claim",
-                "next_action": "打开对应原生工作流并保存为项目副本，再按该节点的真实输入/模型门禁执行",
+                "next_action": "Open the corresponding native workflow and save it as a project copy, then execute per that node's real input/model gates",
             }
         )
     return {
@@ -383,5 +383,5 @@ def inspect_d3_routes(
         "project_id": project.get("id") if project else None,
         "shot_id": shot_id,
         "compile": compile_report,
-        "warning": "ready_for_native_workflow 只代表当前镜头可安全交接到原生路线，不代表 GPU、人审或发布通过。",
+        "warning": "ready_for_native_workflow means the current shot can be safely handed off to the native route; it does not imply GPU, human-review, or publication approval.",
     }

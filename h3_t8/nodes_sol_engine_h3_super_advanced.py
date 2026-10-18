@@ -31,7 +31,7 @@ class MiniMaxH3SolEngineDraftToLTXT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SolEngineDraftToLTXT8Advanced",
-            display_name="H3 Super: Draft to LTX Refiner / H3草稿转LTX二阶段 (Advanced/T8)",
+            display_name="H3 Super: Draft to LTX Refiner (Advanced/T8)",
             description=(
                 "Prepares decoded H3 RGB frames for NVIDIA's H3 Super Acceleration Stage 2: "
                 "trim to the LTX 8n+1 frame grid, aspect-preserving center-crop to half the "
@@ -164,7 +164,7 @@ class MiniMaxH3SolEngineLTXIdentityRefinerSetupT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SolEngineLTXIdentityRefinerSetupT8Advanced",
             display_name=(
                 "H3 Super: LTX-2.5 Low-Sigma Identity Refiner / "
-                "LTX低Sigma保脸细化 (Advanced/T8)"
+                "LTX Low-Sigma Face-Preserving Refine (Advanced/T8)"
             ),
             description=(
                 "Append-only identity-preserving Stage-2 route. The default schedule is "
@@ -271,7 +271,7 @@ class MiniMaxH3SolEngineTAEHVLoaderT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SolEngineTAEHVLoaderT8Advanced",
-            display_name="H3 Super: TAEHV Wide Loader / TAEHV宽模型加载 (Advanced/T8)",
+            display_name="H3 Super: TAEHV Wide Loader (Advanced/T8)",
             description=(
                 "Loads the taeltx2_3_wide codec used by NVIDIA's published H3 Super "
                 "Stage 2. The architecture is selected explicitly; execution is never "
@@ -301,7 +301,7 @@ class MiniMaxH3SolEngineTAEHVEncodeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SolEngineTAEHVEncodeT8Advanced",
-            display_name="TAEHV Encode (Legacy/Diagnostic) / TAEHV编码（旧兼容/诊断）",
+            display_name="TAEHV Encode (Legacy",
             description=(
                 "Legacy-compatible TAEHV round-trip encoder. Do not connect this output to "
                 "the H3 Super LTX-2.5 refiner: NVIDIA keeps the original full LTX video VAE "
@@ -338,7 +338,7 @@ class MiniMaxH3SolEngineTAEHVDecodeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SolEngineTAEHVDecodeT8Advanced",
-            display_name="H3 Super: TAEHV Decode / TAEHV解码 (Advanced/T8)",
+            display_name="H3 Super: TAEHV Decode (Advanced/T8)",
             description="Decodes the refined normalized LTX video latent with the published TAEHV wide path.",
             category=CATEGORY,
             is_experimental=True,

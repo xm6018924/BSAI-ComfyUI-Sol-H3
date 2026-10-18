@@ -21,7 +21,7 @@ class MiniMaxH3AVSigmaTailSubdivisionT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AVSigmaTailSubdivisionT8Advanced",
-            display_name="MiniMax H3 AV Sigma Tail Subdivision / 音画尾段细分 (Advanced)",
+            display_name="MiniMax H3 AV Sigma Tail Subdivision (Advanced)",
             description=(
                 "Default-off H3 schedule experiment. It preserves every input sigma knot, "
                 "inserts optional points in base-flow time, and reports both video and audio "
@@ -174,7 +174,7 @@ class MiniMaxH3AVSigmaSameNFERedistributionT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3AVSigmaSameNFERedistributionT8Advanced",
-            display_name="MiniMax H3 AV Sigma Same-NFE / 音画同NFE重分布 (Advanced)",
+            display_name="MiniMax H3 AV Sigma Same-NFE (Advanced)",
             description=(
                 "Default-off causal-control schedule. It keeps the exact joint AV model-call "
                 "count and endpoints while optionally redistributing existing base-flow times. "
@@ -288,7 +288,7 @@ class MiniMaxH3MotionQualityAuditT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionQualityAuditT8Advanced",
-            display_name="MiniMax H3 Motion Quality Audit / 高速动态质量审计 (Advanced)",
+            display_name="MiniMax H3 Motion Quality Audit (Advanced)",
             description=(
                 "Read-only, dependency-free temporal proxy audit. Use a reviewed face/subject mask "
                 "or manual ROI for face-focused analysis. It does not claim face identity detection "
@@ -407,7 +407,7 @@ class MiniMaxH3MotionRepairPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionRepairPlanT8Advanced",
-            display_name="MiniMax H3 Motion Repair Plan / 动态风险重做计划 (Advanced)",
+            display_name="MiniMax H3 Motion Repair Plan (Advanced)",
             description=(
                 "Maps Motion Quality Audit proxy ranges into the existing non-destructive "
                 "Selective Repair Plan. It never renders, overwrites, or automatically accepts media."

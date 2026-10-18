@@ -17,7 +17,7 @@ class MiniMaxH3HybridCompatibilityAuditT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3HybridCompatibilityAuditT8Advanced",
             display_name=(
-                "MiniMax H3 Hybrid Compatibility Audit / 混合模型组合兼容审计 (Advanced)"
+                "MiniMax H3 Hybrid Compatibility Audit (Advanced)"
             ),
             description=(
                 "Passes the exact same MODEL through while auditing Hybrid offset-set integrity, "

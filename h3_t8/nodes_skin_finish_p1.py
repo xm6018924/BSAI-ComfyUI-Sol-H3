@@ -20,7 +20,7 @@ class MiniMaxH3SkinFinishMultiPersonT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishMultiPersonT8Advanced",
-            display_name="MiniMax H3 Skin Finish Multi-Person / 多人肤质收尾 (Advanced)",
+            display_name="MiniMax H3 Skin Finish Multi-Person (Advanced)",
             description=(
                 "Reuses an existing native SAM3.1 multi-person track plan without loading SAM "
                 "again. Shot-local person masks are intersected with CPU YuNet face regions; "
@@ -141,7 +141,7 @@ class MiniMaxH3SkinFinishVideoFinalizeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishVideoFinalizeT8Advanced",
-            display_name="MiniMax H3 Skin Finish Video Finalize / 原音频封装 (Advanced)",
+            display_name="MiniMax H3 Skin Finish Video Finalize (Advanced)",
             description=(
                 "Finalizes reviewed full-length IMAGE frames against an untrimmed file-backed "
                 "ComfyUI VIDEO. Video is encoded frame by frame while original compressed audio "
@@ -192,7 +192,7 @@ class MiniMaxH3SkinFinishVideoStreamT8Advanced(io.ComfyNode):
         return io.Schema(
             node_id="MiniMaxH3SkinFinishVideoStreamT8Advanced",
             display_name=(
-                "MiniMax H3 Skin Finish Video Stream / 两遍低内存肤质收尾 (Advanced)"
+                "MiniMax H3 Skin Finish Video Stream (Advanced)"
             ),
             description=(
                 "Consumes an untrimmed file-backed VIDEO without GetVideoComponents. Pass 1 "

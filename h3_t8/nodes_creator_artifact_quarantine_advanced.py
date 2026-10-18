@@ -27,7 +27,7 @@ class MiniMaxH3CreatorArtifactQuarantineT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3CreatorArtifactQuarantineT8Advanced",
             display_name=(
                 "MiniMax H3 Creator Artifact Quarantine / "
-                "候选文件可恢复隔离 (Advanced EXP/T8)"
+                "Recoverable Candidate Quarantine (Advanced EXP/T8)"
             ),
             description=(
                 "Append-only executor for a reviewed Creator Retention Plan. prepare_only hashes "

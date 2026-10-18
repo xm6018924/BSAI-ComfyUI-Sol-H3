@@ -23,7 +23,7 @@ class MiniMaxH3SkinFinishPersonProfileT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SkinFinishPersonProfileT8Advanced",
             display_name=(
                 "MiniMax H3 Skin Finish Person Profile / "
-                "逐人物肤质参数 (Advanced EXP)"
+                "Per-Person Skin Parameters (Advanced EXP)"
             ),
             description=(
                 "Adds one explicit character_id or shot:track Skin Finish profile to a small "
@@ -81,7 +81,7 @@ class MiniMaxH3SkinFinishPerPersonT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3SkinFinishPerPersonT8Advanced",
             display_name=(
                 "MiniMax H3 Skin Finish Per-Person / "
-                "逐人物逐镜头肤质收尾 (Advanced EXP)"
+                "Per-Person Per-Shot Skin Finish (Advanced EXP)"
             ),
             description=(
                 "Reassigns a source-bound combined ParseNet skin mask to exact SAM3.1 tracks, "

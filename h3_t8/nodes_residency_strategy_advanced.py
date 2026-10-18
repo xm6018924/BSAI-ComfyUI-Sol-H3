@@ -18,7 +18,7 @@ class MiniMaxH3ResidencyStrategyT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3ResidencyStrategyT8Advanced",
-            display_name="MiniMax H3 Residency Strategy / 低显存驻留策略 (Advanced EXP/T8)",
+            display_name="MiniMax H3 Residency Strategy (Advanced EXP/T8)",
             description=(
                 "Compiles a side-effect-free report_only/minimum_memory/balanced/faster policy "
                 "from current ComfyUI and AIMDO telemetry. Applying it remains explicit through "

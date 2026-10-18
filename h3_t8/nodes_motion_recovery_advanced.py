@@ -22,7 +22,7 @@ class MiniMaxH3MotionOverloadAnalyzeT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionOverloadAnalyzeT8Advanced",
-            display_name="MiniMax H3 Motion Overload Analyze / 动作过载分析 (Advanced)",
+            display_name="MiniMax H3 Motion Overload Analyze (Advanced)",
             description=(
                 "Read-only H3 latent and decoded-frame analysis. It separates motion measurement "
                 "from compute allocation, can abstain on calm clips, and never patches MODEL or sampling."
@@ -121,7 +121,7 @@ class MiniMaxH3MotionRetimingPrepareT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionRetimingPrepareT8Advanced",
-            display_name="MiniMax H3 Motion Retiming Prepare / 动作扩时二采准备 (Advanced)",
+            display_name="MiniMax H3 Motion Retiming Prepare (Advanced)",
             description=(
                 "Expands only the frames selected by a signed motion plan, encodes the longer H3 "
                 "video latent, and optionally seeds the shared AV Transformer with a phase-vocoder "
@@ -182,7 +182,7 @@ class MiniMaxH3MotionRecoveryComposerT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionRecoveryComposerT8Advanced",
-            display_name="MiniMax H3 Motion Recovery Composer / 动作二采编排 (Advanced)",
+            display_name="MiniMax H3 Motion Recovery Composer (Advanced)",
             description=(
                 "Authenticates the prepared AV latent and signed plan, then selects the final "
                 "fraction of an existing H3 sigma schedule for the second V2V pass. It installs "
@@ -245,7 +245,7 @@ class MiniMaxH3MotionRecoverAVT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionRecoverAVT8Advanced",
-            display_name="MiniMax H3 Motion Recover AV / 动作音画回时钟 (Advanced)",
+            display_name="MiniMax H3 Motion Recover AV (Advanced)",
             description=(
                 "Returns the regenerated clip to its exact world-frame clock by selecting one real "
                 "generated frame from every hold group. The safe default keeps pass-1 audio and "
@@ -316,7 +316,7 @@ class MiniMaxH3MotionSegmentPlanT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionSegmentPlanT8Advanced",
-            display_name="MiniMax H3 Motion Segment Plan / 动作分段窗口计划 (Advanced)",
+            display_name="MiniMax H3 Motion Segment Plan (Advanced)",
             description=(
                 "Turns one signed full-clip motion plan into budgeted sequential windows. It does "
                 "not impose a global pixel/frame prohibition; it reports hot cuts so the user can "
@@ -386,7 +386,7 @@ class MiniMaxH3MotionWindowCollectT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionWindowCollectT8Advanced",
-            display_name="MiniMax H3 Motion Window Collect / 动作窗口断点收集 (Advanced)",
+            display_name="MiniMax H3 Motion Window Collect (Advanced)",
             description=(
                 "Banks one recovered window per queue item and deterministically assembles all "
                 "signed windows when complete. Missing windows pass the baseline through, so a "
@@ -464,7 +464,7 @@ class MiniMaxH3MotionAutoGateT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3MotionAutoGateT8Advanced",
-            display_name="MiniMax H3 Motion Auto Gate / 动作自动修复旁路 (Advanced)",
+            display_name="MiniMax H3 Motion Auto Gate (Advanced)",
             description=(
                 "Uses ComfyUI native lazy inputs. A calm clip marked ABSTAIN returns the exact "
                 "pass-1 frames/audio without evaluating the connected second-pass graph; only "

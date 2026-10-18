@@ -25,7 +25,7 @@ class MiniMaxH3FaceRefineParityPlanT8Advanced(io.ComfyNode):
         detector_options = local_face_detector_options()
         return io.Schema(
             node_id="MiniMaxH3FaceRefineParityPlanT8Advanced",
-            display_name="MiniMax H3 Face Refine Parity Plan / 原版机制规划 (Advanced)",
+            display_name="MiniMax H3 Face Refine Parity Plan (Advanced)",
             description=(
                 "Builds the isolated upstream-parity crop contract: audited BGR YOLO input, "
                 "separate 21/51-frame Gaussian center/size smoothing, per-frame float crops and "
@@ -96,7 +96,7 @@ class MiniMaxH3FaceRefineParityLatentT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineParityLatentT8Advanced",
-            display_name="MiniMax H3 Face Refine Parity Latent / 原版机制Latent (Advanced)",
+            display_name="MiniMax H3 Face Refine Parity Latent (Advanced)",
             description=(
                 "Injects only the crop video latent into an existing MiniMax H3 AV latent. "
                 "The audio latent and existing mask object are retained exactly. The real source "
@@ -135,7 +135,7 @@ class MiniMaxH3FaceRefinePerFrameDenoiseT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefinePerFrameDenoiseT8Advanced",
-            display_name="MiniMax H3 Face Refine Per-Frame Denoise / 逐帧去噪 (Advanced)",
+            display_name="MiniMax H3 Face Refine Per-Frame Denoise (Advanced)",
             description=(
                 "Applies the audited upstream face-size curve (crop height divided by crop "
                 "factor) to the video noise mask only. "
@@ -176,7 +176,7 @@ class MiniMaxH3FaceRefineParityStitchT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineParityStitchT8Advanced",
-            display_name="MiniMax H3 Face Refine Parity Stitch / 原版机制回贴 (Advanced)",
+            display_name="MiniMax H3 Face Refine Parity Stitch (Advanced)",
             description=(
                 "Creates a non-destructive review candidate with the audited upstream mechanics: "
                 "centred face rectangle, chunk-midpoint 24px source feather and post-warp source-"
@@ -238,7 +238,7 @@ class MiniMaxH3FaceRefineQualityGateT8Advanced(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="MiniMaxH3FaceRefineQualityGateT8Advanced",
-            display_name="MiniMax H3 Face Refine Quality Gate / 候选质量门 (Advanced)",
+            display_name="MiniMax H3 Face Refine Quality Gate (Advanced)",
             description=(
                 "Rejects obvious Face Refine regressions before export. It accepts only "
                 "continuous runs whose source-relative structure, face delta, measured "
@@ -297,7 +297,7 @@ class MiniMaxH3FaceRefineManual512RelativeBaselineT8Advanced(io.ComfyNode):
             node_id="MiniMaxH3FaceRefineManual512RelativeBaselineT8Advanced",
             display_name=(
                 "MiniMax H3 Face Refine MANUAL512 REL Baseline / "
-                "人工验收512相对模式基线 (Advanced)"
+                "Human Review 512 Relative-Mode Baseline (Advanced)"
             ),
             description=(
                 "Fail-closed pass-through for the user-selected MANUAL512 REL author-parity v2. "
