@@ -220,7 +220,14 @@ def _fv_key_to_comfy(key):
 
 
 def _fastvideo_lora_to_comfy_patches(sd, rank=64):
-    """把 FastVideo 格式 FastH3 LoRA state dict 转换为 ComfyUI patch dict。
+    """把 LoRA state dict 转换为 ComfyUI patch dict。
+
+    自动兼容两种 LoRA 格式:
+      - FastVideo 原生 (旧): key 无前缀, 含 transformer_blocks./to_q/to_k/to_v 等
+      - ComfyUI 格式 (新): key 自带 diffusion_model. 前缀, 已含 blocks./qkv_proj 等
+
+    输出的 target key 统一**不带** diffusion_model. 前缀 —— 与模型
+    state_dict() 返回的 key 格式一致 (int8/bf16 hybrid 模型无前缀)。
 
     返回 (lora_patches, delta_patches, stats):
       lora_patches:  {模型key: (lora_A, lora_B, alpha)}  —— 标准 LoRA 补丁
@@ -229,20 +236,56 @@ def _fastvideo_lora_to_comfy_patches(sd, rank=64):
     """
     import torch
     from comfy.weight_adapter.lora import LoRAAdapter
+
+    # ---- 0) 格式检测 & 前缀统一 ----
+    # ComfyUI 格式 LoRA (文件名通常带 _comfyui) 的 key 已经是 blocks.xxx
+    # 格式, 只差一个 diffusion_model. 前缀 (模型 state_dict 通常不带)。
+    # 剥掉前缀后直接 1:1 映射, 跳过 FastVideo→ComfyUI 结构转换 (to_q/to_k/to_v→qkv_proj
+    # 融合、ff.net→mlp.fc 重命名等均不需要 —— key 已经是目标格式)。
+    cleaned_sd = {}
+    has_comfy_prefix = False
+    for k, v in sd.items():
+        if k == '__metadata__':
+            cleaned_sd[k] = v
+            continue
+        if k.startswith('diffusion_model.'):
+            has_comfy_prefix = True
+            cleaned_sd[k[len('diffusion_model.'):]] = v
+        else:
+            cleaned_sd[k] = v
+
     lora_patches = {}
     delta_patches = {}
     stats = {'pairs': 0, 'delta': 0, 'skipped': []}
 
+    if has_comfy_prefix:
+        # ---- 0a) ComfyUI 格式: 直接 1:1 映射 ----
+        for k, v in cleaned_sd.items():
+            if k.endswith('.lora_A.weight'):
+                base = k[:-len('.lora_A.weight')]
+                bk = base + '.lora_B.weight'
+                if bk in cleaned_sd:
+                    lora_patches[base + '.weight'] = LoRAAdapter(
+                        None, (cleaned_sd[bk], v, float(rank), None, None, None))
+                    stats['pairs'] += 1
+            elif k.endswith('.diff_b'):
+                base = k[:-len('.diff_b')]
+                delta_patches[base + '.bias'] = ('diff', (v,))
+                stats['delta'] += 1
+            elif k.endswith('.diff'):
+                base = k[:-len('.diff')]
+                delta_patches[base + '.weight'] = ('diff', (v,))
+                stats['delta'] += 1
+        return lora_patches, delta_patches, stats
+
     # ---- 1) 收集标准 lora_A/lora_B 对 ----
     ab = {}
-    for k, v in sd.items():
-        if k == '__metadata__':
-            continue
+    for k, v in cleaned_sd.items():
         if k.endswith('.lora_A.weight'):
             base = k[:-len('.lora_A.weight')]
             bk = base + '.lora_B.weight'
-            if bk in sd:
-                ab[base] = (v, sd[bk])
+            if bk in cleaned_sd:
+                ab[base] = (v, cleaned_sd[bk])
 
     # ---- 2) qkv 融合: to_q/to_k/to_v 三元组 → qkv_proj 块对角 ----
     trio_groups = {}
@@ -263,31 +306,29 @@ def _fastvideo_lora_to_comfy_patches(sd, rank=64):
             A[:r] = A_q; A[r:2*r] = A_k; A[2*r:] = A_v
             B = torch.zeros((3 * inner, 3 * r), dtype=B_q.dtype, device=B_q.device)
             B[:inner, :r] = B_q; B[inner:2*inner, r:2*r] = B_k; B[2*inner:, 2*r:] = B_v
-            target = 'diffusion_model.' + _fv_key_to_comfy(attn_prefix) + '.qkv_proj.weight'
+            target = _fv_key_to_comfy(attn_prefix) + '.qkv_proj.weight'
             lora_patches[target] = LoRAAdapter(None, (B, A, float(rank), None, None, None))
             stats['pairs'] += 1
         else:
             for role, val in trio.items():
                 ab[attn_prefix + '.attn.' + role] = val
 
-    # ---- 3) 1:1 标准 LoRA ----
+    # ---- 3) 1:1 标准 LoRA (FastVideo 原生格式, 输出 key 不带 diffusion_model. 前缀) ----
     for base, (A, B) in ab.items():
-        target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.weight'
+        target = _fv_key_to_comfy(base) + '.weight'
         lora_patches[target] = LoRAAdapter(None, (B, A, float(rank), None, None, None))
         stats['pairs'] += 1
 
     # ---- 4) delta (.diff/.diff_b) ----
-    for k, v in sd.items():
-        if k == '__metadata__':
-            continue
+    for k, v in cleaned_sd.items():
         if k.endswith('.diff_b'):
             base = k[:-len('.diff_b')]
-            target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.bias'
+            target = _fv_key_to_comfy(base) + '.bias'
             delta_patches[target] = ('diff', (v,))
             stats['delta'] += 1
         elif k.endswith('.diff'):
             base = k[:-len('.diff')]
-            target = 'diffusion_model.' + _fv_key_to_comfy(base) + '.weight'
+            target = _fv_key_to_comfy(base) + '.weight'
             delta_patches[target] = ('diff', (v,))
             stats['delta'] += 1
 
