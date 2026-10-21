@@ -43,6 +43,8 @@ offload/reload 权重：
 
 import sys
 
+import torch
+
 _APPLIED = set()       # owner 集合
 _GLOBAL_PATCHED = False  # 全局只包装一次（多插件共享，避免层叠包装）
 
@@ -102,6 +104,34 @@ def is_light_vae(vae):
         return (has_enc != has_dec)
     except Exception:
         return False
+
+
+def _align_video_vae_dtype(vae):
+    """int8_convrot VideoVAE 以 fp16 全量加载时，部分层仍带着 fp32 的 weight/bias
+    （加载器按权重文件里的源 dtype 装入），PyTorch 2.13 的 conv3d 严格检查会报
+    "Input type (struct c10::Half) and bias type (float) should be the same"。
+    按 vae_dtype 把残留的 fp32 Parameter 对齐一次（量化权重 dtype 非 fp32，不受影响）。
+    AudioVAE 本身以 fp32 加载，天然一致，不处理。
+    """
+    fsm = getattr(vae, "first_stage_model", None)
+    if fsm is None or not is_h3_video_vae(vae):
+        return
+    if getattr(fsm, "_bsai_dtype_aligned", False):
+        return
+    dtype = getattr(vae, "vae_dtype", torch.float16)
+    if dtype not in (torch.float16, torch.bfloat16):
+        fsm._bsai_dtype_aligned = True
+        return
+    fixed = 0
+    for _name, _m in fsm.named_modules():
+        for _attr in ("weight", "bias"):
+            _p = getattr(_m, _attr, None)
+            if isinstance(_p, torch.nn.Parameter) and _p.dtype == torch.float32:
+                setattr(_m, _attr, torch.nn.Parameter(_p.to(dtype)))
+                fixed += 1
+    fsm._bsai_dtype_aligned = True
+    if fixed:
+        print(f"[BSAI-H3VAE] VideoVAE dtype 对齐: {fixed} 个 fp32 参数已转 {dtype}", flush=True)
 
 
 def rebuild_patcher_if_dynamic(vae, label="H3 VAE"):
@@ -201,43 +231,12 @@ def apply_global_patch(owner="BSAI"):
 
     def _wrapped_decode(self, *args, **kwargs):
         ensure_h3_vae_full(self)
+        _align_video_vae_dtype(self)
         return _orig_decode(self, *args, **kwargs)
 
     def _wrapped_encode(self, *args, **kwargs):
         ensure_h3_vae_full(self)
-        # 修复 int8_convrot VideoVAE ref2va 编码: VAE 整体加载 dtype=fp16,
-        # 但 quant_conv 等层的 weight/bias 残留 fp32, encode 走普通 ops.Conv3d
-        # (不像 CausalConv3d 有 cast_bias_weight 动态对齐), PyTorch 2.13 严格
-        # dtype 检查报 input(Half) vs weight/bias(Float) 不匹配。
-        # 只对 VideoVAE(有 quant_conv) 做 fp32->fp16 对齐; AudioVAE 加载 dtype=fp32,
-        # weight/bias 本来就是 fp32, 不能动, 否则 input(fp32) vs weight(fp16) 不匹配。
-        try:
-            import torch as _t
-            fsm = getattr(self, "first_stage_model", None)
-            if (fsm is not None and hasattr(fsm, "quant_conv")
-                    and not getattr(fsm, "_bsai_enc_bias_fixed", False)):
-                fixed = []
-                for _name, _m in fsm.named_modules():
-                    for _attr in ("weight", "bias"):
-                        _p = getattr(_m, _attr, None)
-                        if (_p is not None and isinstance(_p, _t.nn.Parameter)
-                                and _p.dtype == _t.float32):
-                            try:
-                                setattr(_m, _attr, _t.nn.Parameter(_p.to(_t.float16)))
-                                fixed.append(f"{_name}.{_attr}")
-                            except Exception:
-                                pass
-                _qc = getattr(fsm, "quant_conv", None)
-                if _qc is not None:
-                    print(f"[BSAI-H3VAE] quant_conv 修复后: "
-                          f"weight dtype={getattr(getattr(_qc,'weight',None),'dtype',None)}, "
-                          f"bias dtype={getattr(getattr(_qc,'bias',None),'dtype',None)}",
-                          flush=True)
-                print(f"[BSAI-H3VAE] VideoVAE encode dtype 对齐: {len(fixed)} 个 fp32 参数已转 fp16",
-                      flush=True)
-                fsm._bsai_enc_bias_fixed = True
-        except Exception as _e:
-            print(f"[BSAI-H3VAE] encode dtype 对齐异常(忽略): {_e}", flush=True)
+        _align_video_vae_dtype(self)
         return _orig_encode(self, *args, **kwargs)
 
     try:
