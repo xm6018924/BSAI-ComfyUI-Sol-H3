@@ -240,6 +240,13 @@ def _apply_native_pdd_lora(model, state: dict[str, torch.Tensor], strength: floa
     # 31 offsets.  A padded diff with strength_model=0 replaces the original
     # one-head tensors with that encoded bank while retaining ModelPatcher's
     # normal load/unload lifecycle (including low-VRAM restoration).
+    pdd_steps = int(model.model.model_config.unet_config.get("pdd_steps", 1) or 1)
+    if pdd_steps > 1:
+        # Baked-PDD checkpoint (core #17239): the FinalLayer already carries
+        # pdd_steps stacked heads and the native forward consumes them from
+        # the sampler sigmas.  Re-injecting the adapter's encoded bank would
+        # clobber the checkpoint's own heads — backbone adapters only.
+        return patched, len(loaded), adapter_count
     head_patches = _native_pdd_head_patches(state)
     applied_heads = set(
         patched.add_patches(head_patches, strength_patch=1.0, strength_model=0.0)
@@ -815,8 +822,10 @@ def build_pdd_8step_setup(
         )
         hook_count = 0
         rank_counts: dict[int, int] = {}
+        baked_pdd = int(model.model.model_config.unet_config.get("pdd_steps", 1) or 1) > 1
         application_mode = (
-            "comfyui_native_pdd_final_layer_plus_backbone_lora"
+            "comfyui_native_baked_pdd_heads_plus_backbone_lora" if baked_pdd
+            else "comfyui_native_pdd_final_layer_plus_backbone_lora"
         )
         base_weight_mutation = True
         final_paths_preserved = True
