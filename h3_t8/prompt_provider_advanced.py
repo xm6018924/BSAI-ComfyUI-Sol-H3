@@ -34,11 +34,15 @@ PROVIDER_MODES = (
     "openai_compatible — OpenAI / LM Studio / llama.cpp",
     "ollama_chat — local or remote Ollama service",
     "bsai_strata — BSAI Strata (Qwen3.8-Flash-Next @127.0.0.1:8080)",
+    "bsai_nemotron — BSAI Nemotron (llama.cpp @127.0.0.1:8085)",
+    "bsai_ninfer — BSAI NInfer (AI蛮子 ninfer 本地反推, 动态端口)",
 )
 DEFAULT_ENDPOINTS = {
     "openai_compatible": "http://127.0.0.1:1234/v1/chat/completions",
     "ollama_chat": "http://127.0.0.1:11434/api/chat",
     "bsai_strata": "http://127.0.0.1:8080/v1/chat/completions",
+    "bsai_nemotron": "http://127.0.0.1:8085/v1/chat/completions",
+    "bsai_ninfer": "http://127.0.0.1:8082/v1/chat/completions",  # placeholder; real port resolved at runtime
 }
 ENV_NAME = re.compile(r"^[A-Z][A-Z0-9_]{1,63}$")
 OLLAMA_KEEP_ALIVE = re.compile(r"^(?:-1|0|[1-9]\d*(?:ms|s|m|h)?)$")
@@ -90,6 +94,10 @@ def _provider_key(value: str) -> str:
         return "ollama_chat"
     if raw.startswith("bsai_strata"):
         return "bsai_strata"
+    if raw.startswith("bsai_nemotron"):
+        return "bsai_nemotron"
+    if raw.startswith("bsai_ninfer"):
+        return "bsai_ninfer"
     raise ValueError(f"unsupported provider_mode: {value}")
 
 
@@ -393,7 +401,7 @@ def _ollama_messages(
 def _response_text(provider: str, payload: Mapping[str, Any]) -> str:
     message: Mapping[str, Any] | None = None
     try:
-        if provider in ("openai_compatible", "bsai_strata"):
+        if provider in ("openai_compatible", "bsai_strata", "bsai_nemotron", "bsai_ninfer"):
             content = payload["choices"][0]["message"]["content"]
             if isinstance(content, list):
                 content = "".join(
@@ -549,6 +557,47 @@ def rewrite_prompt_provider(
         allow_remote_endpoint=bool(allow_remote_endpoint),
     )
     model = _text(provider_model, "provider_model", required=True, maximum=256)
+    if provider == "bsai_ninfer":
+        # NInfer uses a dynamic free port; resolve the real endpoint through
+        # NInferManager (auto-start on demand) instead of the placeholder URL.
+        try:
+            import importlib.util as _ilu
+            _p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "..", "..", "BSAI-LLM-Strata", "strata_manager.py")
+            if not os.path.exists(_p):
+                raise RuntimeError("BSAI-LLM-Strata 插件缺失，无法启动 ninfer")
+            _spec = _ilu.spec_from_file_location("bsai_strata_manager", _p)
+            _m = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_m)
+            ok, msg = _m.NInferManager.ensure_running()
+            if not ok:
+                raise RuntimeError(f"NInfer 启动失败: {msg}")
+            resolved_endpoint = _m.NInferManager.base_url() + "/chat/completions"
+            mids = _m.NInferManager.models()
+            if mids and model in ("", "default", "qwen3.8-flash-next"):
+                model = mids[0]
+        except Exception as _e:
+            raise ValueError(f"bsai_ninfer endpoint resolution failed: {_e}")
+    if provider == "bsai_nemotron":
+        # Nemotron runs on llama.cpp @8085; auto-start via NemotronManager.
+        try:
+            import importlib.util as _ilu
+            _p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "..", "..", "BSAI-LLM-Strata", "strata_manager.py")
+            if not os.path.exists(_p):
+                raise RuntimeError("BSAI-LLM-Strata 插件缺失，无法启动 Nemotron")
+            _spec = _ilu.spec_from_file_location("bsai_strata_manager", _p)
+            _m = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_m)
+            ok, msg = _m.NemotronManager.ensure_running()
+            if not ok:
+                raise RuntimeError(f"Nemotron 启动失败: {msg}")
+            resolved_endpoint = _m.NemotronManager.base_url() + "/chat/completions"
+            mids = _m.NemotronManager.models()
+            if mids and model in ("", "default", "qwen3.8-flash-next", "Nemotron-3.5-Bolt-74B-A9B"):
+                model = mids[0]
+        except Exception as _e:
+            raise ValueError(f"bsai_nemotron endpoint resolution failed: {_e}")
     env_name = str(api_key_env or "").strip()
     api_key = ""
     if env_name:
@@ -568,7 +617,7 @@ def rewrite_prompt_provider(
         maximum_image_edge=int(maximum_image_edge),
         jpeg_quality=int(jpeg_quality),
     )
-    if provider in ("openai_compatible", "bsai_strata"):
+    if provider in ("openai_compatible", "bsai_strata", "bsai_nemotron", "bsai_ninfer"):
         body_object: dict[str, Any] = {
             "model": model,
             "messages": _openai_messages(
@@ -663,7 +712,7 @@ def rewrite_prompt_provider(
             findings=findings,
             dialogue_bindings=dialogue_bindings,
         )
-        if provider in ("openai_compatible", "bsai_strata"):
+        if provider in ("openai_compatible", "bsai_strata", "bsai_nemotron", "bsai_ninfer"):
             repair_body_object: dict[str, Any] = {
                 "model": model,
                 "messages": repair_messages,

@@ -373,6 +373,12 @@ class BSAI_SolH3_Loader:
     CATEGORY = "BSAI/Sol-H3"
     DESCRIPTION = "BSAI Sol-H3: one-click H3 + FastH3 LoRA + Sol-Attn loader (configurable two-pass dual LoRA)"
 
+    @classmethod
+    def VALIDATE_INPUTS(cls, **kwargs):
+        # v14.152: 带 **kwargs 让 ComfyUI 跳过 combo 选项校验（execution.py 1060 行分支），
+        # 使老工作流存的中文值 '4步 FastH3 极速' 等能进入 load()，由函数内映射到英文选项。
+        return True
+
     def load(self, model_name, precision, sol_attn, tau_start, tau_end,
              sink_conditioning, int8_qk, fused_modulation, chunk_ff, chunk_size,
              fast_h3_steps, sampler, cfg, shift, audio_shift,
@@ -387,6 +393,13 @@ class BSAI_SolH3_Loader:
         model_path = folder_paths.get_full_path("diffusion_models", model_name) if folder_paths else model_name
         model = load_diffusion_model(model_path)
 
+        # v14.152: 兼容老工作流中文值映射到英文选项（combo 校验已被 VALIDATE_INPUTS 跳过）
+        _steps_map = {
+            "4步 FastH3 极速": "4-step FastH3 Turbo",
+            "8步 FastH3 增强": "8-step FastH3 Enhanced",
+            "50步 原生高质量": "50-step Native High Quality",
+        }
+        fast_h3_steps = _steps_map.get(str(fast_h3_steps), str(fast_h3_steps))
         # steps resolution
         if "4-step" in fast_h3_steps:
             steps = 4
