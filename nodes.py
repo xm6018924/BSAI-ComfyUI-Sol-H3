@@ -480,13 +480,22 @@ class BSAI_SolH3_Loader:
                     # LoRA 部分不兼容, 跳过形状不匹配的 patch, 避免 calculate_weight
                     # 的形状警告与失败; 其余 patch 照常生效。
                     def _shape_filter(patches, exp_shape_fn):
+                        # 转换器 target key 不带 diffusion_model. 前缀, 模型 state_dict()
+                        # 带该前缀 (BaseModel.diffusion_model) —— 两种都试, 命中后用模型
+                        # 侧 key, 否则 add_patches 全部落空报 "0个key匹配"。
                         keep = {}
                         dropped = 0
                         model_sd = model.model_state_dict()
                         for k, v in patches.items():
                             exp = exp_shape_fn(v)
-                            if k in model_sd and tuple(exp) == tuple(model_sd[k].shape):
-                                keep[k] = v
+                            mkey = k
+                            if mkey not in model_sd:
+                                alt = (k[len('diffusion_model.'):] if k.startswith('diffusion_model.')
+                                       else 'diffusion_model.' + k)
+                                if alt in model_sd:
+                                    mkey = alt
+                            if mkey in model_sd and tuple(exp) == tuple(model_sd[mkey].shape):
+                                keep[mkey] = v
                             else:
                                 dropped += 1
                         return keep, dropped
